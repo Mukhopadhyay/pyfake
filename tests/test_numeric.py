@@ -1,10 +1,11 @@
-from dummy import Dummy
+from pyfake import Pyfake
 from pydantic import BaseModel
 
 
 class Model(BaseModel):
     thing1: int
 
+
 def test_numeric():
-    d = Dummy(Model)
+    d = Pyfake(Model)
     assert True

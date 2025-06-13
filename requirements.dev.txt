@@ -1,0 +1,4 @@
+build==1.2.2.post1
+pydantic==2.11.6
+pytest==8.4.0
+twine==6.1.0

@@ -1,4 +1,4 @@
-site_name: Dummy
+site_name: Pyfake
 # site_url: https://mydomain.org/mysite
 theme:
   name: material

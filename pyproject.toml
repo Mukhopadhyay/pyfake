@@ -1,2 +1,47 @@
+[project]
+name = "pyfake"
+version = "0.0.1"
+description = "A fake data generator that is pydantic compatible."
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+authors = [
+    {name = "Pranesh Mukhopadhyay", email = "praneshmukherjee7@gmail.com"}
+]
+classifiers = [
+    "Intended Audience :: Information Technology",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python",
+    "Framework :: Pydantic",
+    "Framework :: Pydantic :: 2",
+    "Intended Audience :: Developers",
+]
+keywords = [
+    "pydantic",
+    "fake data",
+    "data generation",
+    "data validation",
+    "data modeling",
+]
+dependencies = [
+    "pydantic>=2.0"
+]
+
+[project.optional-dependencies]
+dev = ["pytest", "black", "ruff"]
+
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+include-package-data = true
+packages = ["pyfake"]
+
+[tool.setuptools.package-data]
+"pyfake" = ["py.typed"]
+
+
 [tool.pytest.ini_options]
 pythonpath = ["."]
