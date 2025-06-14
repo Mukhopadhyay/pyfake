@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 from typing import Type, Optional
-from typing import Dict, List, Any, Literal
+from typing import List, Any
 
 
 class ModelSchema:

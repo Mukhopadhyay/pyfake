@@ -1,8 +1,10 @@
 import random
 from pydantic import BaseModel
+import types
 from typing import Optional, Type, Dict, Any, List, Tuple, Literal
 from pyfake.parsers.pydantic_parser import PydanticParser
 from pyfake.core.types import SupportedFieldType
+from pyfake.generators import number
 
 
 class Pyfake:
@@ -23,6 +25,10 @@ class Pyfake:
         choice = random.choice(choices)
         return choice["value"], choice["type"]
 
+    def __resolve_module(self, type_name: str) -> Optional[types.ModuleType]:
+        mapping = {"integer": number, "float": number}
+        return mapping.get(type_name)
+
     def __generate_value(self, types: List[str], default: Optional[Any] = None) -> Any:
         choice_value, choice_type = self.__choose(types, default=default)
 
@@ -32,10 +38,13 @@ class Pyfake:
         if choice_type == "VALUE":
             return choice_value
 
-        if choice_value == "integer":
-            return random.randint(0, 100)
-        else:
+        # Identify the module
+        module = self.__resolve_module(choice_value)
+        if not module:
             return
+
+        func = getattr(module, choice_value)
+        return func()
 
     def generate(self, num: Optional[int] = 1) -> Dict[str, Any]:
         parser = PydanticParser(self.model)
