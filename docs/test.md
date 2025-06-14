@@ -5,8 +5,12 @@ pytest tests/
 Test with coverage
 ```bash
 coverage run -m pytest
+
 # Generating report
 coverage report
+
+# Generating html report
+coverage html
 ```
 
 Generating coverage badge

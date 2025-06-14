@@ -25,6 +25,7 @@ class Pyfake:
 
     def __generate_value(self, types: List[str], default: Optional[Any] = None) -> Any:
         choice_value, choice_type = self.__choose(types, default=default)
+
         if choice_type == "TYPE" and choice_value not in SupportedFieldType.__args__:
             raise ValueError(f"Unsupported type: {choice_value}")
 
@@ -33,8 +34,8 @@ class Pyfake:
 
         if choice_value == "integer":
             return random.randint(0, 100)
-        elif choice_value == "null":
-            return None
+        else:
+            return
 
     def generate(self, num: Optional[int] = 1) -> Dict[str, Any]:
         parser = PydanticParser(self.model)
