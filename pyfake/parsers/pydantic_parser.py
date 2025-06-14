@@ -1,11 +1,12 @@
 from pydantic import BaseModel
-from typing import Type
+from typing import Type, Optional
 from typing import Dict, List, Any, Literal
 
 
 class ModelSchema:
     name: str
     types: List[str]
+    default: Optional[Any] = None
 
 
 class PydanticParser:
@@ -17,7 +18,7 @@ class PydanticParser:
     def __init__(self, model: Type[BaseModel]):
         self.__model = model
 
-    def parse(self) -> List[Dict[str, Any]]:
+    def parse(self) -> List[ModelSchema]:
         """
         Returns a dictionary with field and essential attributes
         to generate random data.
@@ -26,6 +27,8 @@ class PydanticParser:
         schema = []
 
         for field, value in properties.items():
+            default_value = value.get("default")
+
             possible_types = value.get("anyOf", value.get("type"))
             if isinstance(possible_types, list):
                 possible_types = [_["type"] for _ in possible_types]
@@ -34,6 +37,8 @@ class PydanticParser:
                     possible_types,
                 ]
 
-            schema.append({"name": field, "types": possible_types})
+            schema.append(
+                {"name": field, "types": possible_types, "default": default_value}
+            )
 
         return schema

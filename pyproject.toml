@@ -45,3 +45,16 @@ packages = ["pyfake"]
 
 [tool.pytest.ini_options]
 pythonpath = ["."]
+
+[tool.coverage.run]
+branch = true
+source = ["pyfake"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "if __name__ == .__main__.:",
+    "pragma: no cover",
+]
+omit = [
+    "tests/*"
+]

@@ -1,11 +1,25 @@
 from pyfake import Pyfake
-from pydantic import BaseModel
+from pydantic import BaseModel, ValidationError
+from typing import Optional
+from rich import print
 
 
 class Model(BaseModel):
-    thing1: int
+    integer: int
+    optional_integer: Optional[int]
+    optional_integer_default_none: Optional[int] = None
+    optional_integer_default_42: Optional[int] = 42
 
 
 def test_numeric():
-    d = Pyfake(Model)
-    assert True
+    pyfake = Pyfake(Model)
+    result = pyfake.generate(10)
+    print(result)
+
+    assert isinstance(result, list)
+    assert len(result) == 10
+    for item in result:
+        try:
+            Model(**item)
+        except ValidationError:
+            assert False, f"Validation error for item: {item}"

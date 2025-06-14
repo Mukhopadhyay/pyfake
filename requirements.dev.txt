@@ -1,4 +1,8 @@
 build==1.2.2.post1
+coverage==7.9.1
+coverage-badge==1.1.2
 pydantic==2.11.6
+pydantic_core==2.33.2
 pytest==8.4.0
+rich==14.0.0
 twine==6.1.0
