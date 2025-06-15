@@ -26,10 +26,6 @@ class PydanticParser:
         properties = self.__model.model_json_schema().get("properties")
         schema = []
 
-        from rich import print
-
-        print(properties)
-
         for field, value in properties.items():
             default_value = value.get("default")
 
