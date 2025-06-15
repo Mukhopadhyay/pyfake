@@ -6,6 +6,9 @@ from pyfake.parsers.pydantic_parser import PydanticParser
 from pyfake.core.types import SupportedFieldType
 from pyfake.generators import number
 
+# Module map
+_dtype_to_mod = {"integer": number, "number": number}
+
 
 class Pyfake:
 
@@ -26,8 +29,7 @@ class Pyfake:
         return choice["value"], choice["type"]
 
     def __resolve_module(self, type_name: str) -> Optional[types.ModuleType]:
-        mapping = {"integer": number, "float": number}
-        return mapping.get(type_name)
+        return _dtype_to_mod.get(type_name)
 
     def __generate_value(self, types: List[str], default: Optional[Any] = None) -> Any:
         choice_value, choice_type = self.__choose(types, default=default)

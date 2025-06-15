@@ -1,3 +1,3 @@
 from typing import Literal
 
-SupportedFieldType = Literal["integer", "null"]
+SupportedFieldType = Literal["integer", "number", "null"]

@@ -1,17 +1,25 @@
-# Welcome to MkDocs
+<p align="center">
+  <a href="https://github.com/Mukhopadhyay/pyfake"><img src="./assets/logo.png" alt="FastAPI" ></a>
+</p>
 
-For full documentation visit [mkdocs.org](https://www.mkdocs.org).
+<p align="center">
+<i>A Flexible and Extensible fake data generator based on <strong>Pydantic</strong> models.</i>
+</p>
 
-## Commands
+<p align="center">
+<img src="https://img.shields.io/pypi/v/pyfake?pypiBaseUrl=https%3A%2F%2Fpypi.org&style=for-the-badge"/> <img src="https://img.shields.io/badge/python-3670A0?style=for-the-badge&logo=python&logoColor=ffdd54"/> <img src="https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/pydantic/pydantic/main/docs/badge/v2.json&style=for-the-badge"/>
+</p>
 
-* `mkdocs new [dir-name]` - Create a new project.
-* `mkdocs serve` - Start the live-reloading docs server.
-* `mkdocs build` - Build the documentation site.
-* `mkdocs -h` - Print help message and exit.
+<p align="center">
+<img src="./assets/coverage.svg"/>
+</p>
 
-## Project layout
+---
 
-    mkdocs.yml    # The configuration file.
-    docs/
-        index.md  # The documentation homepage.
-        ...       # Other markdown pages, images and other files.
+## Installation
+
+```bash
+pip install pyfake
+```
+
+---
