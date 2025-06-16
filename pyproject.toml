@@ -1,6 +1,6 @@
 [project]
 name = "pyfake"
-version = "0.0.1"
+version = "0.0.5"
 description = "A fake data generator that is pydantic compatible."
 readme = "README.md"
 requires-python = ">=3.9"
@@ -37,7 +37,7 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
 include-package-data = true
-packages = ["pyfake"]
+packages = {find = {}}
 
 [tool.setuptools.package-data]
 "pyfake" = ["py.typed"]
