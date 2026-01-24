@@ -27,3 +27,8 @@ keywords = [
     "data validation",
     "data modeling",
 ]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.4.2",
+]
