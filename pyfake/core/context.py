@@ -3,8 +3,10 @@ Shared execution state for Pyfake
 """
 
 import random
+from typing import Optional
 
 
 class Context:
-    def __init__(self, seed: int | None = None):
-        self.random = random.seed(seed)
+    def __init__(self, seed: Optional[int] = None):
+        # Setting the seed for reproducibility
+        self.random = random.Random(seed)
