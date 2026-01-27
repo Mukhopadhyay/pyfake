@@ -1,8 +1,11 @@
 from datetime import date, datetime, time
-from typing import Annotated, Optional, List, Dict
+from typing import Annotated, Optional, List, Dict, Union
 from uuid import UUID, uuid4
 
 from pydantic import BaseModel, Field, EmailStr, HttpUrl
+
+# Field docs:
+# https://docs.pydantic.dev/latest/api/fields/#pydantic.fields.Field
 
 
 class StressTestModel(BaseModel):
@@ -11,9 +14,12 @@ class StressTestModel(BaseModel):
     # -------------------------
 
     integer_basic: int
-    # integer_with_bounds: Annotated[int, Field(ge=1, le=100)]
-    # integer_optional: Optional[int]
-    # integer_optional_default: Optional[int] = 42
+    integer_optional: Optional[int]
+    integer_with_bounds: Annotated[int, Field(ge=1, le=100)]
+    integer_with_multiple_annotations: Union[
+        Annotated[int, Field(ge=1, le=100)], Annotated[int, Field(ge=200, le=300)]
+    ]
+    integer_optional_default: Optional[int] = 42
 
     # float_basic: float
     # float_with_bounds: Annotated[float, Field(gt=0.0, lt=1.0)]

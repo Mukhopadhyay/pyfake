@@ -3,8 +3,11 @@ Resolves the datatypes and forms the generator mapping
 """
 
 from pyfake.generators import primivites
-from pyfake.schemas.models import ModelPropertySchema, ResolvedSchema
+from pyfake.schemas import ModelPropertySchema, ResolvedSchema, ResolverArgs
 from pyfake.exceptions import GeneratorNotFound
+
+from typing import List, Dict
+from collections.abc import Callable
 
 
 class GeneratorRegistry:
@@ -14,26 +17,49 @@ class GeneratorRegistry:
     """
 
     def __init__(self):
-        self.__generators = {"integer": primivites.generate_int}
+        self.__generators: Dict[str, Callable] = {
+            "integer": primivites.generate_int,
+            "null": primivites.generate_none,
+        }
 
-    def __resolve(self, type_: str):
+    def __resolve_type(self, schema: ModelPropertySchema) -> List[str]:
         """
-        Internal function for resolving type to generator function mapping
+        input: The model property schema
+        output: All possible types and their respective params
+
+        e.g.,
+
+        > a: int | None = None
+        >> ['integer', 'none']
         """
-        pass
+        print("1. Resolving type")
+        possible_types: List[ResolvedSchema] = []
+
+        if schema.anyOf:
+            # Multiple possible values
+            for type_ in schema.anyOf:
+                possible_types.append(
+                    ResolvedSchema(type=type_.type, args=ResolverArgs())
+                )
+        elif schema.type:
+            # Scalar type
+            possible_types.append(schema.type)
+
+        print("Resolved types:", possible_types)
+
+        return possible_types
 
     def generate(self, schema: ModelPropertySchema):
-        """
-        1. Resolves the generator function
-        2. Generate the data with valid args
-        """
-        generator_func = self.__generators.get(schema.type)
-        if not generator_func:
-            raise GeneratorNotFound(type_=schema.type)
+        # 1. Resolve the type
+        possible_types = self.__resolve_type(schema)
 
-        __resolved_schema = ResolvedSchema(
-            generator_func=generator_func,
-            args={},
-        )
+        # generator_func = self.__generators.get(schema.type)
+        # if not generator_func:
+        #     raise GeneratorNotFound(type_=schema.type)
 
-        return __resolved_schema.generator_func(**__resolved_schema.args.model_dump())
+        # __resolved_schema = ResolvedSchema(
+        #     generator_func=generator_func,
+        #     args={},
+        # )
+
+        # return __resolved_schema.generator_func(**__resolved_schema.args.model_dump())

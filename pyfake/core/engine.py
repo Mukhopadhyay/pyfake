@@ -2,9 +2,9 @@ from pyfake.core.context import Context
 from pyfake.core.registry import GeneratorRegistry
 
 from pydantic import BaseModel
-from typing import Optional, Dict
+from typing import Optional, Dict, Any
 
-from pyfake.schemas import models
+from pyfake import schemas
 
 
 class Engine:
@@ -16,15 +16,12 @@ class Engine:
         self.context = context
         self.registry = GeneratorRegistry()
 
-    def generate(self, schema: BaseModel):
+    def generate(self, schema: BaseModel) -> dict[str, Any]:
         print("Raw:", schema.model_json_schema())
 
-        model_property: Dict[str, models.ModelPropertySchema] = (
+        model_property: Dict[str, schemas.ModelPropertySchema] = (
             schema.model_json_schema()["properties"]
         )
-        from pprint import pprint
-
-        pprint(model_property)
 
         # This is going to be populated after the for loop
         _data = {}
@@ -34,7 +31,7 @@ class Engine:
             1. Resolve the type of the generator function
             2. Generate the value
             """
-            schema = models.ModelPropertySchema(**value)
+            schema = schemas.ModelPropertySchema(**value)
             # print("Generating for key:", key, "with schema:", schema)
             _data[key] = self.registry.generate(schema)
 

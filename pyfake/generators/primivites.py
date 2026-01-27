@@ -11,6 +11,8 @@ import string
 from pyfake.core.context import Context
 from typing import Optional
 
+def generate_none():
+    return None
 
 def generate_int(*, context: Optional[Context] = None, **kwargs) -> int:
     if context:
