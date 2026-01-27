@@ -12,7 +12,7 @@ from pyfake.core.context import Context
 from typing import Optional
 
 
-def generate_int(*, context: Optional[Context] = None) -> int:
+def generate_int(*, context: Optional[Context] = None, **kwargs) -> int:
     if context:
         return context.random.randint(0, 100)
     return random.randint(0, 100)
