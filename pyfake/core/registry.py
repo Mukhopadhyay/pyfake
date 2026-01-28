@@ -39,7 +39,10 @@ class GeneratorRegistry:
             # Multiple possible values
             for type_ in schema.anyOf:
                 possible_types.append(
-                    ResolvedSchema(type=type_.type, args=ResolverArgs())
+                    ResolvedSchema(
+                        type=type_.type,
+                        args=ResolverArgs(ge=type_.minimum, le=type_.maximum),
+                    )
                 )
         elif schema.type:
             # Scalar type

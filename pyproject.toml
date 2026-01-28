@@ -31,4 +31,5 @@ keywords = [
 [dependency-groups]
 dev = [
     "pytest>=8.4.2",
+    "rich>=14.3.1",
 ]

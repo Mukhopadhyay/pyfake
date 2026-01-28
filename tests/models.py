@@ -19,6 +19,17 @@ class StressTestModel(BaseModel):
     integer_with_multiple_annotations: Union[
         Annotated[int, Field(ge=1, le=100)], Annotated[int, Field(ge=200, le=300)]
     ]
+    integer_with_multiple_annotations: Union[
+        Annotated[int, Field(ge=1, le=100, default=21)],
+        Annotated[int, Field(ge=200, le=300, default=42)],
+    ]
+    integer_optional_2_defaults: Optional[
+        Annotated[int, Field(ge=1, le=100, default=21)]
+    ] = 42
+    integer_optional_3_defaults: Union[
+        Annotated[int, Field(ge=1, le=10, default=5)],
+        Annotated[int, Field(ge=20, le=30, default=29)],
+    ] = 27
     integer_optional_default: Optional[int] = 42
 
     # float_basic: float

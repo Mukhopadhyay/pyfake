@@ -17,7 +17,9 @@ class Engine:
         self.registry = GeneratorRegistry()
 
     def generate(self, schema: BaseModel) -> dict[str, Any]:
-        print("Raw:", schema.model_json_schema())
+        from rich import print
+
+        print(schema.model_json_schema())
 
         model_property: Dict[str, schemas.ModelPropertySchema] = (
             schema.model_json_schema()["properties"]
@@ -32,7 +34,6 @@ class Engine:
             2. Generate the value
             """
             schema = schemas.ModelPropertySchema(**value)
-            # print("Generating for key:", key, "with schema:", schema)
             _data[key] = self.registry.generate(schema)
 
         return _data

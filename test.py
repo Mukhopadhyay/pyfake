@@ -7,13 +7,12 @@
 # print(x)
 
 from pyfake import Pyfake
-from pydantic import BaseModel
+
+# from pydantic import BaseModel
 from tests.models import StressTestModel
+from tests.field_schema import Model
 
 
-class Model(BaseModel):
-    integer_basic: int
-
-
-x = Pyfake.from_schema(StressTestModel, num=1)
+# x = Pyfake.from_schema(StressTestModel, num=1)
+x = Pyfake.from_schema(Model, num=1)
 print(x)
