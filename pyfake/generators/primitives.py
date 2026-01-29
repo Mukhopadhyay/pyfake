@@ -6,7 +6,6 @@ Handles scalar generation
 * str
 """
 
-import math
 import string
 from pyfake.core.context import Context
 from typing import Optional

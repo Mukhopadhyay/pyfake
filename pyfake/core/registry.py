@@ -2,7 +2,7 @@
 Resolves the datatypes and forms the generator mapping
 """
 
-from pyfake.generators import primivites
+from pyfake.generators import primitives
 from pyfake.core.context import Context
 from pyfake.schemas import ModelPropertySchema, ResolvedSchema, GeneratorArgs
 from pyfake.exceptions import GeneratorNotFound
@@ -19,10 +19,10 @@ class GeneratorRegistry:
 
     def __init__(self, context: Context = None):
         self.__generators: Dict[str, Callable] = {
-            "integer": primivites.generate_int,
-            "null": primivites.generate_none,
-            "string": primivites.generate_str,
-            "number": primivites.generate_float,
+            "integer": primitives.generate_int,
+            "null": primitives.generate_none,
+            "string": primitives.generate_str,
+            "number": primitives.generate_float,
         }
         self.__context = context
 
