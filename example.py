@@ -1,3 +1,6 @@
+import warnings
+
+warnings.filterwarnings("ignore")
 from pyfake import Pyfake
 
 # from tests.models import StressTestModel
@@ -28,5 +31,24 @@ class StressTestModel(BaseModel):
     integer_optional_default: Optional[int] = 42
 
 
-x = Pyfake.from_schema(StressTestModel, num=1, seed=1)
+class StressTestStringModel(BaseModel):
+    string_basic: str
+    string_optional: Optional[str]
+    string_with_bounds: Annotated[str, Field(min_length=1, max_length=100)]
+    string_with_multiple_annotations: Union[
+        Annotated[str, Field(min_length=1, max_length=5)],
+        Annotated[str, Field(min_length=10, max_length=15)],
+    ]
+    string_optional_default: Optional[
+        Annotated[str, Field(min_length=1, max_length=10, default="abc")]
+    ] = "xyz"
+    string_with_length_default: Annotated[
+        str, Field(min_length=3, max_length=3, default="abc")
+    ] = "def"
+    string_with_examples: Annotated[
+        str, Field(examples=["example1", "example2", "example3"])
+    ]
+
+
+x = Pyfake.from_schema(StressTestStringModel, num=1, seed=1)
 print(x)

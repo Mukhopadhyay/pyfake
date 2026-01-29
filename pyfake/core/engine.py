@@ -5,7 +5,6 @@ from pydantic import BaseModel
 from typing import Optional, Dict, Any, List
 
 from pyfake import schemas
-from rich import print
 
 
 class Engine:
@@ -18,8 +17,6 @@ class Engine:
         self.registry = GeneratorRegistry(context=self.context)
 
     def generate(self, schema: BaseModel) -> Dict[str, Any]:
-
-        # print(schema.model_json_schema())
 
         model_property: Dict[str, schemas.ModelPropertySchema] = (
             schema.model_json_schema()["properties"]

@@ -4,14 +4,16 @@ Resolves the datatypes and forms the generator mapping
 
 from pyfake.generators import primitives
 from pyfake.core.context import Context
-from pyfake.schemas import ModelPropertySchema, ResolvedSchema, GeneratorArgs
+from pyfake.schemas import (
+    ModelPropertySchema,
+    ResolvedSchema,
+    GeneratorArgs,
+    FieldSchema,
+)
 from pyfake.exceptions import GeneratorNotFound
 
 from typing import List, Dict, Any
 from collections.abc import Callable
-
-
-from rich import print
 
 
 class GeneratorRegistry:
@@ -28,6 +30,33 @@ class GeneratorRegistry:
             "number": primitives.generate_float,
         }
         self.__context = context
+
+    def __get_resolved_schema(
+        self,
+        name: str,
+        type_: str,
+        required_attrs: List[str],
+        generator_func: Callable,
+        schema: FieldSchema,
+    ) -> ResolvedSchema:
+        return ResolvedSchema(
+            type=type_,
+            generator_func=generator_func,
+            args=GeneratorArgs(
+                lt=schema.exclusiveMaximum,
+                gt=schema.exclusiveMinimum,
+                le=schema.maximum,
+                ge=schema.minimum,
+                default=schema.default,
+                pattern=schema.pattern,
+                multiple_of=schema.multipleOf,
+                decimal_places=schema.multipleOf,
+                min_length=schema.minLength,
+                max_length=schema.maxLength,
+                examples=schema.examples,
+                is_optional=name not in required_attrs,
+            ),
+        )
 
     def __resolve_type(
         self, name: str, schema: ModelPropertySchema, required_attrs: List[str]
@@ -54,27 +83,15 @@ class GeneratorRegistry:
                     raise GeneratorNotFound(type_=current_type)
 
                 possible_types.append(
-                    ResolvedSchema(
-                        type=current_type,
+                    self.__get_resolved_schema(
+                        name=name,
+                        type_=current_type,
+                        required_attrs=required_attrs,
                         generator_func=__generator_func,
-                        args=GeneratorArgs(
-                            lt=type_.exclusiveMaximum,
-                            gt=type_.exclusiveMinimum,
-                            le=type_.maximum,
-                            ge=type_.minimum,
-                            default=type_.default,
-                            pattern=type_.examples,
-                            multiple_of=type_.multipleOf,
-                            decimal_places=type_.multipleOf,
-                            min_length=type_.minLength,
-                            max_length=type_.maxLength,
-                            examples=type_.examples,
-                            is_optional=name not in required_attrs,
-                        ),
+                        schema=type_,
                     )
                 )
         else:
-            # print("Running scalar!")
             # Scalar type
             # Resolve the generator function
             __generator_func = self.__generators.get(schema.type)
@@ -82,27 +99,15 @@ class GeneratorRegistry:
                 raise GeneratorNotFound(type_=schema.type)
 
             possible_types.append(
-                ResolvedSchema(
-                    type=schema.type,
+                self.__get_resolved_schema(
+                    name=name,
+                    type_=schema.type,
+                    required_attrs=required_attrs,
                     generator_func=__generator_func,
-                    args=GeneratorArgs(
-                        lt=schema.exclusiveMaximum,
-                        gt=schema.exclusiveMinimum,
-                        le=schema.maximum,
-                        ge=schema.minimum,
-                        default=schema.default,
-                        pattern=schema.pattern,
-                        multiple_of=schema.multipleOf,
-                        decimal_places=schema.multipleOf,
-                        min_length=schema.minLength,
-                        max_length=schema.maxLength,
-                        examples=schema.examples,
-                        is_optional=name not in required_attrs,
-                    ),
+                    schema=schema,
                 )
             )
 
-        # print("Resolved types:", possible_types)
         return possible_types
 
     def generate(
