@@ -51,12 +51,13 @@ class AnyOfSchema(FieldSchema):
 
 
 class ModelPropertySchema(FieldSchema):
-    title: str
+    title: Optional[str] = None
     # If multi type then anyOf will be there
     anyOf: Optional[List[AnyOfSchema]] = None
-    # If scalar type then type will be present
-    # type: Optional[types_] = None
-    # default: Optional[Any] = None  # Default will always be outside anyOf
+
+    # Allow extra to True
+    class Config:
+        extra = "allow"
 
 
 class ModelJSONSchema(BaseModel):

@@ -41,6 +41,8 @@ def generate_str(
     **kwargs,
 ) -> str:
     # TODO: Support for pattern
+    if not length:
+        length = 10
 
     # Figuring out the length based on min & max length
     if min_length is not None and max_length is not None:

@@ -11,6 +11,9 @@ from typing import List, Dict, Any
 from collections.abc import Callable
 
 
+from rich import print
+
+
 class GeneratorRegistry:
     """
     1. Resolves the type to generator function mapping
@@ -47,6 +50,7 @@ class GeneratorRegistry:
                 current_type = type_.type or schema.type
 
                 __generator_func = self.__generators.get(current_type)
+                print("Generator function:", __generator_func)
                 if not __generator_func:
                     raise GeneratorNotFound(type_=current_type)
 
@@ -97,8 +101,6 @@ class GeneratorRegistry:
                     ),
                 )
             )
-
-        from rich import print
 
         print("Resolved types:", possible_types)
         return possible_types
