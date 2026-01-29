@@ -30,7 +30,7 @@ class GeneratorRegistry:
         self.__context = context
 
     def __resolve_type(
-        self, schema: ModelPropertySchema, required_attrs: List[str]
+        self, name: str, schema: ModelPropertySchema, required_attrs: List[str]
     ) -> List[ResolvedSchema]:
         """
         input: The model property schema
@@ -50,7 +50,6 @@ class GeneratorRegistry:
                 current_type = type_.type or schema.type
 
                 __generator_func = self.__generators.get(current_type)
-                print("Generator function:", __generator_func)
                 if not __generator_func:
                     raise GeneratorNotFound(type_=current_type)
 
@@ -70,7 +69,7 @@ class GeneratorRegistry:
                             min_length=type_.minLength,
                             max_length=type_.maxLength,
                             examples=type_.examples,
-                            is_optional=schema.title not in required_attrs,
+                            is_optional=name not in required_attrs,
                         ),
                     )
                 )
@@ -97,17 +96,21 @@ class GeneratorRegistry:
                         min_length=schema.minLength,
                         max_length=schema.maxLength,
                         examples=schema.examples,
-                        is_optional=schema.title not in required_attrs,
+                        is_optional=name not in required_attrs,
                     ),
                 )
             )
 
-        print("Resolved types:", possible_types)
+        # print("Resolved types:", possible_types)
         return possible_types
 
-    def generate(self, schema: ModelPropertySchema, required_attrs: List[str]) -> Any:
+    def generate(
+        self, name: str, schema: ModelPropertySchema, required_attrs: List[str]
+    ) -> Any:
         # 1. Resolve the type
-        possible_types = self.__resolve_type(schema, required_attrs=required_attrs)
+        possible_types = self.__resolve_type(
+            name=name, schema=schema, required_attrs=required_attrs
+        )
 
         # 2. If multiple possible values pick the type first
         selected_type = self.__context.random.choice(possible_types)

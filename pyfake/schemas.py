@@ -2,7 +2,7 @@
 Pydantic classes for various models used in PyFake
 """
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from typing import Literal, Dict, List, Optional, Any, Union
 from collections.abc import Callable
 
@@ -56,8 +56,7 @@ class ModelPropertySchema(FieldSchema):
     anyOf: Optional[List[AnyOfSchema]] = None
 
     # Allow extra to True
-    class Config:
-        extra = "allow"
+    model_config = ConfigDict(extra="allow")
 
 
 class ModelJSONSchema(BaseModel):
