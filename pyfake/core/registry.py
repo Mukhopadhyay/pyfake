@@ -73,7 +73,8 @@ class GeneratorRegistry:
                         ),
                     )
                 )
-        elif schema.type:
+        else:
+            # print("Running scalar!")
             # Scalar type
             # Resolve the generator function
             __generator_func = self.__generators.get(schema.type)
