@@ -1,14 +1,13 @@
-"""
-Handles scalar generation
-* int
-* float
-* bool
-* str
-"""
-
 import string
 from pyfake.core.context import Context
 from typing import Optional
+
+"""
+TODO:
+Argument error for invalid Field args, e.g.,
+- lt < gt
+- le < ge
+"""
 
 
 def generate_none(*args, **kwargs):

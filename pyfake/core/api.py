@@ -2,8 +2,6 @@ from pyfake.core.engine import Engine
 from pyfake.core.context import Context
 from typing import Optional
 
-# from pyfake.core.registry import GeneratorRegistry
-
 
 class Pyfake:
 
