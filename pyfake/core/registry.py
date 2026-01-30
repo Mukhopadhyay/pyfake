@@ -2,7 +2,7 @@
 Resolves the datatypes and forms the generator mapping
 """
 
-from pyfake.generators import primitives
+from pyfake.generators import primitives, uuid
 from pyfake.core.context import Context
 from pyfake.schemas import (
     ModelPropertySchema,
@@ -12,7 +12,7 @@ from pyfake.schemas import (
 )
 from pyfake.exceptions import GeneratorNotFound
 
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional, Union
 from collections.abc import Callable
 
 
@@ -23,22 +23,62 @@ class GeneratorRegistry:
     """
 
     def __init__(self, context: Context = None):
-        self.__generators: Dict[str, Callable] = {
+        self._generators: Dict[str, Union[Callable, Dict[str, Callable]]] = {
             "integer": primitives.generate_int,
             "null": primitives.generate_none,
-            "string": primitives.generate_str,
+            "string": {
+                "string": primitives.generate_str,
+                "uuid": uuid.generate_uuid4,
+                "uuid1": uuid.generate_uuid1,
+                "uuid3": uuid.generate_uuid3,
+                "uuid4": uuid.generate_uuid4,
+                "uuid5": uuid.generate_uuid5,
+                "uuid6": uuid.generate_uuid6,
+                "uuid7": uuid.generate_uuid7,
+                "uuid8": uuid.generate_uuid8,
+            },
             "number": primitives.generate_float,
         }
         self.__context = context
+
+    def __resolve_generator(
+        self, type_: str, format: Optional[str] = None
+    ) -> Union[Callable, None]:
+        _generator_result: Union[Callable, Dict[str, Callable]] = self._generators.get(
+            type_
+        )
+        if isinstance(_generator_result, dict):
+            if format is None:
+                _func = _generator_result.get(type_)
+                if not _func:
+                    raise GeneratorNotFound(type_=type_)
+                return _func
+            else:
+                _func = _generator_result.get(format)
+                if not _func:
+                    raise GeneratorNotFound(type_=f"{type_} with format {format}")
+                return _func
+        elif isinstance(_generator_result, Callable):
+            _func = _generator_result
+            return _func
+        else:
+            raise GeneratorNotFound(type_=type_)
 
     def __get_resolved_schema(
         self,
         name: str,
         type_: str,
         required_attrs: List[str],
-        generator_func: Callable,
+        # generator_func: Callable,
         schema: FieldSchema,
     ) -> ResolvedSchema:
+        # __generator_func = self.__generators.get(current_type)
+        # if not __generator_func:
+        #     raise GeneratorNotFound(type_=current_type)
+
+        # Figure out the generator function
+        generator_func = self.__resolve_generator(type_=type_, format=schema.format)
+
         return ResolvedSchema(
             type=type_,
             generator_func=generator_func,
@@ -55,6 +95,7 @@ class GeneratorRegistry:
                 max_length=schema.maxLength,
                 examples=schema.examples,
                 is_optional=name not in required_attrs,
+                format=schema.format,
             ),
         )
 
@@ -77,33 +118,20 @@ class GeneratorRegistry:
             for type_ in schema.anyOf:
 
                 current_type = type_.type or schema.type
-
-                __generator_func = self.__generators.get(current_type)
-                if not __generator_func:
-                    raise GeneratorNotFound(type_=current_type)
-
                 possible_types.append(
                     self.__get_resolved_schema(
                         name=name,
                         type_=current_type,
                         required_attrs=required_attrs,
-                        generator_func=__generator_func,
                         schema=type_,
                     )
                 )
         else:
-            # Scalar type
-            # Resolve the generator function
-            __generator_func = self.__generators.get(schema.type)
-            if not __generator_func:
-                raise GeneratorNotFound(type_=schema.type)
-
             possible_types.append(
                 self.__get_resolved_schema(
                     name=name,
                     type_=schema.type,
                     required_attrs=required_attrs,
-                    generator_func=__generator_func,
                     schema=schema,
                 )
             )

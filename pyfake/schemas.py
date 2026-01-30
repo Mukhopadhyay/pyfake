@@ -22,6 +22,7 @@ class FieldSchema(BaseModel):
     decimal_places: Optional[int] = None  # decimal_places
     minLength: Optional[int] = None  # min_length
     maxLength: Optional[int] = None  # max_length
+    format: Optional[str] = None  # format
 
 
 class GeneratorArgs(BaseModel):
@@ -43,6 +44,7 @@ class GeneratorArgs(BaseModel):
         None  # Will be handled by the registry not the generators
     )
     is_optional: Optional[bool] = False
+    format: Optional[str] = None
 
 
 class AnyOfSchema(FieldSchema):
