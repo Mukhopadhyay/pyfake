@@ -66,15 +66,9 @@ class GeneratorRegistry:
 
     def __get_resolved_schema(
         self,
-        # name: str,
         type_: str,
-        # required_attrs: List[str],
-        # generator_func: Callable,
         schema: FieldSchema,
     ) -> ResolvedSchema:
-        # __generator_func = self.__generators.get(current_type)
-        # if not __generator_func:
-        #     raise GeneratorNotFound(type_=current_type)
 
         # Figure out the generator function
         generator_func = self.__resolve_generator(type_=type_, format=schema.format)
@@ -120,18 +114,14 @@ class GeneratorRegistry:
                 current_type = type_.type or schema.type
                 possible_types.append(
                     self.__get_resolved_schema(
-                        # name=name,
                         type_=current_type,
-                        # required_attrs=required_attrs,
                         schema=type_,
                     )
                 )
         else:
             possible_types.append(
                 self.__get_resolved_schema(
-                    # name=name,
                     type_=schema.type,
-                    # required_attrs=required_attrs,
                     schema=schema,
                 )
             )
@@ -163,9 +153,6 @@ class GeneratorRegistry:
 
         if selected_type.args.examples:
             possible_values.extend(selected_type.args.examples)
-
-        # if selected_type.args.is_optional:
-        #     possible_values.append(None)
 
         # Generated value
         generated_value = selected_type.generator_func(
