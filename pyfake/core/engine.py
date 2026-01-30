@@ -21,6 +21,10 @@ class Engine:
         model_property: Dict[str, schemas.ModelPropertySchema] = (
             schema.model_json_schema()["properties"]
         )
+        from rich import print
+
+        print(schema.model_json_schema())
+
         required_attributes: List[str] = schema.model_json_schema()["required"]
 
         # This is going to be populated after the for loop

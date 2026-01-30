@@ -43,7 +43,7 @@ class GeneratorArgs(BaseModel):
     examples: Optional[List[Any]] = (
         None  # Will be handled by the registry not the generators
     )
-    is_optional: Optional[bool] = False
+    # is_optional: Optional[bool] = False
     format: Optional[str] = None
 
 
