@@ -1,9 +1,12 @@
 [project]
 name = "pyfake"
-version = "0.0.5"
+version = "0.0.6"
 description = "A fake data generator that is pydantic compatible."
 readme = "README.md"
 requires-python = ">=3.9"
+dependencies = [
+    "pydantic[email,timezone]>=2.12.5",
+]
 license = { text = "MIT" }
 authors = [
     {name = "Pranesh Mukhopadhyay", email = "praneshmukherjee7@gmail.com"}
@@ -24,58 +27,22 @@ keywords = [
     "data validation",
     "data modeling",
 ]
-dependencies = [
-    "pydantic>=2.0"
+
+[dependency-groups]
+dev = [
+    "pytest>=8.4.2",
+    "pytest-cov>=7.0.0",
+    "rich>=14.3.1",
 ]
 
-[project.optional-dependencies]
-dev = ["pytest", "black", "ruff"]
-
-[build-system]
-requires = ["setuptools>=61.0", "wheel"]
-build-backend = "setuptools.build_meta"
-
-[tool.setuptools]
-include-package-data = true
-packages = {find = {}}
-
-[tool.setuptools.package-data]
-"pyfake" = ["py.typed"]
-
-
 [tool.pytest.ini_options]
-pythonpath = ["."]
+testpaths = ["tests"]
+addopts = "--cov=pyfake --cov-report=term-missing"
 
 [tool.coverage.run]
 branch = true
 source = ["pyfake"]
 
 [tool.coverage.report]
-exclude_lines = [
-    "if __name__ == .__main__.:",
-    "pragma: no cover",
-]
-omit = [
-    "tests/*"
-]
-
-[tool.mypy]
-python_version = "3.10"
-strict = true
-ignore_missing_imports = true
-disallow_untyped_defs = true
-check_untyped_defs = true
-warn_unused_ignores = true
-exclude = ["tests", "scripts"]
-
-[tool.black]
-line-length = 88
-target-version = ["py310"]  # Match your Python version
-exclude = '''
-/(
-    \.venv
-  | build
-  | dist
-  | coverage\.html
-)/
-'''
+show_missing = true
+skip_empty = true

@@ -1,66 +1,39 @@
-import random
+from pyfake.core.context import Context
+from pyfake.core.registry import GeneratorRegistry
+
 from pydantic import BaseModel
-import types
-from typing import Optional, Type, Dict, Any, List, Tuple, Literal
-from pyfake.parsers.pydantic_parser import PydanticParser
-from pyfake.core.types import SupportedFieldType
-from pyfake.generators import number
+from typing import Optional, Dict, Any, List
 
-# Module map
-_dtype_to_mod = {"integer": number, "number": number}
+from pyfake import schemas
 
 
-class Pyfake:
+class Engine:
+    """
+    Uses the generator registry to generate data based on the schema
+    """
 
-    def __init__(self, model: Type[BaseModel]):
-        self.model: Type[BaseModel] = model
+    def __init__(self, context: Optional[Context] = None):
+        self.context = context
+        self.registry = GeneratorRegistry(context=self.context)
 
-    def __choose(
-        self, options: List[str], default: Optional[Any] = None
-    ) -> Tuple[str, Literal["TYPE", "VALUE"]]:
-        """
-        Returns a random choice and the type of the choice.
-        """
-        choices = [{"value": option, "type": "TYPE"} for option in options]
-        if default is not None:
-            choices.append({"value": default, "type": "VALUE"})
+    def generate(self, schema: BaseModel) -> Dict[str, Any]:
 
-        choice = random.choice(choices)
-        return choice["value"], choice["type"]
+        model_property: Dict[str, schemas.ModelPropertySchema] = (
+            schema.model_json_schema()["properties"]
+        )
+        required_attributes: List[str] = schema.model_json_schema()["required"]
 
-    def __resolve_module(self, type_name: str) -> Optional[types.ModuleType]:
-        """
-        Based on the type name, resolve the corresponding module.
-        """
-        return _dtype_to_mod.get(type_name)
+        # This is going to be populated after the for loop
+        _data = {}
 
-    def __generate_value(self, types: List[str], default: Optional[Any] = None) -> Any:
-        choice_value, choice_type = self.__choose(types, default=default)
+        for key, value in model_property.items():
+            """
+            1. Resolve the type of the generator function
+            2. Generate the value
+            """
+            schema = schemas.ModelPropertySchema(**value)
+            _data[key] = self.registry.generate(
+                name=key, schema=schema, required_attrs=required_attributes
+            )
 
-        if choice_type == "TYPE" and choice_value not in SupportedFieldType.__args__:
-            raise ValueError(f"Unsupported type: {choice_value}")
-
-        if choice_type == "VALUE":
-            return choice_value
-
-        # Identify the module
-        module = self.__resolve_module(choice_value)
-        if not module:
-            return
-
-        func = getattr(module, choice_value)
-        return func()
-
-    def generate(self, num: Optional[int] = 1) -> Dict[str, Any]:
-        parser = PydanticParser(self.model)
-        fields = parser.parse()
-
-        data = []
-        for _ in range(num):
-            item = {}
-            for field in fields:
-                item[field["name"]] = self.__generate_value(
-                    field["types"], field["default"]
-                )
-            data.append(item)
-        return data
+        return _data
