@@ -14,7 +14,6 @@ def generate_date(
 ) -> date:
     """
     Generate a random date object within the specified bounds.
-    Returns as datetime ISO 8601 string.
     """
 
     if context is None:
@@ -48,7 +47,6 @@ def generate_datetime(
 ) -> datetime:
     """
     Generate a random datetime object within the specified bounds.
-    Returns as datetime ISO 8601 string.
     """
 
     if context is None:
@@ -76,6 +74,9 @@ def generate_datetime(
 
 
 def generate_time(*, context: Optional[Context] = None, **kwargs) -> datetime.time:
+    """
+    Generate a random time object.
+    """
     return time(
         hour=context.random.randint(0, 23),
         minute=context.random.randint(0, 59),

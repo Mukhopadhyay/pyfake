@@ -39,12 +39,15 @@ docs = [
 testpaths = ["tests"]
 addopts = "--cov=pyfake --cov-report=term-missing --strict-markers"
 markers = [
+    "datatypes: Unit tests for all datatypes together.",
     "integer: All integer related tests, generator + pydantic integration.",
     "boolean: All boolean related tests, generator + pydantic integration.",
     "string: All string related tests, generator + pydantic integration.",
     "float: All float related tests, generator + pydantic integration.",
     "uuid: All UUID related tests, generator + pydantic integration.",
+    "datetime: All datetime related tests, generator + pydantic integration.",
     "pyfake: All pyfake core generator tests.",
+    "api: Tests for the main `Pyfake` class",
     "registry: All pyfake registry GeneratorRegistry() related tests.",
 ]
 

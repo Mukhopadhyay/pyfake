@@ -3,6 +3,7 @@ from pyfake.core.context import Context
 from pyfake.generators import primitives
 
 
+@pytest.mark.datatypes
 class TestGenerateNone:
 
     def test_generate_none(self):
@@ -12,6 +13,7 @@ class TestGenerateNone:
         assert primitives.generate_none(1, thing="abc") is None
 
 
+@pytest.mark.datatypes
 @pytest.mark.integer
 class TestGenerateInteger:
 
@@ -49,6 +51,7 @@ class TestGenerateInteger:
             assert result < lt
 
 
+@pytest.mark.datatypes
 @pytest.mark.boolean
 class TestGenerateBoolean:
 
@@ -64,6 +67,7 @@ class TestGenerateBoolean:
         assert isinstance(primitives.generate_bool(context=context), bool)
 
 
+@pytest.mark.datatypes
 @pytest.mark.string
 class TestGenerateString:
 
@@ -106,6 +110,7 @@ class TestGenerateString:
         assert all(c.isalpha() for c in result)
 
 
+@pytest.mark.datatypes
 @pytest.mark.float
 class TestGenerateFloat:
 

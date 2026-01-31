@@ -25,14 +25,15 @@ class Pyfake:
         if not num:
             num = 1
 
-        result = None
         if num > 1:
-            result = [self.engine.generate(self.schema) for _ in range(num)]
-            if not as_dict:
-                result = [self.schema(**item) for item in result]
+            instances = [
+                self.schema(**self.engine.generate(self.schema)) for _ in range(num)
+            ]
+            if as_dict:
+                return [instance.model_dump() for instance in instances]
+            return instances
         else:
-            result = self.engine.generate(self.schema)
-            if not as_dict:
-                result = self.schema(**result)
-
-        return result
+            instance = self.schema(**self.engine.generate(self.schema))
+            if as_dict:
+                return instance.model_dump()
+            return instance

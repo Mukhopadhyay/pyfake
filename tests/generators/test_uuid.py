@@ -4,6 +4,7 @@ import uuid
 from pyfake.generators import uuid as pyfake_uuid
 
 
+@pytest.mark.datatypes
 @pytest.mark.uuid
 class TestGenerateUUIDs:
     @pytest.mark.parametrize(
