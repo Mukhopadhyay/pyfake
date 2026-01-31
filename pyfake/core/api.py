@@ -15,11 +15,7 @@ class Pyfake:
     def from_schema(
         cls, schema, num=1, seed: Optional[int] = None, as_dict: Optional[bool] = True
     ):
-<<<<<<< HEAD
         return cls(schema, seed).generate(num, as_dict=as_dict)
-=======
-        return cls(schema, seed).generate(num)
->>>>>>> 8e989d7 (Adding generators for date, datetime & time)
 
     def generate(
         self, num: Optional[int] = 1, as_dict: Optional[bool] = True
@@ -29,9 +25,7 @@ class Pyfake:
         if not num:
             num = 1
 
-        result = None
         if num > 1:
-<<<<<<< HEAD
             instances = [
                 self.schema(**self.engine.generate(self.schema)) for _ in range(num)
             ]
@@ -43,14 +37,3 @@ class Pyfake:
             if as_dict:
                 return instance.model_dump()
             return instance
-=======
-            result = [self.engine.generate(self.schema) for _ in range(num)]
-            if not as_dict:
-                result = [self.schema(**item) for item in result]
-        else:
-            result = self.engine.generate(self.schema)
-            if not as_dict:
-                result = self.schema(**result)
-
-        return result
->>>>>>> 8e989d7 (Adding generators for date, datetime & time)

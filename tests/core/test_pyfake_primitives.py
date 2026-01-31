@@ -170,6 +170,7 @@ class TestPyfakeFloatGeneration:
                 or 1.0 <= result["float_with_defaults"] <= 10.0
             )
 
+
 @pytest.mark.pyfake
 @pytest.mark.pyfake
 class TestPyfakeInstantiation:

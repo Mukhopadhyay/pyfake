@@ -126,6 +126,9 @@ def generate_time(
     return time(hours, minutes, seconds)
 =======
 def generate_time(*, context: Optional[Context] = None, **kwargs) -> datetime.time:
+    """
+    Generate a random time object.
+    """
     return time(
         hour=context.random.randint(0, 23),
         minute=context.random.randint(0, 59),
