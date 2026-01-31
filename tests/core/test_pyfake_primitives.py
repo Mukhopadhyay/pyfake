@@ -6,6 +6,7 @@ from typing import Annotated, Optional, Union
 
 
 @pytest.mark.datatypes
+@pytest.mark.pyfake
 @pytest.mark.integer
 class TestPyfakeIntegerGeneration:
 
@@ -71,6 +72,7 @@ class TestPyfakeIntegerGeneration:
 
 
 @pytest.mark.datatypes
+@pytest.mark.pyfake
 @pytest.mark.string
 class TestPyfakeStringGeneration:
 
@@ -128,6 +130,7 @@ class TestPyfakeStringGeneration:
 
 
 @pytest.mark.datatypes
+@pytest.mark.pyfake
 @pytest.mark.float
 class TestPyfakeFloatGeneration:
 
@@ -166,3 +169,34 @@ class TestPyfakeFloatGeneration:
                 result["float_with_defaults"] == 6.6
                 or 1.0 <= result["float_with_defaults"] <= 10.0
             )
+
+@pytest.mark.pyfake
+@pytest.mark.pyfake
+class TestPyfakeInstantiation:
+
+    class SampleModel(BaseModel):
+        integer_basic: int
+        string_basic: str
+
+    def test_pyfake_return_type(self):
+        pyfake = Pyfake(self.SampleModel)
+
+        assert isinstance(pyfake.generate(num=None), dict)
+        assert isinstance(pyfake.generate(), dict)
+        assert isinstance(pyfake.generate(num=1), dict)
+        assert isinstance(pyfake.generate(num=5), list)
+
+    def test_pyfake_return_count(self):
+        pyfake = Pyfake(self.SampleModel)
+        multiple_result = pyfake.generate(num=5)
+
+        assert len(multiple_result) == 5
+
+    def test_pyfake_return_type_from_schema(self):
+        assert isinstance(Pyfake.from_schema(self.SampleModel, num=1), dict)
+        assert isinstance(Pyfake.from_schema(self.SampleModel, num=5), list)
+
+    def test_pyfake_return_count_from_schema(self):
+        multiple_result = Pyfake.from_schema(self.SampleModel, num=5)
+
+        assert len(multiple_result) == 5
