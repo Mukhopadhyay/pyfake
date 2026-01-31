@@ -3,35 +3,73 @@ import warnings
 warnings.filterwarnings("ignore")
 
 from pyfake import Pyfake
-
+from rich import print
 
 from pydantic import UUID1, UUID3, UUID4, UUID5, UUID6, UUID7, UUID8
 from uuid import UUID, uuid4
 
 from pydantic import BaseModel, Field, ConfigDict
-from typing import Optional
+from typing import Optional, Annotated, Union
+from datetime import datetime, date, timezone, time
 
 
 class Model(BaseModel):
-    alias_uuid: UUID = Field(alias="id")
-    native_uuid: UUID
-    native_uuid_default_factory: UUID = Field(default_factory=uuid4)
-    optional_uuid: Optional[UUID] = None
+    """
+    Exhaustive date & datetime coverage for pyfake.
+    """
 
-    pyd_uuid1: UUID1
-    pyd_uuid3: UUID3
-    pyd_uuid4: UUID4
-    pyd_uuid5: UUID5
-    pyd_uuid6: UUID6
-    pyd_uuid7: UUID7
-    pyd_uuid8: UUID8
+    plain_date: date
+    plain_datetime: datetime
 
-    model_config = ConfigDict(json_encoders={UUID: str})
+    optional_date: Optional[date] = None
+    optional_datetime: Optional[datetime] = None
+
+    nullable_date: Optional[date] = None
+    nullable_datetime: Optional[datetime] = None
+
+    date_with_default: date = Field(default_factory=date.today)
+    datetime_with_default: datetime = Field(default_factory=datetime.now)
+
+    utc_datetime_default: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc)
+    )
+
+    naive_datetime: datetime
+    aware_datetime: datetime
+
+    offset_datetime: datetime = Field(description="Datetime with fixed offset tzinfo")
+
+    date_with_time: datetime
+    time_only: time
+
+    past_date: Annotated[date, Field(description="Should be before today")]
+
+    future_datetime: Annotated[datetime, Field(description="Should be in the future")]
+
+    min_max_date: Annotated[date, Field(ge=date(1970, 1, 1), le=date(2100, 12, 31))]
+
+    min_max_datetime: Annotated[
+        datetime,
+        Field(
+            ge=datetime(1970, 1, 1, tzinfo=timezone.utc),
+            le=datetime(2100, 12, 31, tzinfo=timezone.utc),
+        ),
+    ]
+
+    date_from_string: date
+    datetime_from_string: datetime
+
+    iso_datetime_z: datetime = Field(description="ISO 8601 with Z suffix")
+
+    date_or_datetime: Union[date, datetime]
+
+    flexible_datetime: Union[
+        datetime,
+        int,  # unix timestamp (seconds)
+        float,  # unix timestamp (float)
+        str,  # ISO string
+    ]
 
 
-x = Pyfake.from_schema(Model, num=1)
+x = Pyfake.from_schema(Model, num=1, as_dict=False)
 print(x)
-
-
-print("type nativeuuid", type(x["native_uuid_default_factory"]))
-print(UUID(str(x["native_uuid_default_factory"])))

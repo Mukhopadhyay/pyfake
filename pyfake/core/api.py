@@ -1,6 +1,7 @@
 from pyfake.core.engine import Engine
 from pyfake.core.context import Context
 from typing import Optional, Dict, List, Any, Union
+from pydantic import BaseModel
 
 
 class Pyfake:
@@ -11,16 +12,27 @@ class Pyfake:
         self.engine = Engine(self.context)
 
     @classmethod
-    def from_schema(cls, schema, num=1, seed: Optional[int] = None):
+    def from_schema(
+        cls, schema, num=1, seed: Optional[int] = None, as_dict: Optional[bool] = True
+    ):
         return cls(schema, seed).generate(num)
 
     def generate(
-        self, num: Optional[int] = 1
-    ) -> Union[Dict[str, Any], List[Dict[str, Any]]]:
+        self, num: Optional[int] = 1, as_dict: Optional[bool] = True
+    ) -> Union[
+        Union[BaseModel, Dict[str, Any]], List[Union[BaseModel, Dict[str, Any]]]
+    ]:
         if not num:
             num = 1
 
+        result = None
         if num > 1:
-            return [self.engine.generate(self.schema) for _ in range(num)]
+            result = [self.engine.generate(self.schema) for _ in range(num)]
+            if not as_dict:
+                result = [self.schema(**item) for item in result]
         else:
-            return self.engine.generate(self.schema)
+            result = self.engine.generate(self.schema)
+            if not as_dict:
+                result = self.schema(**result)
+
+        return result

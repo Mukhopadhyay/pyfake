@@ -2,7 +2,7 @@
 Resolves the datatypes and forms the generator mapping
 """
 
-from pyfake.generators import primitives, uuid
+from pyfake.generators import primitives, uuid, datetime
 from pyfake.core.context import Context
 from pyfake.schemas import (
     ModelPropertySchema,
@@ -36,6 +36,9 @@ class GeneratorRegistry:
                 "uuid6": uuid.generate_uuid6,
                 "uuid7": uuid.generate_uuid7,
                 "uuid8": uuid.generate_uuid8,
+                "date": datetime.generate_date,
+                "date-time": datetime.generate_datetime,
+                "time": datetime.generate_time,
             },
             "number": primitives.generate_float,
         }

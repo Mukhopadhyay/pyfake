@@ -18,6 +18,10 @@ class Engine:
 
     def generate(self, schema: BaseModel) -> Dict[str, Any]:
 
+        from rich import print
+
+        print(schema.model_json_schema())
+
         model_property: Dict[str, schemas.ModelPropertySchema] = (
             schema.model_json_schema()["properties"]
         )
