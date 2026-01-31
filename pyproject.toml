@@ -38,7 +38,7 @@ markers = [
     "boolean: All boolean related tests, generator + pydantic integration.",
     "string: All string related tests, generator + pydantic integration.",
     "float: All float related tests, generator + pydantic integration.",
-    "uuid: All UUID related tests.",
+    "uuid: All UUID related tests, generator + pydantic integration.",
     "pyfake: All pyfake core generator tests.",
     "registry: All pyfake registry GeneratorRegistry() related tests.",
 ]
