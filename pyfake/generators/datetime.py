@@ -14,6 +14,10 @@ def generate_date(
 ) -> date:
     """
     Generate a random date object within the specified bounds.
+<<<<<<< HEAD
+=======
+    Returns as datetime ISO 8601 string.
+>>>>>>> 8e989d7 (Adding generators for date, datetime & time)
     """
 
     if context is None:
@@ -30,8 +34,11 @@ def generate_date(
         else (lt - timedelta(days=1) if lt is not None else date(2100, 12, 31))
     )
 
+<<<<<<< HEAD
     print("Min date:", min_date, "Max date:", max_date)
 
+=======
+>>>>>>> 8e989d7 (Adding generators for date, datetime & time)
     delta_days = (max_date - min_date).days
     random_days = context.random.randint(0, delta_days)
 
@@ -49,6 +56,10 @@ def generate_datetime(
 ) -> datetime:
     """
     Generate a random datetime object within the specified bounds.
+<<<<<<< HEAD
+=======
+    Returns as datetime ISO 8601 string.
+>>>>>>> 8e989d7 (Adding generators for date, datetime & time)
     """
 
     if context is None:
@@ -75,6 +86,7 @@ def generate_datetime(
     return min_datetime + timedelta(seconds=random_seconds)
 
 
+<<<<<<< HEAD
 def generate_time(
     *,
     gt: Optional[time] = None,
@@ -112,3 +124,12 @@ def generate_time(
     seconds = random_seconds % 60
 
     return time(hours, minutes, seconds)
+=======
+def generate_time(*, context: Optional[Context] = None, **kwargs) -> datetime.time:
+    return time(
+        hour=context.random.randint(0, 23),
+        minute=context.random.randint(0, 59),
+        second=context.random.randint(0, 59),
+        microsecond=context.random.randint(0, 999_999),
+    )
+>>>>>>> 8e989d7 (Adding generators for date, datetime & time)

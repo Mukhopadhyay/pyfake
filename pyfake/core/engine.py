@@ -22,6 +22,7 @@ class Engine:
 
     def generate(self, schema: BaseModel) -> Dict[str, Any]:
 
+<<<<<<< HEAD
         # from rich import print
 
         # print(schema)
@@ -32,6 +33,16 @@ class Engine:
         #     schema.model_json_schema()["properties"]
         # )
         # required_attributes: List[str] = schema.model_json_schema()["required"]
+=======
+        from rich import print
+
+        print(schema.model_json_schema())
+
+        model_property: Dict[str, schemas.ModelPropertySchema] = (
+            schema.model_json_schema()["properties"]
+        )
+        required_attributes: List[str] = schema.model_json_schema()["required"]
+>>>>>>> 8e989d7 (Adding generators for date, datetime & time)
 
         # This is going to be populated after the for loop
         # _data = {}

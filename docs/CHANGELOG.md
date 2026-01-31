@@ -7,14 +7,13 @@ tags:
 
 ## Changelog 🕓
 
-### `0.0.7` - 2026-01-31
+### `0.0.7` - 2026-01-30
 
 **New Features**
 
 - Support for `datetime`, `date` & `time` formats
   - Ability to set bounds using pydantic [`Field()`](https://docs.pydantic.dev/latest/concepts/fields/) function
 - Flag based return for either accepting a **dictionary** or the **input Pydantic model** (`as_dict = True`)
-- Updated ReadTheDocs documentation
 
 ### `0.0.6` - 2026-01-30
 
