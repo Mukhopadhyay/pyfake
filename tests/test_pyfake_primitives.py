@@ -5,6 +5,7 @@ from pydantic import BaseModel, Field
 from typing import Annotated, Optional, Union
 
 
+@pytest.mark.pyfake
 @pytest.mark.integer
 class TestPyfakeIntegerGeneration:
 
@@ -69,6 +70,7 @@ class TestPyfakeIntegerGeneration:
         assert isinstance(result["integer_optional_default"], (int, type(None)))
 
 
+@pytest.mark.pyfake
 @pytest.mark.string
 class TestPyfakeStringGeneration:
 
@@ -125,6 +127,7 @@ class TestPyfakeStringGeneration:
         assert all(c.isalpha() for c in result["string_basic"])
 
 
+@pytest.mark.pyfake
 @pytest.mark.float
 class TestPyfakeFloatGeneration:
 
@@ -165,6 +168,7 @@ class TestPyfakeFloatGeneration:
             )
 
 
+@pytest.mark.pyfake
 @pytest.mark.pyfake
 class TestPyfakeInstantiation:
 

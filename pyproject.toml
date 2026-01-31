@@ -1,15 +1,13 @@
 [project]
 name = "pyfake"
-version = "0.0.6"
+version = "0.0.7"
 description = "A fake data generator that is pydantic compatible."
 readme = "README.md"
 requires-python = ">=3.9"
-dependencies = [
-    "pydantic[email,timezone]>=2.12.5",
-]
+dependencies = ["pydantic[email,timezone]>=2.12.5"]
 license = { text = "MIT" }
 authors = [
-    {name = "Pranesh Mukhopadhyay", email = "praneshmukherjee7@gmail.com"}
+    { name = "Pranesh Mukhopadhyay", email = "praneshmukherjee7@gmail.com" },
 ]
 classifiers = [
     "Intended Audience :: Information Technology",
@@ -29,15 +27,21 @@ keywords = [
 ]
 
 [dependency-groups]
-dev = [
-    "pytest>=8.4.2",
-    "pytest-cov>=7.0.0",
-    "rich>=14.3.1",
-]
+dev = ["pytest>=8.4.2", "pytest-cov>=7.0.0", "rich>=14.3.1"]
+
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-addopts = "--cov=pyfake --cov-report=term-missing"
+addopts = "--cov=pyfake --cov-report=term-missing --strict-markers"
+markers = [
+    "integer: All integer related tests, generator + pydantic integration.",
+    "boolean: All boolean related tests, generator + pydantic integration.",
+    "string: All string related tests, generator + pydantic integration.",
+    "float: All float related tests, generator + pydantic integration.",
+    "uuid: All UUID related tests.",
+    "pyfake: All pyfake core generator tests.",
+    "registry: All pyfake registry GeneratorRegistry() related tests.",
+]
 
 [tool.coverage.run]
 branch = true

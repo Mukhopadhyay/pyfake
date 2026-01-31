@@ -1,4 +1,3 @@
-import itertools
 import pytest
 from pyfake.core.context import Context
 from pyfake.generators import primitives
