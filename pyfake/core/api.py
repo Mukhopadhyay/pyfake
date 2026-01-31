@@ -15,7 +15,7 @@ class Pyfake:
     def from_schema(
         cls, schema, num=1, seed: Optional[int] = None, as_dict: Optional[bool] = True
     ):
-        return cls(schema, seed).generate(num)
+        return cls(schema, seed).generate(num, as_dict=as_dict)
 
     def generate(
         self, num: Optional[int] = 1, as_dict: Optional[bool] = True

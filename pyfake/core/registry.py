@@ -91,14 +91,11 @@ class GeneratorRegistry:
                 min_length=schema.minLength,
                 max_length=schema.maxLength,
                 examples=schema.examples,
-                # is_optional=name not in required_attrs,
                 format=schema.format,
             ),
         )
 
-    def __resolve_type(
-        self, name: str, schema: ModelPropertySchema, required_attrs: List[str]
-    ) -> List[ResolvedSchema]:
+    def __resolve_type(self, schema: ModelPropertySchema) -> List[ResolvedSchema]:
         """
         input: The model property schema
         output: All possible types and their respective params
@@ -135,9 +132,7 @@ class GeneratorRegistry:
         self, name: str, schema: ModelPropertySchema, required_attrs: List[str]
     ) -> Any:
         # 1. Resolve the type
-        possible_types = self.__resolve_type(
-            name=name, schema=schema, required_attrs=required_attrs
-        )
+        possible_types = self.__resolve_type(schema=schema)
 
         # 2. If multiple possible values pick the type first
         selected_type = self.__context.random.choice(possible_types)

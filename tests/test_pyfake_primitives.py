@@ -5,6 +5,7 @@ from pydantic import BaseModel, Field
 from typing import Annotated, Optional, Union
 
 
+@pytest.mark.integer
 class TestPyfakeIntegerGeneration:
 
     class StressTestModel(BaseModel):
@@ -68,6 +69,7 @@ class TestPyfakeIntegerGeneration:
         assert isinstance(result["integer_optional_default"], (int, type(None)))
 
 
+@pytest.mark.string
 class TestPyfakeStringGeneration:
 
     class StressTestStringModel(BaseModel):
@@ -123,6 +125,7 @@ class TestPyfakeStringGeneration:
         assert all(c.isalpha() for c in result["string_basic"])
 
 
+@pytest.mark.float
 class TestPyfakeFloatGeneration:
 
     class StressTestFloatModel(BaseModel):
@@ -162,6 +165,7 @@ class TestPyfakeFloatGeneration:
             )
 
 
+@pytest.mark.pyfake
 class TestPyfakeInstantiation:
 
     class SampleModel(BaseModel):

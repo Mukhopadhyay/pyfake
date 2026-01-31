@@ -13,6 +13,7 @@ class TestGenerateNone:
         assert primitives.generate_none(1, thing="abc") is None
 
 
+@pytest.mark.integer
 class TestGenerateInteger:
 
     @pytest.mark.parametrize(
@@ -49,6 +50,7 @@ class TestGenerateInteger:
             assert result < lt
 
 
+@pytest.mark.boolean
 class TestGenerateBoolean:
 
     @pytest.mark.parametrize(
@@ -63,6 +65,7 @@ class TestGenerateBoolean:
         assert isinstance(primitives.generate_bool(context=context), bool)
 
 
+@pytest.mark.string
 class TestGenerateString:
 
     @pytest.mark.parametrize(
@@ -104,6 +107,7 @@ class TestGenerateString:
         assert all(c.isalpha() for c in result)
 
 
+@pytest.mark.float
 class TestGenerateFloat:
 
     @pytest.mark.parametrize(
