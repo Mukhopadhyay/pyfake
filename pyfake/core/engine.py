@@ -20,7 +20,9 @@ class Engine:
 
         from rich import print
 
+        print(schema)
         print(schema.model_json_schema())
+        print(schema.model_fields["date_with_bounds"])
 
         model_property: Dict[str, schemas.ModelPropertySchema] = (
             schema.model_json_schema()["properties"]

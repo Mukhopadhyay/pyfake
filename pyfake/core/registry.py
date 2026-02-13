@@ -134,6 +134,10 @@ class GeneratorRegistry:
         # 1. Resolve the type
         possible_types = self.__resolve_type(schema=schema)
 
+        from rich import print
+
+        print(f"Possible types for {name}:\n {possible_types}")
+
         # 2. If multiple possible values pick the type first
         selected_type = self.__context.random.choice(possible_types)
 
