@@ -1,5 +1,7 @@
 temp.py
 notes.md
+notebooks/*
+__marimo__/*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

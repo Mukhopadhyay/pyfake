@@ -14,12 +14,15 @@ from pyfake.exceptions import GeneratorNotFound
 
 from typing import List, Dict, Any, Optional, Union
 from collections.abc import Callable
+from pydantic.fields import FieldInfo
 
 
 class GeneratorRegistry:
     """
-    1. Resolves the type to generator function mapping
-    2. Generates data using the resolved generator functions
+    Responsible for:
+    1. Resolving possible types based on FieldInfo
+    2. Resolving FieldInfo
+    3. Generating value based on the resolved type and FieldInfo
     """
 
     def __init__(self, context: Context = None):

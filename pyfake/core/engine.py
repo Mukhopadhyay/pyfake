@@ -9,7 +9,11 @@ from pyfake import schemas
 
 class Engine:
     """
-    Uses the generator registry to generate data based on the schema
+
+    Responsible for:
+    1. Iterating over the schema properties
+    2. Controllin the nunber of samples (items to generate)
+    3. Controlling the output format (dict, list, pydantic model, etc)
     """
 
     def __init__(self, context: Optional[Context] = None):
