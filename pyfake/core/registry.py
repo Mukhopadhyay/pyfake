@@ -31,7 +31,6 @@ class GeneratorRegistry:
         self._generators: Dict[str, Union[Callable, Dict[str, Callable]]] = {
             "integer": primitives.generate_int,
             "null": primitives.generate_none,
-<<<<<<< HEAD
             "string": primitives.generate_str,
             "uuid": uuid.generate_uuid4,
             "uuid1": uuid.generate_uuid1,
@@ -44,22 +43,6 @@ class GeneratorRegistry:
             "date": datetime.generate_date,
             "date-time": datetime.generate_datetime,
             "time": datetime.generate_time,
-=======
-            "string": {
-                "string": primitives.generate_str,
-                "uuid": uuid.generate_uuid4,
-                "uuid1": uuid.generate_uuid1,
-                "uuid3": uuid.generate_uuid3,
-                "uuid4": uuid.generate_uuid4,
-                "uuid5": uuid.generate_uuid5,
-                "uuid6": uuid.generate_uuid6,
-                "uuid7": uuid.generate_uuid7,
-                "uuid8": uuid.generate_uuid8,
-                "date": datetime.generate_date,
-                "date-time": datetime.generate_datetime,
-                "time": datetime.generate_time,
-            },
->>>>>>> 8e989d7 (Adding generators for date, datetime & time)
             "number": primitives.generate_float,
         }
         self.__context = context
