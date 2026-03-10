@@ -14,7 +14,8 @@ from pyfake.exceptions import GeneratorNotFound
 
 from typing import List, Dict, Any, Optional, Union
 from collections.abc import Callable
-from pydantic.fields import FieldInfo
+
+# from pydantic.fields import FieldInfo
 
 
 class GeneratorRegistry:
@@ -29,20 +30,18 @@ class GeneratorRegistry:
         self._generators: Dict[str, Union[Callable, Dict[str, Callable]]] = {
             "integer": primitives.generate_int,
             "null": primitives.generate_none,
-            "string": {
-                "string": primitives.generate_str,
-                "uuid": uuid.generate_uuid4,
-                "uuid1": uuid.generate_uuid1,
-                "uuid3": uuid.generate_uuid3,
-                "uuid4": uuid.generate_uuid4,
-                "uuid5": uuid.generate_uuid5,
-                "uuid6": uuid.generate_uuid6,
-                "uuid7": uuid.generate_uuid7,
-                "uuid8": uuid.generate_uuid8,
-                "date": datetime.generate_date,
-                "date-time": datetime.generate_datetime,
-                "time": datetime.generate_time,
-            },
+            "string": primitives.generate_str,
+            "uuid": uuid.generate_uuid4,
+            "uuid1": uuid.generate_uuid1,
+            "uuid3": uuid.generate_uuid3,
+            "uuid4": uuid.generate_uuid4,
+            "uuid5": uuid.generate_uuid5,
+            "uuid6": uuid.generate_uuid6,
+            "uuid7": uuid.generate_uuid7,
+            "uuid8": uuid.generate_uuid8,
+            "date": datetime.generate_date,
+            "date-time": datetime.generate_datetime,
+            "time": datetime.generate_time,
             "number": primitives.generate_float,
         }
         self.__context = context
@@ -50,9 +49,7 @@ class GeneratorRegistry:
     def __resolve_generator(
         self, type_: str, format: Optional[str] = None
     ) -> Union[Callable, None]:
-        _generator_result: Union[Callable, Dict[str, Callable]] = self._generators.get(
-            type_
-        )
+        _generator_result: Dict[str, Callable] = self._generators.get(type_)
         if isinstance(_generator_result, dict):
             if format is None:
                 _func = _generator_result.get(type_)

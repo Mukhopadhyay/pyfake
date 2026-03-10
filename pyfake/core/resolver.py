@@ -2,7 +2,8 @@ import annotated_types
 from pydantic import BaseModel
 from pydantic.fields import FieldInfo
 from pydantic_core import PydanticUndefinedType
-from typing import Annotated, Union, get_args, get_origin
+from typing import Annotated, Union, Literal, get_args, get_origin
+from enum import Enum
 
 from pyfake.schemas import GeneratorArgs
 
@@ -13,10 +14,8 @@ class Resolver:
 
     @staticmethod
     def __parse(field_info: FieldInfo):
-        generator_args = GeneratorArgs()
-        if not field_info.metadata:
-            return generator_args
 
+        generator_args = GeneratorArgs()
         # Default value
         if field_info.default is not None and not isinstance(
             field_info.default, PydanticUndefinedType
@@ -26,8 +25,11 @@ class Resolver:
         if field_info.examples:
             generator_args.examples = field_info.examples
         # Format
-        if field_info.json_schema_extra and "format" in field_info.json_schema_extra:
-            generator_args.format = field_info.json_schema_extra["format"]
+        if field_info.json_schema_extra:
+            generator_args.format = field_info.json_schema_extra.get("format")
+
+        if not field_info.metadata:
+            return generator_args
 
         for meta in field_info.metadata:
             if isinstance(meta, annotated_types.Ge):
@@ -177,6 +179,25 @@ class Resolver:
                         k: Resolver(v).resolve()["schema"]
                         for k, v in tp.model_fields.items()
                     },
+                    "generator_args": generator_args,
+                }
+
+            # Literals
+            if origin is Literal:
+                args = get_args(tp)
+
+                return {
+                    "type": "literal",
+                    "values": args,
+                    "generator_args": generator_args,
+                }
+
+            # Enums
+            if isinstance(tp, type) and issubclass(tp, Enum):
+                return {
+                    "type": "enum",
+                    "enum_class": tp,
+                    "values": [e.value for e in tp],
                     "generator_args": generator_args,
                 }
 
