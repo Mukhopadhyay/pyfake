@@ -1,3 +1,11 @@
+---
+icon: lucide/boxes
+tags:
+  - Internal
+hide:
+  - title
+---
+
 # Supported Types
 
 ## Integer

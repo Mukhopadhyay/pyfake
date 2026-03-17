@@ -1,3 +1,11 @@
+---
+icon: lucide/cog
+tags:
+  - Internal
+hide:
+  - title
+---
+
 ```
 Pydantic model
   |
