@@ -12,17 +12,33 @@
 #
 # Read more: https://zensical.org/docs/setup/basics/#site_name
 site_name = "Pyfake"
+repo_name = "Mukhopadhyay/pyfake"
+repo_url = "https://github.com/Mukhopadhyay/pyfake"
+repo = "fontawesome/brands/github"
+
+nav = [
+    { "Home" = "index.md" },
+
+    { "Internals" = [
+        { "Internals" = "internals/internals.md" },
+        { "Types" = "internals/types.md" },
+    ] },
+
+    { "Developers" = [
+        { "Testing" = "dev/testing.md" },
+    ] },
+]
 
 # The site_description is included in the HTML head and should contain a
 # meaningful description of the site content for use by search engines.
 #
 # Read more: https://zensical.org/docs/setup/basics/#site_description
-site_description = "A new project generated from the default template project."
+site_description = "A Flexible and Extensible fake data generator based on Pydantic models."
 
 # The site_author attribute. This is used in the HTML head element.
 #
 # Read more: https://zensical.org/docs/setup/basics/#site_author
-site_author = "<your name here>"
+site_author = "Pranesh Mukhopadhyay"
 
 # The site_url is the canonical URL for your site. When building online
 # documentation you should set this.
@@ -247,6 +263,9 @@ features = [
     # always rendered as part of the navigation sidebar on the left.
     # https://zensical.org/docs/setup/navigation/#navigation-integration
     #"toc.integrate",
+
+    "content.action.edit", # Edit this page
+    "content.action.view", # View source of this page
 ]
 
 # ----------------------------------------------------------------------------
@@ -254,7 +273,7 @@ features = [
 # option in the "theme" subsection. The logo must be a relative path to a file
 # in your "docs_dir", e.g., to use `docs/assets/logo.png` you would set:
 # ----------------------------------------------------------------------------
-#logo = "assets/logo.png"
+logo = "assets/logo-only.png"
 
 # ----------------------------------------------------------------------------
 # If you don't have a dedicated project logo, you can use a built-in icon from
@@ -265,8 +284,8 @@ features = [
 # - https://zensical.org/docs/setup/logo-and-icons
 # - https://github.com/zensical/ui/tree/master/dist/.icons
 # ----------------------------------------------------------------------------
-#[project.theme.icon]
-#logo = "lucide/smile"
+# [project.theme.icon]
+# logo = "lucide/smile"
 
 # ----------------------------------------------------------------------------
 # In the "font" subsection you can configure the fonts used. By default, fonts
@@ -300,6 +319,6 @@ toggle.name = "Switch to light mode"
 # ----------------------------------------------------------------------------
 # The "extra" section contains miscellaneous settings.
 # ----------------------------------------------------------------------------
-#[[project.extra.social]]
-#icon = "fontawesome/brands/github"
-#link = "https://github.com/user/repo"
+[[project.extra.social]]
+icon = "fontawesome/brands/github"
+link = "https://github.com/Mukhopadhyay/pyfake"

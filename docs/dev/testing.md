@@ -1,3 +1,11 @@
+---
+icon: lucide/code
+tags:
+  - Internal
+hide:
+  - Developers
+---
+
 ## Tests
 
 ### Setting up the test

@@ -1,3 +1,14 @@
+---
+icon: lucide/rocket
+tags:
+  - Get started
+  - Setup
+hide:
+  - title
+---
+
+<!-- # Getting Started -->
+
 <p align="center">
   <a href="https://github.com/Mukhopadhyay/pyfake"><img src="https://raw.githubusercontent.com/Mukhopadhyay/pyfake/refs/heads/master/docs/assets/logo.png" alt="Pyfake" ></a>
 </p>
