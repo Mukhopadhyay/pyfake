@@ -3,7 +3,7 @@ name = "pyfake"
 version = "0.0.7"
 description = "A fake data generator that is pydantic compatible."
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 dependencies = ["pydantic[email,timezone]>=2.12.5"]
 license = { text = "MIT" }
 authors = [
@@ -27,17 +27,11 @@ keywords = [
 ]
 
 [dependency-groups]
-dev = [
-    "marimo>=0.17.6",
-    "pytest>=8.4.2",
-    "pytest-cov>=7.0.0",
-    "rich>=14.3.1",
-]
+dev = ["pytest>=8.4.2", "pytest-cov>=7.0.0", "rich>=14.3.1"]
 docs = [
-    "mkdocs>=1.6.1",
-    "mkdocs-material>=9.7.1",
-    "mkdocs-material-extensions>=1.3.1",
+    "zensical>=0.0.27"
 ]
+
 
 
 [tool.pytest.ini_options]
