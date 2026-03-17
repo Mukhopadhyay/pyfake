@@ -17,7 +17,7 @@ repo_url = "https://github.com/Mukhopadhyay/pyfake"
 repo = "fontawesome/brands/github"
 
 nav = [
-    { "Home" = "index.md" },
+    { "Get Started" = "index.md" },
 
     { "Internals" = [
         { "Internals" = "internals/internals.md" },
@@ -133,6 +133,9 @@ features = [
     # dismiss it when they have read the announcement.
     # https://zensical.org/docs/setup/header/#announcement-bar
     "announce.dismiss",
+
+    # https://zensical.org/docs/setup/navigation/#navigation-tabs-with-tabs
+    "navigation.tabs",
 
     # If you have a repository configured and turn on this feature, Zensical
     # will generate an edit button for the page. This works for common

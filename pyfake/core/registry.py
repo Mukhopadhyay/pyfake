@@ -28,7 +28,7 @@ class GeneratorRegistry:
     """
 
     def __init__(self, context: Context = None):
-        self._generators: Dict[str, Union[Callable, Dict[str, Callable]]] = {
+        self._generators: Dict[str, Callable] = {
             "integer": primitives.generate_int,
             "null": primitives.generate_none,
             "string": primitives.generate_str,
