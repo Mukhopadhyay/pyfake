@@ -1,0 +1,45 @@
+## Changelog 🕓
+
+### `0.0.7` - 2026-01-31
+
+**New Features**
+
+- Support for `datetime`, `date` & `time` formats
+  - Ability to set bounds using pydantic [`Field()`](https://docs.pydantic.dev/latest/concepts/fields/) function
+- Flag based return for either accepting a **dictionary** or the **input Pydantic model** (`as_dict = True`)
+- Updated ReadTheDocs documentation
+
+### `0.0.6` - 2026-01-30
+
+**Major changes**
+
+- Migrated the entire project to [`uv`](https://docs.astral.sh/uv/) for faster, deterministic dependency management and installs.
+- Introduced a new modular and expandable architecture, separating concerns into:
+  - `engine` – execution and orchestration layer
+  - `registry` – type to generator resolution
+  - `context` – shared runtime state and randomness control
+
+**New Features**
+
+- Added full support for UUID generation across all formats:
+  - `UUID1`, `UUID3`, `UUID4`, `UUID5`, `UUID6`, `UUID7`, `UUID8`
+- Added support for legacy primitive types:
+  - `int`
+  - `float`
+  - `str`
+- Introduced a reproducible generation context, allowing users to set a seed for deterministic fake data generation.
+
+**Testing**
+
+- Added **comprehensive test coverage** across all generators and core components.
+- Tests now validate:
+  - Correct type resolution
+  - Deterministic output with seeded contexts
+  - UUID format correctness
+  - Edge cases across primitive and complex generators
+
+---
+
+### `0.0.5` - 2025-06-16
+
+- Initial release

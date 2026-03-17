@@ -3,13 +3,11 @@ name = "pyfake"
 version = "0.0.6"
 description = "A fake data generator that is pydantic compatible."
 readme = "README.md"
-requires-python = ">=3.9"
-dependencies = [
-    "pydantic[email,timezone]>=2.12.5",
-]
+requires-python = ">=3.10"
+dependencies = ["pydantic[email,timezone]>=2.12.5"]
 license = { text = "MIT" }
 authors = [
-    {name = "Pranesh Mukhopadhyay", email = "praneshmukherjee7@gmail.com"}
+    { name = "Pranesh Mukhopadhyay", email = "praneshmukherjee7@gmail.com" },
 ]
 classifiers = [
     "Intended Audience :: Information Technology",
@@ -29,10 +27,9 @@ keywords = [
 ]
 
 [dependency-groups]
-dev = [
-    "pytest>=8.4.2",
-    "pytest-cov>=7.0.0",
-    "rich>=14.3.1",
+dev = ["pytest>=8.4.2", "pytest-cov>=7.0.0", "rich>=14.3.1"]
+docs = [
+    "zensical>=0.0.27",
 ]
 
 [tool.pytest.ini_options]
