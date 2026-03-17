@@ -22,28 +22,33 @@ class Engine:
 
     def generate(self, schema: BaseModel) -> Dict[str, Any]:
 
-        from rich import print
+        # from rich import print
 
-        print(schema)
-        print(schema.model_json_schema())
-        print(schema.model_fields["date_with_bounds"])
+        # print(schema)
+        # print(schema.model_json_schema())
+        # print(schema.model_fields["date_with_bounds"])
 
-        model_property: Dict[str, schemas.ModelPropertySchema] = (
-            schema.model_json_schema()["properties"]
-        )
-        required_attributes: List[str] = schema.model_json_schema()["required"]
+        # model_property: Dict[str, schemas.ModelPropertySchema] = (
+        #     schema.model_json_schema()["properties"]
+        # )
+        # required_attributes: List[str] = schema.model_json_schema()["required"]
 
         # This is going to be populated after the for loop
+        # _data = {}
+
+        # for key, value in model_property.items():
+        #     """
+        #     1. Resolve the type of the generator function
+        #     2. Generate the value
+        #     """
+        #     schema = schemas.ModelPropertySchema(**value)
+        #     _data[key] = self.registry.generate(
+        #         name=key, schema=schema, required_attrs=required_attributes
+        #     )
+
         _data = {}
 
-        for key, value in model_property.items():
-            """
-            1. Resolve the type of the generator function
-            2. Generate the value
-            """
-            schema = schemas.ModelPropertySchema(**value)
-            _data[key] = self.registry.generate(
-                name=key, schema=schema, required_attrs=required_attributes
-            )
+        for prop, attr in schema.model_fields.items():
+            _data[prop] = self.registry.generate(attr)
 
         return _data

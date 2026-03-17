@@ -53,13 +53,41 @@ class Resolver:
                     generator_args.decimal_places = meta.decimal_places
         return generator_args
 
+    # @staticmethod
+    # def __merge(schema, root_args):
+    #     """
+    #     Attach root generator args to the schema node itself.
+    #     Do NOT propagate to children (containers keep their own constraints).
+    #     """
+
+    #     if "generator_args" not in schema:
+    #         schema["generator_args"] = GeneratorArgs()
+
+    #     local = schema["generator_args"]
+
+    #     for k, v in root_args.__dict__.items():
+    #         if v is not None:
+    #             setattr(local, k, v)
+
+    #     return schema
     @staticmethod
     def __merge(schema, root_args):
-        """
-        Attach root generator args to the schema node itself.
-        Do NOT propagate to children (containers keep their own constraints).
-        """
 
+        # Union → push constraints to variants
+        if schema.get("type") == "union":
+            for variant in schema["variants"]:
+                if "generator_args" not in variant:
+                    variant["generator_args"] = GeneratorArgs()
+
+                local = variant["generator_args"]
+
+                for k, v in root_args.__dict__.items():
+                    if v is not None:
+                        setattr(local, k, v)
+
+            return schema
+
+        # Normal node
         if "generator_args" not in schema:
             schema["generator_args"] = GeneratorArgs()
 

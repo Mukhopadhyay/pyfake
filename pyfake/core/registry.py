@@ -11,11 +11,12 @@ from pyfake.schemas import (
     FieldSchema,
 )
 from pyfake.exceptions import GeneratorNotFound
+from pyfake.core.resolver import Resolver
 
 from typing import List, Dict, Any, Optional, Union
 from collections.abc import Callable
-
-# from pydantic.fields import FieldInfo
+from pydantic.fields import FieldInfo
+import random
 
 
 class GeneratorRegistry:
@@ -46,120 +47,109 @@ class GeneratorRegistry:
         }
         self.__context = context
 
-    def __resolve_generator(
-        self, type_: str, format: Optional[str] = None
-    ) -> Union[Callable, None]:
-        _generator_result: Dict[str, Callable] = self._generators.get(type_)
-        if isinstance(_generator_result, dict):
-            if format is None:
-                _func = _generator_result.get(type_)
-                if not _func:
-                    raise GeneratorNotFound(type_=type_)
-                return _func
-            else:
-                _func = _generator_result.get(format)
-                if not _func:
-                    raise GeneratorNotFound(type_=f"{type_} with format {format}")
-                return _func
-        elif isinstance(_generator_result, Callable):
-            _func = _generator_result
-            return _func
-        else:
-            raise GeneratorNotFound(type_=type_)
+    def generate(self, attr: FieldInfo):
+        schema = Resolver(attr).resolve()["schema"]
+        return self._generate(schema)
 
-    def __get_resolved_schema(
-        self,
-        type_: str,
-        schema: FieldSchema,
-    ) -> ResolvedSchema:
+    def _generate(self, schema):
+        t = schema["type"]
+        args = schema.get("generator_args")
 
-        # Figure out the generator function
-        generator_func = self.__resolve_generator(type_=type_, format=schema.format)
+        # ---------------------
+        # Default shortcut
+        # ---------------------
+        if args and args.default is not None:
+            return args.default
 
-        return ResolvedSchema(
-            type=type_,
-            generator_func=generator_func,
-            args=GeneratorArgs(
-                lt=schema.exclusiveMaximum,
-                gt=schema.exclusiveMinimum,
-                le=schema.maximum,
-                ge=schema.minimum,
-                default=schema.default,
-                pattern=schema.pattern,
-                multiple_of=schema.multipleOf,
-                decimal_places=schema.multipleOf,
-                min_length=schema.minLength,
-                max_length=schema.maxLength,
-                examples=schema.examples,
-                format=schema.format,
-            ),
-        )
+        # ---------------------
+        # Union
+        # ---------------------
+        if t == "union":
+            variants = schema["variants"]
 
-    def __resolve_type(self, schema: ModelPropertySchema) -> List[ResolvedSchema]:
-        """
-        input: The model property schema
-        output: All possible types and their respective params
+            if schema.get("nullable") and random.random() < 0.2:
+                return None
 
-        e.g.,
+            variant = random.choice(variants)
+            return self._generate(variant)
 
-        > a: int | None = None
-        >> ['integer', 'none']
-        """
-        possible_types: List[ResolvedSchema] = []
+        # ---------------------
+        # Literal
+        # ---------------------
+        if t == "literal":
+            return random.choice(schema["values"])
 
-        if schema.anyOf:
-            # Multiple possible values
-            for type_ in schema.anyOf:
+        # ---------------------
+        # Enum
+        # ---------------------
+        if t == "enum":
+            return random.choice(schema["values"])
 
-                current_type = type_.type or schema.type
-                possible_types.append(
-                    self.__get_resolved_schema(
-                        type_=current_type,
-                        schema=type_,
-                    )
-                )
-        else:
-            possible_types.append(
-                self.__get_resolved_schema(
-                    type_=schema.type,
-                    schema=schema,
-                )
-            )
+        # ---------------------
+        # List / Set
+        # ---------------------
+        if t in (list, set):
+            length = random.randint(args.min_length or 1, args.max_length or 5)
 
-        return possible_types
+            items = [self._generate(schema["items"]) for _ in range(length)]
 
-    def generate(
-        self, name: str, schema: ModelPropertySchema, required_attrs: List[str]
-    ) -> Any:
-        # 1. Resolve the type
-        possible_types = self.__resolve_type(schema=schema)
+            return items if t is list else set(items)
 
-        from rich import print
+        # ---------------------
+        # Tuple
+        # ---------------------
+        if t is tuple:
 
-        print(f"Possible types for {name}:\n {possible_types}")
+            if schema["mode"] == "variable":
+                length = random.randint(args.min_length or 1, args.max_length or 5)
 
-        # 2. If multiple possible values pick the type first
-        selected_type = self.__context.random.choice(possible_types)
+                return tuple(self._generate(schema["items"]) for _ in range(length))
 
-        # 3. Look for defaults & examples
-        # The value for this attribute is gonna be one of
-        # S = {
-        #     default, -- If default is not None
-        #     example1, example2, ... -- If examples are present
-        #     generated_value
-        #     None -- If the field is optional
-        # }
-        possible_values = []
-        if selected_type.args.default is not None:
-            possible_values.append(selected_type.args.default)
+            return tuple(self._generate(i) for i in schema["items"])
 
-        if selected_type.args.examples:
-            possible_values.extend(selected_type.args.examples)
+        # ---------------------
+        # Dict
+        # ---------------------
+        if t is dict:
+            length = random.randint(args.min_length or 1, args.max_length or 5)
 
-        # Generated value
-        generated_value = selected_type.generator_func(
-            **selected_type.args.model_dump(exclude_none=True), context=self.__context
-        )
-        possible_values.append(generated_value)
+            return {
+                self._generate(schema["keys"]): self._generate(schema["values"])
+                for _ in range(length)
+            }
 
-        return self.__context.random.choice(possible_values)
+        # ---------------------
+        # Nested Model
+        # ---------------------
+        if t == "model":
+            model_cls = schema["model"]
+
+            data = {
+                name: self._generate(field_schema)
+                for name, field_schema in schema["fields"].items()
+            }
+
+            return model_cls(**data)
+
+        # ---------------------
+        # Primitive Types
+        # ---------------------
+        if t is int:
+            low = args.ge if args.ge is not None else 0
+            high = args.le if args.le is not None else 100
+            return random.randint(low, high)
+
+        if t is float:
+            low = args.ge if args.ge is not None else 0
+            high = args.le if args.le is not None else 100
+            return random.uniform(low, high)
+
+        if t is str:
+            length = random.randint(args.min_length or 3, args.max_length or 10)
+            return "".join(random.choices("abcdefghijklmnopqrstuvwxyz", k=length))
+
+        if t is bool:
+            return random.choice([True, False])
+
+        # fallback
+        return None
