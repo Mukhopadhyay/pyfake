@@ -3,6 +3,7 @@ Resolves the datatypes and forms the generator mapping
 """
 
 import uuid as uuid_mod
+import datetime as dt_mod
 
 from pyfake.generators import primitives, uuid, datetime
 from pyfake.core.context import Context
@@ -53,6 +54,9 @@ class GeneratorRegistry:
             str: "string",
             bool: "bool",
             uuid_mod.UUID: "uuid",
+            dt_mod.datetime: "date-time",
+            dt_mod.date: "date",
+            dt_mod.time: "time",
         }
         self.__context = context or Context()
 
