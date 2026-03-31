@@ -47,12 +47,8 @@ class GeneratorRegistry:
         }
         self.__context = context
 
-    def __resolve_generator(
-        self, type_: str, format: Optional[str] = None
-    ) -> Union[Callable, None]:
-        _generator_result: Union[Callable, Dict[str, Callable]] = self._generators.get(
-            type_
-        )
+    def __resolve_generator(self, type_: str, format: Optional[str] = None) -> Union[Callable, None]:
+        _generator_result: Union[Callable, Dict[str, Callable]] = self._generators.get(type_)
         if isinstance(_generator_result, dict):
             if format is None:
                 _func = _generator_result.get(type_)
@@ -131,15 +127,9 @@ class GeneratorRegistry:
 
         return possible_types
 
-    def generate(
-        self, name: str, schema: ModelPropertySchema, required_attrs: List[str]
-    ) -> Any:
+    def generate(self, name: str, schema: ModelPropertySchema, required_attrs: List[str]) -> Any:
         # 1. Resolve the type
         possible_types = self.__resolve_type(schema=schema)
-
-        from rich import print
-
-        print(f"Possible types for {name}:\n {possible_types}")
 
         # 2. If multiple possible values pick the type first
         selected_type = self.__context.random.choice(possible_types)

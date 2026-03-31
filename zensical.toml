@@ -18,8 +18,10 @@ repo = "fontawesome/brands/github"
 
 nav = [
     { "Get Started" = "index.md" },
+    { "Usage & Examples" = "examples.md" },
 
     { "Internals" = [
+        { "How It Works" = "internals/how-it-works.md" },
         { "Internals" = "internals/internals.md" },
         { "Types" = "internals/types.md" },
     ] },
@@ -319,9 +321,35 @@ scheme = "slate"
 toggle.icon = "lucide/moon"
 toggle.name = "Switch to light mode"
 
+[project.markdown_extensions.admonition]
+[project.markdown_extensions.pymdownx.details]
+[project.markdown_extensions.pymdownx.superfences]
+custom_fences = [
+    { name = "mermaid", class = "mermaid", format = "pymdownx.superfences.fence_code_format" },
+]
+[project.markdown_extensions.pymdownx.tabbed]
+alternate_style = true
+[project.markdown_extensions.pymdownx.tasklist]
+custom_checkbox = true
+
+
 # ----------------------------------------------------------------------------
 # The "extra" section contains miscellaneous settings.
 # ----------------------------------------------------------------------------
 [[project.extra.social]]
 icon = "fontawesome/brands/github"
 link = "https://github.com/Mukhopadhyay/pyfake"
+
+# [project.markdown_extensions]
+# extensions = ["fenced_code", "pymdownx.superfences"]
+
+# ----------------------------------------------------------------------------
+# Termynal — animated terminal windows inside code blocks.
+# Use <!-- termynal --> immediately before a fenced code block to activate.
+# Lines starting with $ are typed as shell commands; >>> / ... for Python REPL.
+# ----------------------------------------------------------------------------
+[project.markdown_extensions.termynal]
+include_assets = true
+title = "bash"
+buttons = "macos"
+prompt_literal_start = ["$", ">>>", "..."]

@@ -1,6 +1,8 @@
 import annotated_types
+import types
 from pydantic import BaseModel
 from pydantic.fields import FieldInfo
+from pydantic.types import UuidVersion
 from pydantic_core import PydanticUndefinedType
 from typing import Annotated, Union, Literal, get_args, get_origin
 from enum import Enum
@@ -17,9 +19,7 @@ class Resolver:
 
         generator_args = GeneratorArgs()
         # Default value
-        if field_info.default is not None and not isinstance(
-            field_info.default, PydanticUndefinedType
-        ):
+        if field_info.default is not None and not isinstance(field_info.default, PydanticUndefinedType):
             generator_args.default = field_info.default
         # Examples
         if field_info.examples:
@@ -46,6 +46,8 @@ class Resolver:
                 generator_args.min_length = meta.min_length
             if isinstance(meta, annotated_types.MaxLen):
                 generator_args.max_length = meta.max_length
+            if isinstance(meta, UuidVersion):
+                generator_args.format = f"uuid{meta.uuid_version}"
             if meta.__class__.__name__ == "_PydanticGeneralMetadata":
                 if meta.pattern is not None:
                     generator_args.pattern = meta.pattern
@@ -73,7 +75,7 @@ class Resolver:
     @staticmethod
     def __merge(schema, root_args):
 
-        # Union → push constraints to variants
+        # Union → push constraints to variants (but not default)
         if schema.get("type") == "union":
             for variant in schema["variants"]:
                 if "generator_args" not in variant:
@@ -82,8 +84,9 @@ class Resolver:
                 local = variant["generator_args"]
 
                 for k, v in root_args.__dict__.items():
-                    if v is not None:
-                        setattr(local, k, v)
+                    if k == "default" or v is None:
+                        continue
+                    setattr(local, k, v)
 
             return schema
 
@@ -116,10 +119,16 @@ class Resolver:
                 for m in meta:
                     if isinstance(m, FieldInfo):
                         parsed = self.__parse(m)
+                        # Defaults in Annotated metadata have no effect
+                        # (consistent with pydantic behavior)
+                        parsed.default = None
 
                         for k, v in parsed.__dict__.items():
                             if v is not None:
                                 setattr(local_args, k, v)
+
+                    if isinstance(m, UuidVersion):
+                        local_args.format = f"uuid{m.uuid_version}"
 
                 # return _resolve(base, local_args)
                 merged = GeneratorArgs()
@@ -137,7 +146,7 @@ class Resolver:
                 return _resolve(base, merged)
 
             # Union / Optional
-            if origin is Union:
+            if origin is Union or origin is types.UnionType:
                 args = get_args(tp)
 
                 variants = []
@@ -203,10 +212,7 @@ class Resolver:
                 return {
                     "type": "model",
                     "model": tp,
-                    "fields": {
-                        k: Resolver(v).resolve()["schema"]
-                        for k, v in tp.model_fields.items()
-                    },
+                    "fields": {k: Resolver(v).resolve()["schema"] for k, v in tp.model_fields.items()},
                     "generator_args": generator_args,
                 }
 

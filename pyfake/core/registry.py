@@ -2,6 +2,8 @@
 Resolves the datatypes and forms the generator mapping
 """
 
+import uuid as uuid_mod
+
 from pyfake.generators import primitives, uuid, datetime
 from pyfake.core.context import Context
 from pyfake.schemas import (
@@ -13,10 +15,9 @@ from pyfake.schemas import (
 from pyfake.exceptions import GeneratorNotFound
 from pyfake.core.resolver import Resolver
 
-from typing import List, Dict, Any, Optional, Union
+from typing import List, Dict
 from collections.abc import Callable
 from pydantic.fields import FieldInfo
-import random
 
 
 class GeneratorRegistry:
@@ -32,6 +33,7 @@ class GeneratorRegistry:
             "integer": primitives.generate_int,
             "null": primitives.generate_none,
             "string": primitives.generate_str,
+            "bool": primitives.generate_bool,
             "uuid": uuid.generate_uuid4,
             "uuid1": uuid.generate_uuid1,
             "uuid3": uuid.generate_uuid3,
@@ -45,7 +47,14 @@ class GeneratorRegistry:
             "time": datetime.generate_time,
             "number": primitives.generate_float,
         }
-        self.__context = context
+        self._type_map: Dict[type, str] = {
+            int: "integer",
+            float: "number",
+            str: "string",
+            bool: "bool",
+            uuid_mod.UUID: "uuid",
+        }
+        self.__context = context or Context()
 
     def generate(self, attr: FieldInfo):
         schema = Resolver(attr).resolve()["schema"]
@@ -53,12 +62,14 @@ class GeneratorRegistry:
 
     def _generate(self, schema):
         t = schema["type"]
-        args = schema.get("generator_args")
+        args = schema.get("generator_args") or GeneratorArgs()
+
+        rng = self.__context.random
 
         # ---------------------
         # Default shortcut
         # ---------------------
-        if args and args.default is not None:
+        if args.default is not None:
             return args.default
 
         # ---------------------
@@ -67,29 +78,29 @@ class GeneratorRegistry:
         if t == "union":
             variants = schema["variants"]
 
-            if schema.get("nullable") and random.random() < 0.2:
+            if schema.get("nullable") and rng.random() < 0.2:
                 return None
 
-            variant = random.choice(variants)
+            variant = rng.choice(variants)
             return self._generate(variant)
 
         # ---------------------
         # Literal
         # ---------------------
         if t == "literal":
-            return random.choice(schema["values"])
+            return rng.choice(schema["values"])
 
         # ---------------------
         # Enum
         # ---------------------
         if t == "enum":
-            return random.choice(schema["values"])
+            return rng.choice(schema["values"])
 
         # ---------------------
         # List / Set
         # ---------------------
         if t in (list, set):
-            length = random.randint(args.min_length or 1, args.max_length or 5)
+            length = rng.randint(args.min_length or 1, args.max_length or 5)
 
             items = [self._generate(schema["items"]) for _ in range(length)]
 
@@ -101,7 +112,7 @@ class GeneratorRegistry:
         if t is tuple:
 
             if schema["mode"] == "variable":
-                length = random.randint(args.min_length or 1, args.max_length or 5)
+                length = rng.randint(args.min_length or 1, args.max_length or 5)
 
                 return tuple(self._generate(schema["items"]) for _ in range(length))
 
@@ -111,12 +122,9 @@ class GeneratorRegistry:
         # Dict
         # ---------------------
         if t is dict:
-            length = random.randint(args.min_length or 1, args.max_length or 5)
+            length = rng.randint(args.min_length or 1, args.max_length or 5)
 
-            return {
-                self._generate(schema["keys"]): self._generate(schema["values"])
-                for _ in range(length)
-            }
+            return {self._generate(schema["keys"]): self._generate(schema["values"]) for _ in range(length)}
 
         # ---------------------
         # Nested Model
@@ -124,32 +132,27 @@ class GeneratorRegistry:
         if t == "model":
             model_cls = schema["model"]
 
-            data = {
-                name: self._generate(field_schema)
-                for name, field_schema in schema["fields"].items()
-            }
+            data = {name: self._generate(field_schema) for name, field_schema in schema["fields"].items()}
 
             return model_cls(**data)
 
         # ---------------------
+        # Format-based dispatch
+        # (uuid, date, date-time, time, etc.)
+        # ---------------------
+        if args.format and args.format in self._generators:
+            gen_func = self._generators[args.format]
+            gen_kwargs = args.model_dump(exclude={"default", "examples", "format"})
+            return gen_func(context=self.__context, **gen_kwargs)
+
+        # ---------------------
         # Primitive Types
         # ---------------------
-        if t is int:
-            low = args.ge if args.ge is not None else 0
-            high = args.le if args.le is not None else 100
-            return random.randint(low, high)
-
-        if t is float:
-            low = args.ge if args.ge is not None else 0
-            high = args.le if args.le is not None else 100
-            return random.uniform(low, high)
-
-        if t is str:
-            length = random.randint(args.min_length or 3, args.max_length or 10)
-            return "".join(random.choices("abcdefghijklmnopqrstuvwxyz", k=length))
-
-        if t is bool:
-            return random.choice([True, False])
+        type_key = self._type_map.get(t)
+        if type_key and type_key in self._generators:
+            gen_func = self._generators[type_key]
+            gen_kwargs = args.model_dump(exclude={"default", "examples", "format"})
+            return gen_func(context=self.__context, **gen_kwargs)
 
         # fallback
         return None
