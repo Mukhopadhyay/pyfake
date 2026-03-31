@@ -128,8 +128,6 @@ Copyright &copy; 2026 The authors
 #
 language = "en"
 
-# Zensical provides a number of feature toggles that change the behavior
-# of the documentation site.
 features = [
     # Zensical includes an announcement bar. This feature allows users to
     # dismiss it when they have read the announcement.
@@ -271,7 +269,8 @@ features = [
 
     "content.action.edit", # Edit this page
     "content.action.view", # View source of this page
-]
+] # Zensical provides a number of feature toggles that change the behavior
+# of the documentation site.
 
 # ----------------------------------------------------------------------------
 # You can configure your own logo to be shown in the header using the "logo"
@@ -317,11 +316,11 @@ toggle.icon = "lucide/sun"
 toggle.name = "Switch to dark mode"
 
 [[project.theme.palette]]
-scheme = "slate"
+
+
+[project.markdown_extensions.admonition]scheme = "slate"
 toggle.icon = "lucide/moon"
 toggle.name = "Switch to light mode"
-
-[project.markdown_extensions.admonition]
 [project.markdown_extensions.pymdownx.details]
 [project.markdown_extensions.pymdownx.superfences]
 custom_fences = [
@@ -330,17 +329,16 @@ custom_fences = [
 [project.markdown_extensions.pymdownx.tabbed]
 alternate_style = true
 [project.markdown_extensions.pymdownx.tasklist]
-custom_checkbox = true
 
 
-# ----------------------------------------------------------------------------
+# ----------------------------------------------------------------------------custom_checkbox = true
 # The "extra" section contains miscellaneous settings.
 # ----------------------------------------------------------------------------
 [[project.extra.social]]
-icon = "fontawesome/brands/github"
-link = "https://github.com/Mukhopadhyay/pyfake"
 
-# [project.markdown_extensions]
+
+# [project.markdown_extensions]icon = "fontawesome/brands/github"
+link = "https://github.com/Mukhopadhyay/pyfake"
 # extensions = ["fenced_code", "pymdownx.superfences"]
 
 # ----------------------------------------------------------------------------
@@ -349,6 +347,7 @@ link = "https://github.com/Mukhopadhyay/pyfake"
 # Lines starting with $ are typed as shell commands; >>> / ... for Python REPL.
 # ----------------------------------------------------------------------------
 [project.markdown_extensions.termynal]
+
 include_assets = true
 title = "bash"
 buttons = "macos"
