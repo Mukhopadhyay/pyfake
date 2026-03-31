@@ -1,6 +1,6 @@
 [project]
 name = "pyfake"
-version = "0.0.6"
+version = "0.0.7"
 description = "A fake data generator that is pydantic compatible."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -27,14 +27,25 @@ keywords = [
 ]
 
 [dependency-groups]
-dev = ["pytest>=8.4.2", "pytest-cov>=7.0.0", "rich>=14.3.1"]
-docs = [
-    "zensical>=0.0.27",
-]
+dev = ["marimo>=0.17.6", "pytest>=8.4.2", "pytest-cov>=7.0.0", "rich>=14.3.1"]
+docs = ["termynal>=0.14.0", "zensical>=0.0.27"]
+
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-addopts = "--cov=pyfake --cov-report=term-missing"
+addopts = "--cov=pyfake --cov-report=term-missing --strict-markers"
+markers = [
+    "datatypes: Unit tests for all datatypes together.",
+    "integer: All integer related tests, generator + pydantic integration.",
+    "boolean: All boolean related tests, generator + pydantic integration.",
+    "string: All string related tests, generator + pydantic integration.",
+    "float: All float related tests, generator + pydantic integration.",
+    "uuid: All UUID related tests, generator + pydantic integration.",
+    "datetime: All datetime related tests, generator + pydantic integration.",
+    "pyfake: All pyfake core generator tests.",
+    "api: Tests for the main `Pyfake` class",
+    "registry: All pyfake registry GeneratorRegistry() related tests.",
+]
 
 [tool.coverage.run]
 branch = true

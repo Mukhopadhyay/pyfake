@@ -2,7 +2,10 @@
 Resolves the datatypes and forms the generator mapping
 """
 
-from pyfake.generators import primitives, uuid
+import uuid as uuid_mod
+import datetime as dt_mod
+
+from pyfake.generators import primitives, uuid, datetime
 from pyfake.core.context import Context
 from pyfake.schemas import (
     ModelPropertySchema,
@@ -11,153 +14,149 @@ from pyfake.schemas import (
     FieldSchema,
 )
 from pyfake.exceptions import GeneratorNotFound
+from pyfake.core.resolver import Resolver
 
-from typing import List, Dict, Any, Optional, Union
+from typing import List, Dict
 from collections.abc import Callable
+from pydantic.fields import FieldInfo
 
 
 class GeneratorRegistry:
     """
-    1. Resolves the type to generator function mapping
-    2. Generates data using the resolved generator functions
+    Responsible for:
+    1. Resolving possible types based on FieldInfo
+    2. Resolving FieldInfo
+    3. Generating value based on the resolved type and FieldInfo
     """
 
     def __init__(self, context: Context = None):
-        self._generators: Dict[str, Union[Callable, Dict[str, Callable]]] = {
+        self._generators: Dict[str, Callable] = {
             "integer": primitives.generate_int,
             "null": primitives.generate_none,
-            "string": {
-                "string": primitives.generate_str,
-                "uuid": uuid.generate_uuid4,
-                "uuid1": uuid.generate_uuid1,
-                "uuid3": uuid.generate_uuid3,
-                "uuid4": uuid.generate_uuid4,
-                "uuid5": uuid.generate_uuid5,
-                "uuid6": uuid.generate_uuid6,
-                "uuid7": uuid.generate_uuid7,
-                "uuid8": uuid.generate_uuid8,
-            },
+            "string": primitives.generate_str,
+            "bool": primitives.generate_bool,
+            "uuid": uuid.generate_uuid4,
+            "uuid1": uuid.generate_uuid1,
+            "uuid3": uuid.generate_uuid3,
+            "uuid4": uuid.generate_uuid4,
+            "uuid5": uuid.generate_uuid5,
+            "uuid6": uuid.generate_uuid6,
+            "uuid7": uuid.generate_uuid7,
+            "uuid8": uuid.generate_uuid8,
+            "date": datetime.generate_date,
+            "date-time": datetime.generate_datetime,
+            "time": datetime.generate_time,
             "number": primitives.generate_float,
         }
-        self.__context = context
+        self._type_map: Dict[type, str] = {
+            int: "integer",
+            float: "number",
+            str: "string",
+            bool: "bool",
+            uuid_mod.UUID: "uuid",
+            dt_mod.datetime: "date-time",
+            dt_mod.date: "date",
+            dt_mod.time: "time",
+        }
+        self.__context = context or Context()
 
-    def __resolve_generator(
-        self, type_: str, format: Optional[str] = None
-    ) -> Union[Callable, None]:
-        _generator_result: Union[Callable, Dict[str, Callable]] = self._generators.get(
-            type_
-        )
-        if isinstance(_generator_result, dict):
-            if format is None:
-                _func = _generator_result.get(type_)
-                if not _func:
-                    raise GeneratorNotFound(type_=type_)
-                return _func
-            else:
-                _func = _generator_result.get(format)
-                if not _func:
-                    raise GeneratorNotFound(type_=f"{type_} with format {format}")
-                return _func
-        elif isinstance(_generator_result, Callable):
-            _func = _generator_result
-            return _func
-        else:
-            raise GeneratorNotFound(type_=type_)
+    def generate(self, attr: FieldInfo):
+        schema = Resolver(attr).resolve()["schema"]
+        return self._generate(schema)
 
-    def __get_resolved_schema(
-        self,
-        type_: str,
-        schema: FieldSchema,
-    ) -> ResolvedSchema:
+    def _generate(self, schema):
+        t = schema["type"]
+        args = schema.get("generator_args") or GeneratorArgs()
 
-        # Figure out the generator function
-        generator_func = self.__resolve_generator(type_=type_, format=schema.format)
+        rng = self.__context.random
 
-        return ResolvedSchema(
-            type=type_,
-            generator_func=generator_func,
-            args=GeneratorArgs(
-                lt=schema.exclusiveMaximum,
-                gt=schema.exclusiveMinimum,
-                le=schema.maximum,
-                ge=schema.minimum,
-                default=schema.default,
-                pattern=schema.pattern,
-                multiple_of=schema.multipleOf,
-                decimal_places=schema.multipleOf,
-                min_length=schema.minLength,
-                max_length=schema.maxLength,
-                examples=schema.examples,
-                # is_optional=name not in required_attrs,
-                format=schema.format,
-            ),
-        )
+        # ---------------------
+        # Default shortcut
+        # ---------------------
+        if args.default is not None:
+            return args.default
 
-    def __resolve_type(
-        self, name: str, schema: ModelPropertySchema, required_attrs: List[str]
-    ) -> List[ResolvedSchema]:
-        """
-        input: The model property schema
-        output: All possible types and their respective params
+        # ---------------------
+        # Union
+        # ---------------------
+        if t == "union":
+            variants = schema["variants"]
 
-        e.g.,
+            if schema.get("nullable") and rng.random() < 0.2:
+                return None
 
-        > a: int | None = None
-        >> ['integer', 'none']
-        """
-        possible_types: List[ResolvedSchema] = []
+            variant = rng.choice(variants)
+            return self._generate(variant)
 
-        if schema.anyOf:
-            # Multiple possible values
-            for type_ in schema.anyOf:
+        # ---------------------
+        # Literal
+        # ---------------------
+        if t == "literal":
+            return rng.choice(schema["values"])
 
-                current_type = type_.type or schema.type
-                possible_types.append(
-                    self.__get_resolved_schema(
-                        type_=current_type,
-                        schema=type_,
-                    )
-                )
-        else:
-            possible_types.append(
-                self.__get_resolved_schema(
-                    type_=schema.type,
-                    schema=schema,
-                )
-            )
+        # ---------------------
+        # Enum
+        # ---------------------
+        if t == "enum":
+            return rng.choice(schema["values"])
 
-        return possible_types
+        # ---------------------
+        # List / Set
+        # ---------------------
+        if t in (list, set):
+            length = rng.randint(args.min_length or 1, args.max_length or 5)
 
-    def generate(
-        self, name: str, schema: ModelPropertySchema, required_attrs: List[str]
-    ) -> Any:
-        # 1. Resolve the type
-        possible_types = self.__resolve_type(
-            name=name, schema=schema, required_attrs=required_attrs
-        )
+            items = [self._generate(schema["items"]) for _ in range(length)]
 
-        # 2. If multiple possible values pick the type first
-        selected_type = self.__context.random.choice(possible_types)
+            return items if t is list else set(items)
 
-        # 3. Look for defaults & examples
-        # The value for this attribute is gonna be one of
-        # S = {
-        #     default, -- If default is not None
-        #     example1, example2, ... -- If examples are present
-        #     generated_value
-        #     None -- If the field is optional
-        # }
-        possible_values = []
-        if selected_type.args.default is not None:
-            possible_values.append(selected_type.args.default)
+        # ---------------------
+        # Tuple
+        # ---------------------
+        if t is tuple:
 
-        if selected_type.args.examples:
-            possible_values.extend(selected_type.args.examples)
+            if schema["mode"] == "variable":
+                length = rng.randint(args.min_length or 1, args.max_length or 5)
 
-        # Generated value
-        generated_value = selected_type.generator_func(
-            **selected_type.args.model_dump(exclude_none=True), context=self.__context
-        )
-        possible_values.append(generated_value)
+                return tuple(self._generate(schema["items"]) for _ in range(length))
 
-        return self.__context.random.choice(possible_values)
+            return tuple(self._generate(i) for i in schema["items"])
+
+        # ---------------------
+        # Dict
+        # ---------------------
+        if t is dict:
+            length = rng.randint(args.min_length or 1, args.max_length or 5)
+
+            return {self._generate(schema["keys"]): self._generate(schema["values"]) for _ in range(length)}
+
+        # ---------------------
+        # Nested Model
+        # ---------------------
+        if t == "model":
+            model_cls = schema["model"]
+
+            data = {name: self._generate(field_schema) for name, field_schema in schema["fields"].items()}
+
+            return model_cls(**data)
+
+        # ---------------------
+        # Format-based dispatch
+        # (uuid, date, date-time, time, etc.)
+        # ---------------------
+        if args.format and args.format in self._generators:
+            gen_func = self._generators[args.format]
+            gen_kwargs = args.model_dump(exclude={"default", "examples", "format"})
+            return gen_func(context=self.__context, **gen_kwargs)
+
+        # ---------------------
+        # Primitive Types
+        # ---------------------
+        type_key = self._type_map.get(t)
+        if type_key and type_key in self._generators:
+            gen_func = self._generators[type_key]
+            gen_kwargs = args.model_dump(exclude={"default", "examples", "format"})
+            return gen_func(context=self.__context, **gen_kwargs)
+
+        # fallback
+        return None

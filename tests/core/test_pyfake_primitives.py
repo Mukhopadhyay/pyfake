@@ -5,6 +5,9 @@ from pydantic import BaseModel, Field
 from typing import Annotated, Optional, Union
 
 
+@pytest.mark.datatypes
+@pytest.mark.pyfake
+@pytest.mark.integer
 class TestPyfakeIntegerGeneration:
 
     class StressTestModel(BaseModel):
@@ -68,6 +71,9 @@ class TestPyfakeIntegerGeneration:
         assert isinstance(result["integer_optional_default"], (int, type(None)))
 
 
+@pytest.mark.datatypes
+@pytest.mark.pyfake
+@pytest.mark.string
 class TestPyfakeStringGeneration:
 
     class StressTestStringModel(BaseModel):
@@ -75,9 +81,9 @@ class TestPyfakeStringGeneration:
         string_optional: Optional[str]
         string_with_bounds: Annotated[str, Field(min_length=1, max_length=100)]
         string_with_multiple_annotations: Union[
-            Annotated[str, Field(min_length=1, max_length=5)],
-            Annotated[str, Field(min_length=10, max_length=15)],
-        ]
+            Annotated[str, Field(min_length=1, max_length=5, default=5)],
+            Annotated[str, Field(min_length=10, max_length=15, default=12)],
+        ] = 50
         string_optional_default: Optional[
             Annotated[str, Field(min_length=1, max_length=10, default="abc")]
         ] = "xyz"
@@ -123,6 +129,9 @@ class TestPyfakeStringGeneration:
         assert all(c.isalpha() for c in result["string_basic"])
 
 
+@pytest.mark.datatypes
+@pytest.mark.pyfake
+@pytest.mark.float
 class TestPyfakeFloatGeneration:
 
     class StressTestFloatModel(BaseModel):
@@ -162,6 +171,8 @@ class TestPyfakeFloatGeneration:
             )
 
 
+@pytest.mark.pyfake
+@pytest.mark.pyfake
 class TestPyfakeInstantiation:
 
     class SampleModel(BaseModel):

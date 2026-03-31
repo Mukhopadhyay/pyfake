@@ -7,6 +7,8 @@ from pydantic import BaseModel, Field
 from typing import Optional, Annotated
 
 
+@pytest.mark.datatypes
+@pytest.mark.pyfake
 @pytest.mark.uuid
 class TestPyfakeUUIDGeneration:
 

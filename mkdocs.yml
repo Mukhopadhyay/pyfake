@@ -1,0 +1,58 @@
+
+site_name: Pyfake
+# site_url: https://mydomain.org/mysite
+theme:
+  name: material
+  logo: null
+
+  features:
+    - navigation.tabs
+    - content.code.copy
+
+  palette:
+    # Palette toggle for light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: yellow
+      accent: light orange
+      toggle:
+        # icon: material/lightbulb
+        icon: material/brightness-4
+        name: Switch to dark mode
+
+    # Palette toggle for dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: orange
+      accent: light orange
+      toggle:
+        # icon: material/lightbulb-outline
+        icon: material/brightness-2
+        name: Switch to light mode
+
+# Navigation
+nav:
+  - Home: index.md
+  - Installation: installation.md
+  - Getting Started: getting-started.md
+  - Testing: testing.md
+  - Changes: CHANGELOG.md
+
+extra:
+  social:
+    - icon: fontawesome/brands/linkedin
+      link: https://www.linkedin.com/in/praneshmukhopadhyay/
+    - icon: fontawesome/brands/github
+      link: https://github.com/Mukhopadhyay
+
+repo_url: https://github.com/Mukhopadhyay/pyfake
+repo_name: Mukhopadhyay/pyfake
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences

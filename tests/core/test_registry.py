@@ -4,6 +4,7 @@ from pyfake.core.context import Context
 from collections.abc import Callable
 
 
+@pytest.mark.pyfake
 @pytest.mark.registry
 class TestPyfakeRegistry:
     def test_generators_registered(self):
