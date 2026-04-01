@@ -5,7 +5,8 @@ description = "A fake data generator that is pydantic compatible."
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = ["pydantic[email,timezone]>=2.12.5"]
-license = { text = "MIT" }
+# license = { text = "MIT" }
+license = { file = "LICENSE" }
 authors = [
     { name = "Pranesh Mukhopadhyay", email = "praneshmukherjee7@gmail.com" },
 ]
@@ -54,3 +55,7 @@ source = ["pyfake"]
 [tool.coverage.report]
 show_missing = true
 skip_empty = true
+
+[tool.setuptools.packages.find]
+include = ["pyfake*"]
+exclude = ["notebooks*", "site*", "tests*"]
