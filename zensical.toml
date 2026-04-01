@@ -23,12 +23,10 @@ nav = [
     { "Internals" = [
         { "How It Works" = "internals/how-it-works.md" },
         { "Internals" = "internals/internals.md" },
-        { "Types" = "internals/types.md" },
+        # { "Types" = "internals/types.md" },
     ] },
 
-    { "Developers" = [
-        { "Testing" = "dev/testing.md" },
-    ] },
+    { "Developers" = [{ "Testing" = "dev/testing.md" }] },
 ]
 
 # The site_description is included in the HTML head and should contain a
@@ -311,16 +309,18 @@ logo = "assets/logo-only.png"
 # - https://zensical.org/docs/setup/colors/
 # ----------------------------------------------------------------------------
 [[project.theme.palette]]
-scheme = "default"
+scheme = "orange"
+accent = "orange"
 toggle.icon = "lucide/sun"
 toggle.name = "Switch to dark mode"
 
 [[project.theme.palette]]
 scheme = "slate"
+accent = "orange"
+toggle.icon = "lucide/moon"
+toggle.name = "Switch to light mode"
 
 [project.markdown_extensions.admonition]
-# toggle.icon = "lucide/moon"
-# toggle.name = "Switch to light mode"
 [project.markdown_extensions.pymdownx.details]
 [project.markdown_extensions.pymdownx.superfences]
 custom_fences = [
@@ -329,9 +329,9 @@ custom_fences = [
 [project.markdown_extensions.pymdownx.tabbed]
 alternate_style = true
 [project.markdown_extensions.pymdownx.tasklist]
+custom_checkbox = true
 
-
-# ----------------------------------------------------------------------------custom_checkbox = true
+# ----------------------------------------------------------------------------
 # The "extra" section contains miscellaneous settings.
 # ----------------------------------------------------------------------------
 [[project.extra.social]]

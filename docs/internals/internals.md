@@ -16,7 +16,7 @@ For a narrative walkthrough of a single generation call, see [How It Works](how-
 
 ## Architecture Overview
 
-```
+<!-- ```
 Pydantic model
       │
       │  model.model_fields  →  {name: FieldInfo}
@@ -36,7 +36,28 @@ Pydantic model
       │
       ▼
    Context         — shared random.Random (and optional seed)
+``` -->
+
+<center>
+```mermaid
+flowchart TD
+    A["Pydantic model"] --> B["model.model_fields\n{name: FieldInfo}"]
+
+    subgraph Core Pipeline
+        C["Engine"]
+        D["Resolver"]
+        E["GeneratorRegistry (Dispatches to the right generator)"]
+        F["Generator function (Produces a single value)" ]
+    end
+
+    B --> C
+    C -->|FieldInfo| D
+    D -->|schema dict| E
+    E --> F
+
+    F --> G["Context\n(random.Random + seed)"]
 ```
+</center>
 
 ---
 

@@ -11,12 +11,25 @@ hide:
 
 Everything `pyfake` can do, shown in working code — from a three-line hello-world to a fully-constrained real-world schema.
 
-<!-- termynal -->
-```shell
-$ pip install pyfake
----> 100%
-Successfully installed pyfake
-```
+
+
+=== "`uv` (Recommended)" 
+
+    <!-- termynal -->
+    ```shell
+    $ uv add pyfake
+    ---> 100%
+    Successfully installed pyfake
+    ```
+
+=== "`pip`"
+
+    <!-- termynal -->
+    ```shell
+    $ pip install pyfake
+    ---> 100%
+    Successfully installed pyfake
+    ```
 
 ## Your First Fake
 
@@ -35,21 +48,12 @@ class User(BaseModel):
 
 result = Pyfake.from_schema(User)
 print(result)
-# {'id': 47, 'username': 'xKLmPqRstU', 'is_active': True}
+# 
 ```
 
 <!-- termynal -->
 
 ```console
-$ python
->>> from pydantic import BaseModel
->>> from pyfake import Pyfake
->>> class User(BaseModel):
-...     id: int
-...     username: str
-...     is_active: bool
-...
->>> Pyfake.from_schema(User)
 {'id': 47, 'username': 'xKLmPqRstU', 'is_active': True}
 ```
 

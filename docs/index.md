@@ -35,9 +35,9 @@ hide:
 
 Most fake data generators are either:
 
-- ❌ Random but not structured  
-- ❌ Structured but not realistic  
-- ❌ Hard to extend  
+❌ Random but not structured  
+❌ Structured but not realistic  
+❌ Hard to extend  
 
 **Pyfake fixes that.**
 
@@ -90,15 +90,15 @@ $ python example.py
 }
 ```
 
-### Installation
+## Installation
 
-=== "`uv` (Recommended)" 
+=== "uv (Recommended)" 
 
     ```bash
     uv add pyfake
     ```
 
-=== "`pip`"
+=== "pip"
 
 
     ```bash
@@ -107,7 +107,10 @@ $ python example.py
     pip install pyfake
     ```
 
-### How It Works
+!!! note "From source"
+    **pyfake** can be downloaded directly from github as well
+
+## How It Works
 
 Pyfake reads your Pydantic schema and:
 

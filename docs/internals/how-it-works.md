@@ -12,28 +12,34 @@ hide:
 
 ## The Pipeline
 
+
+<center>
+```mermaid
+%% flowchart TD
+%%   A[Pyfake.from_schema(MyModel)]
+%%   B[Engine.generate(MyModel)]
+%%   C[Resolver.resolve(FieldInfo)\nannotation → schema dict]
+%%   D[GeneratorRegistry._generate(schema)\ndispatches by type / format]
+%%   E[Generator function\ngenerate_int, generate_str, generate_uuid4 …]
+%%   F[generated value]
+
+%%   A --> B
+%%   B -->|iterates model.model_fields (for each field)| C
+%%   C --> D
+%%   D --> E
+%%   E --> F
+
+flowchart TD
+  A["Pyfake.from_schema(MyModel)"]
+  B["Engine.generate(MyModel)"]
+  C["Resolver.resolve(FieldInfo)\nannotation -> schema"]
+  D["GeneratorRegistry._generate(schema)\ndispatch by type"]
+  E["Generator function\n(int, str, uuid4, ...)"]
+  F["Generated value"]
+
+  A --> B --> C --> D --> E --> F
 ```
-Pyfake.from_schema(MyModel)
-         │
-         ▼
-   Engine.generate(MyModel)
-         │  iterates model.model_fields
-         │
-         ▼  (for each field)
-   Resolver.resolve(FieldInfo)
-         │  annotation → schema dict
-         │
-         ▼
-   GeneratorRegistry._generate(schema)
-         │  dispatches by type / format
-         │
-         ▼
-   Generator function
-   (generate_int, generate_str, generate_uuid4 …)
-         │
-         ▼
-      generated value
-```
+</center>
 
 ---
 
