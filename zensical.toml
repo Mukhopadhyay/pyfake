@@ -319,8 +319,8 @@ toggle.name = "Switch to dark mode"
 scheme = "slate"
 
 [project.markdown_extensions.admonition]
-toggle.icon = "lucide/moon"
-toggle.name = "Switch to light mode"
+# toggle.icon = "lucide/moon"
+# toggle.name = "Switch to light mode"
 [project.markdown_extensions.pymdownx.details]
 [project.markdown_extensions.pymdownx.superfences]
 custom_fences = [
@@ -335,10 +335,10 @@ alternate_style = true
 # The "extra" section contains miscellaneous settings.
 # ----------------------------------------------------------------------------
 [[project.extra.social]]
-
+link = "https://github.com/Mukhopadhyay/pyfake"
+icon = "fontawesome/brands/github"
 
 # [project.markdown_extensions]icon = "fontawesome/brands/github"
-link = "https://github.com/Mukhopadhyay/pyfake"
 # extensions = ["fenced_code", "pymdownx.superfences"]
 
 # ----------------------------------------------------------------------------
