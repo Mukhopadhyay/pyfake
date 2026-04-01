@@ -3,9 +3,11 @@ icon: lucide/calendar-days
 tags:
   - Get started
   - Setup
+hide:
+  - title
 ---
 
-## Changelog 🕓
+# Changelog 🕓
 
 ### `0.0.7` - 2026-01-31
 

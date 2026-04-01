@@ -27,6 +27,7 @@ nav = [
     ] },
 
     { "Developers" = [{ "Testing" = "dev/testing.md" }] },
+    { "Change Log" = [{ "Change Log" = "CHANGELOG.md" }] },
 ]
 
 # The site_description is included in the HTML head and should contain a
