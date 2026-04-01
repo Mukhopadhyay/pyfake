@@ -9,7 +9,12 @@ hide:
 
 # Changelog 🕓
 
-### `0.0.7` - 2026-01-31
+### `0.0.7` - 2026-04-02
+
+**Major changes**
+- Recursive generator support for nested Pydantic models
+- Recursive resolver for resolving nested Pydantic models in the input Schema
+
 
 **New Features**
 
@@ -17,6 +22,10 @@ hide:
   - Ability to set bounds using pydantic [`Field()`](https://docs.pydantic.dev/latest/concepts/fields/) function
 - Flag based return for either accepting a **dictionary** or the **input Pydantic model** (`as_dict = True`)
 - Updated ReadTheDocs documentation
+- Support for `list`, `set` and `tuple` types with length constraints using pydantic [`Field()`](https://docs.pydantic.dev/latest/concepts/fields/) function
+- Moving documentations to [`zensical`](https://zensical.org/) for better experience and future support.
+
+---
 
 ### `0.0.6` - 2026-01-30
 
