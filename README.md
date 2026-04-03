@@ -22,8 +22,8 @@
 ---
 
 <p align="center">
-  <b>Docs</b>: https://pyfake.readthedocs.io/en/latest &nbsp;•&nbsp;
-  <b>Source</b>: https://github.com/Mukhopadhyay/pyfake
+  <b>Docs</b>: <a href="https://mukhopadhyay.github.io/pyfake/">mukhopadhyay.github.io/pyfake</a> &nbsp;•&nbsp;
+  <b>Source</b>: <a href="https://github.com/Mukhopadhyay/pyfake">github.com/Mukhopadhyay/pyfake</a>
 </p>
 
 ---
@@ -92,7 +92,7 @@ flowchart LR
 uv add pyfake
 ```
 
-**Using `pip`*
+**Using `pip`**
 
 ```bash
 python -m venv .venv

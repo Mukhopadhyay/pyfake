@@ -1,3 +1,6 @@
 from pyfake.core.api import Pyfake
+from pyfake.core.api import Fake
 
-__all__ = ["Pyfake"]
+fake = Fake()
+
+__all__ = ["Pyfake", "fake"]
