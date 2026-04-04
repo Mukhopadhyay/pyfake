@@ -31,6 +31,10 @@ class Resolver:
         if not field_info.metadata:
             return generator_args
 
+        from rich import print
+
+        print(field_info.metadata)
+
         for meta in field_info.metadata:
             if isinstance(meta, annotated_types.Ge):
                 generator_args.ge = meta.ge
@@ -49,7 +53,8 @@ class Resolver:
             if isinstance(meta, UuidVersion):
                 generator_args.format = f"uuid{meta.uuid_version}"
             if meta.__class__.__name__ == "_PydanticGeneralMetadata":
-                if meta.pattern is not None:
+                # if meta.pattern is not None:
+                if hasattr(meta, "pattern") and meta.pattern is not None:
                     generator_args.pattern = meta.pattern
                 if hasattr(meta, "decimal_places") and meta.decimal_places is not None:
                     generator_args.decimal_places = meta.decimal_places
