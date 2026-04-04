@@ -18,16 +18,20 @@ repo = "fontawesome/brands/github"
 
 nav = [
     { "Get Started" = "index.md" },
-    { "Usage & Examples" = "examples.md" },
-
-    { "Internals" = [
+    { "Usage" = [
+        { "Numbers" = "usage/numbers.md" },
+        { "Examples" = "usage/examples.md" },
+    ] },
+    { "Reference" = [
         { "How It Works" = "internals/how-it-works.md" },
         { "Internals" = "internals/internals.md" },
-        # { "Types" = "internals/types.md" },
     ] },
-
-    { "Developers" = [{ "Testing" = "dev/testing.md" }] },
-    { "Change Log" = [{ "Change Log" = "CHANGELOG.md" }] },
+    { "Developers" = [
+        { "Testing" = "dev/testing.md" },
+    ] },
+    { "Change Log" = [
+        { "Change Log" = "CHANGELOG.md" },
+    ] },
 ]
 
 # The site_description is included in the HTML head and should contain a

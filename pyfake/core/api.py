@@ -2,18 +2,20 @@ import json
 from pydantic import BaseModel
 from pyfake.core.engine import Engine
 from pyfake.core.context import Context
-from typing import Optional, Dict, List, Any, Union
+from typing import Optional, Dict, List, Any, Union, Type, TypeVar
+
+T = TypeVar("T", bound=BaseModel)
 
 
 class Pyfake:
 
-    def __init__(self, schema, seed: Optional[int] = None):
+    def __init__(self, schema: Type[T], seed: Optional[int] = None):
         self.schema = schema
         self.context = Context(seed=seed)
         self.engine = Engine(self.context)
 
     @classmethod
-    def from_schema(cls, schema, num=1, seed: Optional[int] = None, as_dict: Optional[bool] = True):
+    def from_schema(cls, schema: Type[T], num=1, seed: Optional[int] = None, as_dict: Optional[bool] = True):
         return cls(schema, seed).generate(num, as_dict=as_dict)
 
     def generate(
@@ -41,7 +43,7 @@ class Fake:
 
     def __call__(
         self,
-        schema,
+        schema: Type[T],
         num: int = 1,
         *,
         as_dict: Optional[bool] = True,
@@ -54,11 +56,15 @@ class Fake:
             as_dict=as_dict,
         )
 
-    def dict(self, schema, num: int = 1, seed: Optional[int] = None):
+    def dict(self, schema: Type[T], num: int = 1, seed: Optional[int] = None):
         return self(schema=schema, num=num, as_dict=True, seed=seed)
 
-    def model(self, schema, num: int = 1, seed: Optional[int] = None):
+    def model(self, schema: Type[T], num: int = 1, seed: Optional[int] = None):
         return self(schema=schema, num=num, as_dict=False, seed=seed)
+
+    def json(self, schema: Type[T], num: int = 1, seed: Optional[int] = None):
+        data = self(schema=schema, num=num, as_dict=True, seed=seed)
+        return json.dumps(data, indent=4, default=str)
 
     def seed(self, seed: int):
         return Fake(seed=seed)
