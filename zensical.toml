@@ -20,6 +20,7 @@ nav = [
     { "Get Started" = "index.md" },
     { "Usage" = [
         { "Numbers" = "usage/numbers.md" },
+        { "Strings" = "usage/strings.md" },
         { "Examples" = "usage/examples.md" },
     ] },
     { "Reference" = [
