@@ -105,6 +105,7 @@ This behavior matches the implementation in `pyfake.generators.primitives.genera
 ### Using `Field` constraints
 
 ```python
+from pyfake import fake
 from pydantic import BaseModel, Field
 
 class User(BaseModel):
