@@ -15,6 +15,7 @@ from pyfake.schemas import (
 )
 from pyfake.exceptions import GeneratorNotFound
 from pyfake.core.resolver import Resolver
+from decimal import Decimal
 
 from typing import List, Dict
 from collections.abc import Callable
@@ -47,10 +48,12 @@ class GeneratorRegistry:
             "date-time": datetime.generate_datetime,
             "time": datetime.generate_time,
             "number": primitives.generate_float,
+            "decimal": primitives.generate_decimal,
         }
         self._type_map: Dict[type, str] = {
             int: "integer",
             float: "number",
+            Decimal: "decimal",
             str: "string",
             bool: "bool",
             uuid_mod.UUID: "uuid",

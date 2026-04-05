@@ -1,4 +1,5 @@
 import string
+from decimal import Decimal
 from pyfake.core.context import Context
 from typing import Optional
 
@@ -23,7 +24,6 @@ def generate_int(
     context: Optional[Context] = None,
     **kwargs,
 ) -> int:
-    # TODO: Support for multiple_of
 
     min_value = ge if ge is not None else (gt + 1 if gt is not None else 0)
     max_value = le if le is not None else (lt - 1 if lt is not None else 100)
@@ -82,6 +82,32 @@ def generate_float(
     if decimal_places is not None:
         format_str = "{:." + str(int(decimal_places)) + "f}"
         num = float(format_str.format(num))
+
+    return num
+
+
+def generate_decimal(
+    *,
+    lt: Optional[int] = None,
+    gt: Optional[int] = None,
+    le: Optional[int] = None,
+    ge: Optional[int] = None,
+    multiple_of: Optional[float] = None,
+    decimal_places: Optional[int] = None,
+    context: Optional[Context] = None,
+    **kwargs,
+) -> Decimal:
+    # TODO: Multiple of multiple_of
+
+    min_value = ge if ge is not None else (gt + 0.1 if gt is not None else 0.0)
+    max_value = le if le is not None else (lt - 0.1 if lt is not None else 100.0)
+
+    num = context.random.uniform(min_value, max_value)
+
+    # Handling decimal places
+    if decimal_places is not None:
+        format_str = "{:." + str(int(decimal_places)) + "f}"
+        num = Decimal(format_str.format(num))
 
     return num
 

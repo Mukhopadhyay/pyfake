@@ -12,6 +12,7 @@ hide:
 ### `0.0.7` - 2026-04-02
 
 **Major changes**
+
 - Recursive generator support for nested Pydantic models
 - Recursive resolver for resolving nested Pydantic models in the input Schema
 
