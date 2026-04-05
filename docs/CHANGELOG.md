@@ -9,6 +9,21 @@ hide:
 
 # Changelog 🕓
 
+### `0.0.8` - 2026-04-06
+
+**Major changes**
+
+- Introduced the Fake class as a new, user-friendly API for generating fake data, accessible via the fake singleton in `pyfake/__init__.py`. This class provides methods for generating data as dicts, models, or JSON, and supports seeding for reproducibility. (`pyfake/core/api.py`, `pyfake/__init__.py`)
+  
+**New Features**
+
+- Added support for the `Decimal` type, including generator registration and type mapping in the registry.
+- Improved metadata parsing for field constraints (e.g., `pattern`, `decimal_places`) and fixed a bug in how these are extracted from Pydantic field metadata.
+
+**Docs**
+- Added comprehensive usage guides for [booleans](https://mukhopadhyay.github.io/pyfake/usage/boolean/), [numbers](https://mukhopadhyay.github.io/pyfake/usage/numbers/) (including constraints and Decimal), and [strings](https://mukhopadhyay.github.io/pyfake/usage/strings/), with examples and notes on supported/unsupported features.
+- Updated the main [README.md](https://github.com/Mukhopadhyay/pyfake/blob/master/README.md) with new documentation links and fixed minor formatting issues.
+
 ### `0.0.7` - 2026-04-02
 
 **Major changes**
