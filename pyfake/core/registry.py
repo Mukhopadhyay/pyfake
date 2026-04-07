@@ -13,7 +13,6 @@ from pyfake.schemas import (
     GeneratorArgs,
     FieldSchema,
 )
-from pyfake.exceptions import GeneratorNotFound
 from pyfake.core.resolver import Resolver
 from decimal import Decimal
 
