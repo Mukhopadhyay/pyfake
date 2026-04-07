@@ -31,10 +31,6 @@ class Resolver:
         if not field_info.metadata:
             return generator_args
 
-        from rich import print
-
-        print(field_info.metadata)
-
         for meta in field_info.metadata:
             if isinstance(meta, annotated_types.Ge):
                 generator_args.ge = meta.ge
