@@ -22,6 +22,7 @@ nav = [
         { "Numbers" = "usage/numbers.md" },
         { "Strings" = "usage/strings.md" },
         { "Booleans" = "usage/boolean.md" },
+        { "UUID" = "usage/uuid.md" },
         { "Examples" = "usage/examples.md" },
     ] },
     { "Reference" = [
