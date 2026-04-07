@@ -3,8 +3,7 @@ icon: octicons/id-badge-16
 tags:
   - Usage
   - Examples
-  - Strings
-  - Primitives
+  - UUID
 hide:
   - title
 ---
