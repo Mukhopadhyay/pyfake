@@ -18,12 +18,14 @@
   <img src="https://img.shields.io/github/stars/Mukhopadhyay/pyfake?style=for-the-badge"/>
 </p>
 
----
 
 <p align="center">
   <a href="https://mukhopadhyay.github.io/pyfake/"><strong>Documentation</strong></a> &middot; <a href="https://github.com/Mukhopadhyay/pyfake"><strong>Github</strong></a> &middot; <a href="https://pypi.org/project/pyfake/"><strong>PyPI</strong></a>
 </p>
 
+<p align="center">
+Generate realistic fake data for your Pydantic models with ease. Perfect for testing, prototyping, and anywhere you need valid mock data.
+</p>
 
 ## ⚡ Quick Example
 
@@ -36,14 +38,19 @@ from rich import print
 
 class Playlist(BaseModel):
     track_ids: List[int]
-    gengre: Literal["rock", "pop", "jazz"]
+    genre: Literal["rock", "pop", "jazz"]
     tags: Annotated[List[str], Field(min_length=2, max_length=5)]
     unique_ratings: Set[int]
 
 result = fake(Playlist, as_dict=True)
 print(result)
 
-# {'track_ids': [28, 25, 95, 40], 'gengre': 'pop', 'tags': ['CJKHILHXTN', 'qkhhjDJYiV'], 'unique_ratings': {17, 49}}
+# {
+#     "track_ids": [28, 25, 95, 40], 
+#     "genre": "pop", 
+#     "tags": ["CJKHILHXTN", "qkhhjDJYiV"], 
+#     "unique_ratings": {17, 49}
+# }
 ```
 
 ## ✨ Why Pyfake?
@@ -56,21 +63,6 @@ print(result)
 |Support for constraints| ❌ Ignores field constraints like `min_length`, `gt`, `multiple_of` | ✅ Respects all Pydantic field constraints when generating data |
 |Support for python primitive types| ❌ Limited support for complex types like `Decimal`, `UUID`, `datetime` | ✅ Full support for Python primitives, including `Decimal`, `UUID`, `datetime`, and more |
 |Reproducibility| ❌ No built-in way to generate the same fake data across runs | ✅ Supports seeding for reproducible fake data generation |
-
-Most fake data generators are either:
-- ❌ Random but not structured  
-- ❌ Structured but not realistic  
-- ❌ Hard to extend  
-
-**Pyfake fixes that.**
-
-It leverages **Pydantic models** as the single source of truth to generate:
-- ✅ Validated data  
-- ✅ Schema-aware fake data  
-- ✅ Easily extensible generators  
-- ✅ Strong typing + IDE autocomplete  
-
-
 
 
 ### 🧠 How It Works
