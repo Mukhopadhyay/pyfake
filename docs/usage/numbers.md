@@ -146,13 +146,73 @@ print(results)
 | `multiple_of`    | The generated value will be a multiple of this value. For floats, the generated value will be a multiple of this value within a reasonable tolerance to account for floating-point precision issues.
 | `decimal_places` | For Decimal fields, this option specifies the number of decimal places to generate. The generated value will be rounded to this number of decimal places.
 
-!!! error "Unsupported options"
+!!! note "Option support updates"
 
-    The following options are not currently supported for numeric fields:
+    The following notes describe current support for numeric field options:
 
-    - `decimal_places`: This option is only currently supported for Decimal fields. For float fields, the generated value will not be rounded to a specific number of decimal places.
-    - `multiple_of`: This option is currently not fully supported for integer fields. Will be implemented in a future release.
+    - `multiple_of`: Now supported for `int`, `float`, and `Decimal` fields. For `float` fields, generated values will be multiples of the specified value within floating-point precision limits; small rounding differences may occur.
+    - `decimal_places`: Supported for both `float` and `Decimal` fields. For `float`, values are rounded to the requested number of decimal places, but floating-point representation may introduce minor differences.
 
+### Using `multiple_of`
+
+!!! note "Version"
+
+    Support for `multiple_of` was added in version `v0.0.9`.
+
+The `multiple_of` option can be used with `int`, `float`, and `Decimal` fields to request values that are multiples of a given number. Here are some examples (sample outputs shown; actual values will vary):
+
+```python
+from pydantic import BaseModel, Field
+
+class Item(BaseModel):
+    count: int = Field(..., ge=0, le=100, multiple_of=5)
+
+results = fake(Item, num=3)
+print(results)
+```
+
+```console
+[
+    {'count': 75},
+    {'count': 20},
+    {'count': 45}
+]
+```
+
+```python
+from pydantic import BaseModel, Field
+
+class Product(BaseModel):
+    expiry: float = Field(..., ge=0.0, le=10.0, multiple_of=0.5)
+
+results = fake(Product, num=3)
+print(results)
+```
+
+```console
+[
+    {'expiry': 3.5},
+    {'expiry': 0.5},
+    {'expiry': 8.0}
+]
+```
+
+```python
+from decimal import Decimal
+from pydantic import BaseModel, Field
+
+class Price(BaseModel):
+    price: Decimal = Field(..., ge=0, le=10, multiple_of=Decimal('0.25'), decimal_places=2)
+
+result = fake(Price)
+print(result)
+```
+
+```console
+{'price': Decimal('5.25')}
+```
+
+Note: `float` results respect floating-point precision and may show small rounding differences. `Decimal` values will be exact multiples when using `Decimal`-typed `multiple_of` values.
 
 ## Integer Types
 

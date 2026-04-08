@@ -1,5 +1,5 @@
 import string
-from decimal import Decimal
+from decimal import Decimal, ROUND_CEILING, ROUND_FLOOR
 from pyfake.core.context import Context
 from typing import Optional
 from pyfake.exceptions import InvalidConstraints
@@ -9,6 +9,7 @@ TODO:
 Argument error for invalid Field args, e.g.,
 - lt < gt
 - le < ge
+- multiple_of > (lt - gt) or multiple_of > (le - ge)
 """
 
 
@@ -32,15 +33,20 @@ def generate_int(
 
     # Handling multiple_of within the range
     if multiple_of is not None:
-        # Finding the first multiple of multiple_of within the range
-        start = ((min_value + multiple_of - 1) // multiple_of) * multiple_of
+
+        mult = int(multiple_of)
+        if mult <= 0:
+            raise InvalidConstraints("multiple_of must be a positive integer")
+
+        k_start = -(-min_value // mult)
+        start = k_start * mult
+
         if start > max_value:
             raise InvalidConstraints("No valid integer can be generated with the given constraints.")
-        # Finding the number of multiples of multiple_of within the range
-        count = ((max_value - start) // multiple_of) + 1
-        # Randomly selecting one of the multiples
+
+        count = ((max_value - start) // mult) + 1
         random_multiple = context.random.randint(0, count - 1)
-        return start + random_multiple * multiple_of
+        return start + random_multiple * mult
 
     return context.random.randint(min_value, max_value)
 
@@ -88,12 +94,22 @@ def generate_float(
 
     num = 0.0
     if multiple_of is not None:
-        start = ((min_value + multiple_of - 1) // multiple_of) * multiple_of
-        if start > max_value:
+        min_dec = Decimal(str(min_value))
+        max_dec = Decimal(str(max_value))
+        mult_dec = Decimal(str(multiple_of))
+
+        if mult_dec == 0:
+            raise InvalidConstraints("multiple_of cannot be zero")
+
+        k_start = (min_dec / mult_dec).to_integral_value(rounding=ROUND_CEILING)
+        start = k_start * mult_dec
+        if start > max_dec:
             raise InvalidConstraints("No valid float can be generated with the given constraints.")
-        count = int((max_value - start) // multiple_of) + 1
+
+        k_count = ((max_dec - start) / mult_dec).to_integral_value(rounding=ROUND_FLOOR)
+        count = int(k_count) + 1
         random_multiple = context.random.randint(0, count - 1)
-        num = start + random_multiple * multiple_of
+        num = float(start + Decimal(random_multiple) * mult_dec)
     else:
         num = context.random.uniform(min_value, max_value)
 
@@ -118,19 +134,32 @@ def generate_decimal(
     context: Optional[Context] = None,
     **kwargs,
 ) -> Decimal:
-    # TODO: Multiple of multiple_of
-
     min_value = ge if ge is not None else (gt + 0.1 if gt is not None else 0.0)
     max_value = le if le is not None else (lt - 0.1 if lt is not None else 100.0)
 
     num = Decimal(0)
     if multiple_of is not None:
-        start = ((min_value + multiple_of - 1) // multiple_of) * multiple_of
-        if start > max_value:
+        # Use Decimal arithmetic to find the first multiple >= min_value
+        # and the count of multiples <= max_value. This avoids float
+        # rounding errors and incorrect floor/ceil logic.
+        min_dec = Decimal(str(min_value))
+        max_dec = Decimal(str(max_value))
+        mult_dec = Decimal(str(multiple_of))
+
+        if mult_dec == 0:
+            raise InvalidConstraints("multiple_of cannot be zero")
+
+        # Compute the smallest integer k such that k*mult_dec >= min_dec
+        k_start = (min_dec / mult_dec).to_integral_value(rounding=ROUND_CEILING)
+        start = k_start * mult_dec
+
+        if start > max_dec:
             raise InvalidConstraints("No valid decimal can be generated with the given constraints.")
-        count = int((max_value - start) // multiple_of) + 1
+
+        k_count = ((max_dec - start) / mult_dec).to_integral_value(rounding=ROUND_FLOOR)
+        count = int(k_count) + 1
         random_multiple = context.random.randint(0, count - 1)
-        num = Decimal(start + random_multiple * multiple_of)
+        num = start + Decimal(random_multiple) * mult_dec
     else:
         num = context.random.uniform(min_value, max_value)
         num = Decimal(num)

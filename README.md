@@ -4,7 +4,6 @@
   </a>
 </p>
 
-<h1 align="center">Pyfake</h1>
 
 <p align="center">
   <i>A flexible, schema-driven fake data generator built on top of <b>Pydantic v2</b>.</i>
@@ -22,13 +21,41 @@
 ---
 
 <p align="center">
-  <b>Docs</b>: <a href="https://mukhopadhyay.github.io/pyfake/">mukhopadhyay.github.io/pyfake</a> &nbsp;•&nbsp;
-  <b>Source</b>: <a href="https://github.com/Mukhopadhyay/pyfake">github.com/Mukhopadhyay/pyfake</a>
+  <a href="https://mukhopadhyay.github.io/pyfake/"><strong>Documentation</strong></a> &middot; <a href="https://github.com/Mukhopadhyay/pyfake"><strong>Github</strong></a> &middot; <a href="https://pypi.org/project/pyfake/"><strong>PyPI</strong></a>
 </p>
 
----
+
+## ⚡ Quick Example
+
+```python
+from typing import Annotated, List, Set, Literal
+from pydantic import BaseModel, Field
+from pyfake import fake
+from rich import print
+
+
+class Playlist(BaseModel):
+    track_ids: List[int]
+    gengre: Literal["rock", "pop", "jazz"]
+    tags: Annotated[List[str], Field(min_length=2, max_length=5)]
+    unique_ratings: Set[int]
+
+result = fake(Playlist, as_dict=True)
+print(result)
+
+# {'track_ids': [28, 25, 95, 40], 'gengre': 'pop', 'tags': ['CJKHILHXTN', 'qkhhjDJYiV'], 'unique_ratings': {17, 49}}
+```
 
 ## ✨ Why Pyfake?
+
+|Problem| Most fake data generators | Pyfake|
+|-|-|-|
+|Random but not structured| ❌ Generates random data without understanding the schema | ✅ Reads your Pydantic models to produce structured, schema-aware data |
+|Structured but not realistic| ❌ Generates data that fits the schema but isn't realistic (e.g. random strings for names) | ✅ Uses intelligent generators to produce realistic fake data (e.g. names, addresses) |
+|Hard to extend| ❌ Difficult to add custom generators or handle complex types | ✅ Easily extensible with a flexible generator registry and schema resolution system |
+|Support for constraints| ❌ Ignores field constraints like `min_length`, `gt`, `multiple_of` | ✅ Respects all Pydantic field constraints when generating data |
+|Support for python primitive types| ❌ Limited support for complex types like `Decimal`, `UUID`, `datetime` | ✅ Full support for Python primitives, including `Decimal`, `UUID`, `datetime`, and more |
+|Reproducibility| ❌ No built-in way to generate the same fake data across runs | ✅ Supports seeding for reproducible fake data generation |
 
 Most fake data generators are either:
 - ❌ Random but not structured  
@@ -43,29 +70,7 @@ It leverages **Pydantic models** as the single source of truth to generate:
 - ✅ Easily extensible generators  
 - ✅ Strong typing + IDE autocomplete  
 
----
 
-## ⚡ Quick Example
-
-```python
-import uuid
-from typing import Annotated
-from pydantic import BaseModel, Field
-from pyfake import Pyfake
-
-
-class User(BaseModel):
-    id: uuid.UUID = Field(default_factory=uuid.uuid4)
-    name: Annotated[str, Field(min_length=3, max_length=20)]
-    address: Annotated[str, Field(max_length=255)]
-    age: Annotated[int, Field(ge=18)]
-    is_deleted: bool
-
-
-users = Pyfake.from_schema(User, num=5)
-
-print(users)
-```
 
 
 ### 🧠 How It Works
@@ -76,13 +81,6 @@ Pyfake reads your Pydantic schema and:
 * Applies intelligent generators
 * Produces validated fake data
 
-
-```mermaid
-flowchart LR
-    A[Pydantic Model] --> B[Schema Parser]
-    B --> C[Generator Engine]
-    C --> D[Validated Fake Data]
-```
 
 ### Installation
 
