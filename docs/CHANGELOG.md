@@ -9,11 +9,21 @@ hide:
 
 # Changelog 🕓
 
+### `0.0.9` - 2026-04-09
+
+**New Features**
+-  Support for `multiple_of` constraint for numeric fields, allowing users to specify that generated numbers must be multiples of a given value. This is implemented in the generator registry and integrated into the schema resolution process.
+- Improved support for the `decimal_places` option for both `float` and `Decimal` fields, with documentation clarifying floating-point precision nuances.
+
+**Docs**
+- Added comprehensive new documentation pages for datetime and uuid usage, including examples, option explanations, and implementation notes.
+- Updated the README with a clearer quick example, a new feature matrix comparing pyfake to other generators, and a more concise project introduction.
+
 ### `0.0.8` - 2026-04-06
 
 **Major changes**
 
-- Introduced the Fake class as a new, user-friendly API for generating fake data, accessible via the fake singleton in `pyfake/__init__.py`. This class provides methods for generating data as dicts, models, or JSON, and supports seeding for reproducibility. (`pyfake/core/api.py`, `pyfake/__init__.py`)
+- Introduced the Fake class as a new, user-friendly API for generating fake data (`from pyfake import fake`), accessible via the fake singleton in `pyfake/__init__.py`. This class provides methods for generating data as dicts, models, or JSON, and supports seeding for reproducibility. (`pyfake/core/api.py`, `pyfake/__init__.py`)
   
 **New Features**
 
