@@ -4,14 +4,6 @@ from pyfake.core.context import Context
 from typing import Optional
 from pyfake.exceptions import InvalidConstraints
 
-"""
-TODO:
-Argument error for invalid Field args, e.g.,
-- lt < gt
-- le < ge
-- multiple_of > (lt - gt) or multiple_of > (le - ge)
-"""
-
 
 def generate_none(*args, **kwargs):
     return None

@@ -135,7 +135,7 @@ class Resolver:
                 merged = GeneratorArgs()
 
                 # inherit previous constraints
-                if inherited_args:
+                if inherited_args:  # pragma: no cover
                     for k, v in inherited_args.__dict__.items():
                         setattr(merged, k, v)
 

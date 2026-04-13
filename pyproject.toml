@@ -41,11 +41,14 @@ markers = [
     "boolean: All boolean related tests, generator + pydantic integration.",
     "string: All string related tests, generator + pydantic integration.",
     "float: All float related tests, generator + pydantic integration.",
+    "decimal: All decimal related tests, generator + pydantic integration.",
     "uuid: All UUID related tests, generator + pydantic integration.",
     "datetime: All datetime related tests, generator + pydantic integration.",
     "pyfake: All pyfake core generator tests.",
     "api: Tests for the main `Pyfake` class",
     "registry: All pyfake registry GeneratorRegistry() related tests.",
+    "exceptions: Tests for pyfake exception classes.",
+    "complex: Tests for complex types (list, set, tuple, dict, enum, literal, nested models).",
 ]
 
 [tool.coverage.run]

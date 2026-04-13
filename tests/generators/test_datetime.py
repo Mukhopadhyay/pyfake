@@ -6,7 +6,7 @@ from pyfake.generators import datetime as gen_dt
 
 
 @pytest.mark.datatypes
-@pytest.mark.xfail
+# @pytest.mark.xfail
 @pytest.mark.datetime
 class TestGenerateDate:
 
@@ -57,7 +57,7 @@ class TestGenerateDate:
 
 
 @pytest.mark.datatypes
-@pytest.mark.xfail
+# @pytest.mark.xfail
 @pytest.mark.datetime
 class TestGenerateDatetime:
 
@@ -112,7 +112,7 @@ class TestGenerateDatetime:
 
 @pytest.mark.datatypes
 @pytest.mark.datetime
-@pytest.mark.xfail
+# @pytest.mark.xfail
 class TestGenerateTime:
     def test_context_optional_returns_time(self):
         # The implementation now defaults a Context when none is provided
@@ -165,3 +165,19 @@ class TestGenerateTime:
         lt = dt_time(12, 0, 0)
         with pytest.raises(ValueError):
             gen_dt.generate_time(gt=gt, lt=lt, context=Context(seed=2))
+
+
+@pytest.mark.datatypes
+@pytest.mark.datetime
+class TestDatetimeContextDefault:
+    """Tests that datetime generators work when context=None (default Context is created)."""
+
+    def test_generate_date_no_context(self):
+        result = gen_dt.generate_date()
+        assert isinstance(result, date)
+        assert date(1970, 1, 1) <= result <= date(2100, 12, 31)
+
+    def test_generate_datetime_no_context(self):
+        result = gen_dt.generate_datetime()
+        assert isinstance(result, datetime)
+        assert datetime(1970, 1, 1) <= result <= datetime(2100, 12, 31, 23, 59, 59)
