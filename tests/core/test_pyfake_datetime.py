@@ -7,7 +7,7 @@ from datetime import date, datetime, time
 
 @pytest.mark.datatypes
 @pytest.mark.datetime
-@pytest.mark.xfail
+# @pytest.mark.xfail
 class TestPyfakeDateTimeGeneration:
 
     class StressTestDateModel(BaseModel):

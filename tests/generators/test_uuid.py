@@ -97,3 +97,21 @@ class TestGenerateUUIDs:
         result = pyfake_uuid.generate_uuid8(context=context)
         assert isinstance(result, str)
         assert uuid.UUID(result).version == 8
+
+    def test_generate_uuid3_namespace_none_uses_default(self):
+        context = Context(seed=0)
+        result = pyfake_uuid.generate_uuid3(namespace=None, context=context)
+        assert isinstance(result, str)
+        assert uuid.UUID(result).version == 3
+
+    def test_generate_uuid5_namespace_none_uses_default(self):
+        context = Context(seed=0)
+        result = pyfake_uuid.generate_uuid5(namespace=None, context=context)
+        assert isinstance(result, str)
+        assert uuid.UUID(result).version == 5
+
+    def test_generate_uuid8_namespace_none_uses_default(self):
+        context = Context(seed=0)
+        result = pyfake_uuid.generate_uuid8(namespace=None, context=context)
+        assert isinstance(result, str)
+        assert uuid.UUID(result).version == 8
