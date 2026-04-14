@@ -145,6 +145,3 @@ The default `generate_str` function (see `pyfake/generators/primitives.py`) curr
 
 If you rely on regex-based outputs, consider writing a small custom generator that uses `rstr` or similar libraries, or open an enhancement request.
 
----
-
-If you'd like, I can: add digit/punctuation support examples, implement basic `pattern` support, or add a short snippet showing a custom generator. Which would you prefer next?

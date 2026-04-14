@@ -24,7 +24,12 @@ nav = [
         { "Booleans" = "usage/boolean.md" },
         { "UUID" = "usage/uuid.md" },
         { "Datetime" = "usage/datetime.md" },
-        { "Examples" = "usage/examples.md" },
+        { "Lists" = "usage/lists.md" },
+        { "Dicts" = "usage/dicts.md" },
+        { "Tuples" = "usage/tuples.md" },
+        { "Sets" = "usage/sets.md" },
+        { "Literals and Enums" = "usage/enums-literals.md" },
+        # { "Examples" = "usage/examples.md" },
     ] },
     { "Reference" = [
         { "How It Works" = "internals/how-it-works.md" },
@@ -295,8 +300,8 @@ logo = "assets/logo-only.png"
 # - https://zensical.org/docs/setup/logo-and-icons
 # - https://github.com/zensical/ui/tree/master/dist/.icons
 # ----------------------------------------------------------------------------
-# [project.theme.icon]
-# logo = "lucide/smile"
+[project.theme.icon]
+logo = "assets/logo-only.png"
 
 # ----------------------------------------------------------------------------
 # In the "font" subsection you can configure the fonts used. By default, fonts

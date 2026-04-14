@@ -162,7 +162,4 @@ Notes:
 - `uuid3`/`uuid5` currently use `uuid.NAMESPACE_DNS` with a random name under the hood; there is no exposed `namespace` generator-arg in the current `GeneratorArgs`, so custom namespaces or deterministic name inputs are not supported via field metadata today.
 - If you need a specific namespace, deterministic name-based UUIDs, or different return types, register a small custom generator with the registry.
 
-<!-- ## Custom generators
-If you need more control (for example, deterministic name-based UUIDs or custom namespace handling), write a small custom generator that accepts the required arguments and register it with the registry.
 
-If you'd like, I can add an example custom generator or demonstrate how to register one. Which would you prefer? -->
