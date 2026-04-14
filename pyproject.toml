@@ -13,11 +13,21 @@ authors = [
 classifiers = [
     "Intended Audience :: Information Technology",
     "Operating System :: OS Independent",
-    "Programming Language :: Python :: 3",
     "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Framework :: Pydantic",
     "Framework :: Pydantic :: 2",
     "Intended Audience :: Developers",
+    "Topic :: Software Development",
+    "Topic :: Software Development :: Libraries",
+    "Topic :: Software Development :: Testing",
+    "Topic :: Software Development :: Data",
 ]
 keywords = [
     "pydantic",
@@ -26,6 +36,13 @@ keywords = [
     "data validation",
     "data modeling",
 ]
+
+[project.urls]
+Homepage = "https://github.com/Mukhopadhyay/pyfake"
+Documentation = "https://mukhopadhyay.is-a.dev/pyfake/"
+Repository = "https://github.com/Mukhopadhyay/pyfake"
+Issues = "https://github.com/Mukhopadhyay/pyfake/issues"
+Changelog = "https://mukhopadhyay.is-a.dev/pyfake/CHANGELOG/"
 
 [dependency-groups]
 dev = ["marimo>=0.17.6", "pytest>=8.4.2", "pytest-cov>=7.0.0", "rich>=14.3.1"]

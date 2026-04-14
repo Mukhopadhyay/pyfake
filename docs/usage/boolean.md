@@ -131,4 +131,3 @@ print(result)
 ## Custom generators
 If you need more control (for example, a weighted probability), write a small custom generator that accepts a `prob_true` argument and registers it with the registry.
 
-If you'd like, I can add an example custom generator or implement weighted/biased boolean support. Which would you prefer?

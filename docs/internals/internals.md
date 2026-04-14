@@ -171,4 +171,4 @@ fake.generate(num=5)  # same seed → different values (stream continues)
 ```
 
 !!! note
-   Each `Pyfake` instance maintains its own `Context`. The random stream advances with each call to `generate`, so successive calls on the same instance produce different (but still deterministic) results.
+      Each `Pyfake` instance maintains its own `Context`. The random stream advances with each call to `generate`, so successive calls on the same instance produce different (but still deterministic) results.
