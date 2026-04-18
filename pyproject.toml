@@ -1,6 +1,6 @@
 [project]
 name = "pyfake"
-version = "0.0.9"
+version = "0.0.10"
 description = "A fake data generator that is pydantic compatible."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -79,3 +79,6 @@ skip_empty = true
 [tool.setuptools.packages.find]
 include = ["pyfake*"]
 exclude = ["notebooks*", "site*", "tests*"]
+
+[tool.setuptools.package-data]
+pyfake = ["py.typed"]
