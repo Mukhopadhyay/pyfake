@@ -9,6 +9,12 @@ hide:
 
 # Changelog 🕓
 
+### `0.0.10` - 2026-04-19
+
+**Minor changes**
+
+* **Packaging and type hinting**: Added a `py.typed` marker to the package data for pyfake in pyproject.toml, indicating that the package includes type hints for static type checkers.
+
 ### `0.0.9` - 2026-04-09
 
 **New Features**
