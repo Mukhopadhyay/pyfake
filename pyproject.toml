@@ -24,10 +24,6 @@ classifiers = [
     "Framework :: Pydantic",
     "Framework :: Pydantic :: 2",
     "Intended Audience :: Developers",
-    "Topic :: Software Development",
-    "Topic :: Software Development :: Libraries",
-    "Topic :: Software Development :: Testing",
-    "Topic :: Software Development :: Data",
 ]
 keywords = [
     "pydantic",
