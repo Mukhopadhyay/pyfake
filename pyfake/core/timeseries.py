@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Literal, TypedDict
+from typing import Literal, TypedDict, Optional, Union, List
 
 trend_literals = Literal["upward", "downward", "flat"]
 
@@ -43,17 +43,21 @@ class Timeseries:
 
     def __init__(
         self,
-        start: datetime,
+        start: datetime | str,
         periods: int,
         freq: freq_literals,
-        end: datetime | None = None,
-        seed: int | None = None,
+        end: Optional[datetime | str] = None,
+        seed: Optional[int] = None,
         baseline: float = 100.0,
-        trend: trend_literals | TrendDict | None = None,
-        seasonality: freq_literals | SeasonalityDict | None = None,
-        noise: float | dict | None = None,
-        annomalies: AnomalyDict | None = None,
-        missing: float | MissingDict | None = None,
+        trend: Optional[Union[trend_literals, TrendDict]] = None,
+        seasonality: Optional[
+            Union[freq_literals, SeasonalityDict, List[Union[freq_literals, SeasonalityDict]]]
+        ] = None,
+        noise: Optional[Union[float, NoiceDict]] = None,
+        annomalies: Optional[AnomalyDict] = None,
+        missing: Optional[Union[float, MissingDict]] = None,
+        min_value: Optional[float] = None,
+        max_value: Optional[float] = None,
     ):
         pass
 

@@ -4,7 +4,11 @@ version = "0.0.10"
 description = "A fake data generator that is pydantic compatible."
 readme = "README.md"
 requires-python = ">=3.10"
-dependencies = ["pydantic[email,timezone]>=2.12.5"]
+dependencies = [
+    "numpy>=2.2.6",
+    "pandas>=2.3.3",
+    "pydantic[email,timezone]>=2.12.5",
+]
 # license = { text = "MIT" }
 license = { file = "LICENSE" }
 authors = [
