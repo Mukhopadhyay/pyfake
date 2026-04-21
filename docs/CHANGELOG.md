@@ -9,11 +9,29 @@ hide:
 
 # Changelog 🕓
 
+### `0.0.11` - 2026-06-21
+
+**Major changes**
+
+* Added a new **Timeseries** class to pyfake.core.timeseries, supporting generation of time series data with configurable start, periods, frequency, baseline, trend (`upward`, `downward`, `flat`), and reproducibility via seed. The implementation is extensible for future features like noise, seasonality, anomalies, and missing data, but currently implements only baseline and linear trend. (`pyfake/core/timeseries.py`)
+
+* The project now depends on [`Numpy`](https://numpy.org/) for internal calculations, and the documentation has been updated to reflect this change. The installation verification instructions have been removed from the docs since Numpy is now a required dependency. (`docs/index.md`)
+
+**Docs**
+
+* Added a comprehensive **"Getting Started"** guide for the new timeseries feature, including API usage, code examples, limitations, and tips for reproducibility. (`docs/timeseries/getting-started.md`)
+* Updated the main documentation to clarify that Numpy is now a requirement and removed outdated installation verification instructions. (`docs/index.md`)
+* Added a reference to the **"how it works"** section for further reading. (`docs/index.md`)
+
+---
+
 ### `0.0.10` - 2026-04-19
 
 **Minor changes**
 
 * **Packaging and type hinting**: Added a `py.typed` marker to the package data for pyfake in pyproject.toml, indicating that the package includes type hints for static type checkers.
+
+---
 
 ### `0.0.9` - 2026-04-09
 
@@ -24,6 +42,8 @@ hide:
 **Docs**
 - Added comprehensive new documentation pages for datetime and uuid usage, including examples, option explanations, and implementation notes.
 - Updated the README with a clearer quick example, a new feature matrix comparing pyfake to other generators, and a more concise project introduction.
+
+---
 
 ### `0.0.8` - 2026-04-06
 
@@ -39,6 +59,8 @@ hide:
 **Docs**
 - Added comprehensive usage guides for [booleans](https://mukhopadhyay.github.io/pyfake/usage/boolean/), [numbers](https://mukhopadhyay.github.io/pyfake/usage/numbers/) (including constraints and Decimal), and [strings](https://mukhopadhyay.github.io/pyfake/usage/strings/), with examples and notes on supported/unsupported features.
 - Updated the main [README.md](https://github.com/Mukhopadhyay/pyfake/blob/master/README.md) with new documentation links and fixed minor formatting issues.
+
+---
 
 ### `0.0.7` - 2026-04-02
 
