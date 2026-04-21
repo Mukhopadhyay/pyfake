@@ -56,8 +56,8 @@ class Timeseries:
         seasonality: Optional[
             Union[freq_literals, SeasonalityDict, List[Union[freq_literals, SeasonalityDict]]]
         ] = None,
+        anomalies: Optional[AnomalyDict] = None,
         # end: Optional[datetime | str] = None,
-        # anomalies: Optional[AnomalyDict] = None,
         # missing: Optional[Union[float, MissingDict]] = None,
         # min_value: Optional[float] = None,
         # max_value: Optional[float] = None,
@@ -87,9 +87,9 @@ class Timeseries:
         self.trend = trend
         self.noise = noise
         self.seasonality = seasonality
+        self.anomalies = anomalies
 
         # self.end = end
-        # self.anomalies = anomalies
         # self.missing = missing
         # self.min_value = min_value
         # self.max_value = max_value
@@ -186,8 +186,28 @@ class Timeseries:
 
         return y
 
-    # def _inject_anomalies(self):
-    #     pass
+    def _inject_anomalies(self, y: np.ndarray) -> np.ndarray:
+        if not self.anomalies:
+            return y
+        count = self.anomalies.get("count")
+        if not count:
+            percentage = self.anomalies.get("percentage", 0)
+            count = int(self.periods * percentage)
+
+        idx = np.random.choice(self.periods, count, replace=False)
+        magnitude = self.anomalies["magnitude"]
+        anomaly_type = self.anomalies["type"]
+
+        if anomaly_type == "spike":
+            y[idx] *= 1 + magnitude
+        elif anomaly_type == "dip":
+            y[idx] *= 1 - magnitude
+        elif anomaly_type == "shift":
+            y[idx:] += magnitude
+        elif anomaly_type == "outlier":
+            y[idx] = y[idx] + np.random.normal(0, magnitude * 10, size=count)
+
+        return y
 
     # def _inject_missing(self):
     #     pass
@@ -203,4 +223,5 @@ class Timeseries:
         y = self._apply_trend(y)
         y = self._apply_noise(y)
         y = self._apply_seasonality(y)
+        y = self._inject_anomalies(y)
         return list(zip(t, y))
