@@ -44,7 +44,13 @@ Issues = "https://github.com/Mukhopadhyay/pyfake/issues"
 Changelog = "https://mukhopadhyay.is-a.dev/pyfake/CHANGELOG/"
 
 [dependency-groups]
-dev = ["marimo>=0.17.6", "pytest>=8.4.2", "pytest-cov>=7.0.0", "rich>=14.3.1"]
+dev = [
+    "marimo>=0.17.6",
+    "matplotlib>=3.10.8",
+    "pytest>=8.4.2",
+    "pytest-cov>=7.0.0",
+    "rich>=14.3.1",
+]
 docs = ["termynal>=0.14.0", "zensical>=0.0.27"]
 
 

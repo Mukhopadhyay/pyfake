@@ -1,7 +1,8 @@
 import numpy as np
+from pydantic import Field
 from datetime import timedelta
 from datetime import datetime
-from typing import Literal, TypedDict, Optional, Union, List
+from typing import Literal, TypedDict, Optional, Union, List, Annotated
 
 trend_literals = Literal["upward", "downward", "flat"]
 
@@ -19,7 +20,7 @@ class SeasonalityDict(TypedDict):
     amplitude: float
 
 
-class NoiceDict(TypedDict):
+class NoiseDict(TypedDict):
     distribution: Literal["normal", "uniform"]
     mean: float
     std: float
@@ -51,16 +52,26 @@ class Timeseries:
         trend: Optional[Union[trend_literals, TrendDict]] = "upward",
         baseline: float = 100.0,
         seed: Optional[int] = None,
+        noise: Optional[Union[float, NoiseDict]] = None,
         # end: Optional[datetime | str] = None,
         # seasonality: Optional[
         #     Union[freq_literals, SeasonalityDict, List[Union[freq_literals, SeasonalityDict]]]
         # ] = None,
-        # noise: Optional[Union[float, NoiceDict]] = None,
         # anomalies: Optional[AnomalyDict] = None,
         # missing: Optional[Union[float, MissingDict]] = None,
         # min_value: Optional[float] = None,
         # max_value: Optional[float] = None,
     ):
+        """
+        # Timeseries Data Generator
+        ### Noise
+        - If noise is a single number, it is interpreted as the standard deviation of Gaussian noise.
+        - If noise is a NoiseDict, it can specify either a normal or uniform distribution for the noise.
+            - For **normal** distribution, `mean` and `std` parameters are used.
+            - For **uniform** distribution, `mean` and `std` parameters define the range of the uniform distribution
+                as [mean - std, mean + std].
+
+        """
 
         if isinstance(start, str):
             start = datetime.fromisoformat(start)
@@ -74,10 +85,10 @@ class Timeseries:
             trend = "upward"
 
         self.trend = trend
+        self.noise = noise
 
         # self.end = end
         # self.seasonality = seasonality
-        # self.noise = noise
         # self.anomalies = anomalies
         # self.missing = missing
         # self.min_value = min_value
@@ -117,10 +128,35 @@ class Timeseries:
 
         return y + slope * t
 
-    # def _apply_seasonality(self):
-    #     pass
+    def _apply_noise(self, y: np.ndarray) -> np.ndarray:
+        if not self.noise:
+            return y
 
-    # def _apply_noise(self):
+        if isinstance(self.noise, (int, float)):
+            # Generate simple Gaussian noise if noise is provided
+            # as a single number (std deviation)
+            scale = self.noise
+            noise = np.random.normal(0, scale=scale, size=self.periods)
+
+        else:
+            if self.noise["distribution"] == "normal":
+                noise = np.random.normal(
+                    loc=self.noise.get("mean", 0),
+                    scale=self.noise.get("std", 1),
+                    size=self.periods,
+                )
+            else:
+                std = self.noise.get("std", 1)
+                mean = self.noise.get("mean", 0)
+                noise = np.random.uniform(
+                    low=mean - std,
+                    high=mean + std,
+                    size=self.periods,
+                )
+
+        return y + noise
+
+    # def _apply_seasonality(self):
     #     pass
 
     # def _inject_anomalies(self):
@@ -138,4 +174,5 @@ class Timeseries:
         t = self._generate_time_index()
         y = self._generate_baseline()
         y = self._apply_trend(y)
+        y = self._apply_noise(y)
         return list(zip(t, y))
