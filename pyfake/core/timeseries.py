@@ -70,12 +70,10 @@ class Timeseries:
         self.baseline = baseline
         self.seed = seed
 
-        print("Trend input:", trend)
         if trend is None:
             trend = "upward"
 
         self.trend = trend
-        print(self.trend)
 
         # self.end = end
         # self.seasonality = seasonality
