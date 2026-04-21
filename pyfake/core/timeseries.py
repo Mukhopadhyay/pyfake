@@ -37,11 +37,6 @@ class AnomalyDict(TypedDict):
     seasonality: freq_literals | None
 
 
-class MissingDict(TypedDict):
-    probability: float
-    pattern: Literal["random", "block", "seasonal"]
-
-
 class Timeseries:
 
     def __init__(
@@ -57,8 +52,8 @@ class Timeseries:
             Union[freq_literals, SeasonalityDict, List[Union[freq_literals, SeasonalityDict]]]
         ] = None,
         anomalies: Optional[AnomalyDict] = None,
+        missing: Optional[float] = None,
         # end: Optional[datetime | str] = None,
-        # missing: Optional[Union[float, MissingDict]] = None,
         # min_value: Optional[float] = None,
         # max_value: Optional[float] = None,
     ):
@@ -88,9 +83,9 @@ class Timeseries:
         self.noise = noise
         self.seasonality = seasonality
         self.anomalies = anomalies
+        self.missing = missing
 
         # self.end = end
-        # self.missing = missing
         # self.min_value = min_value
         # self.max_value = max_value
 
@@ -209,8 +204,15 @@ class Timeseries:
 
         return y
 
-    # def _inject_missing(self):
-    #     pass
+    def _inject_missing(self, y: np.ndarray) -> np.ndarray:
+        if not self.missing:
+            return y
+
+        prob = self.missing
+
+        missing_idx = np.random.rand(self.periods) < prob
+        y[missing_idx] = np.nan
+        return y
 
     def _set_seed(self):
         if self.seed is not None:
