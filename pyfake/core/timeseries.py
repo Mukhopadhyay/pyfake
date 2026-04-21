@@ -53,10 +53,10 @@ class Timeseries:
         baseline: float = 100.0,
         seed: Optional[int] = None,
         noise: Optional[Union[float, NoiseDict]] = None,
+        seasonality: Optional[
+            Union[freq_literals, SeasonalityDict, List[Union[freq_literals, SeasonalityDict]]]
+        ] = None,
         # end: Optional[datetime | str] = None,
-        # seasonality: Optional[
-        #     Union[freq_literals, SeasonalityDict, List[Union[freq_literals, SeasonalityDict]]]
-        # ] = None,
         # anomalies: Optional[AnomalyDict] = None,
         # missing: Optional[Union[float, MissingDict]] = None,
         # min_value: Optional[float] = None,
@@ -86,9 +86,9 @@ class Timeseries:
 
         self.trend = trend
         self.noise = noise
+        self.seasonality = seasonality
 
         # self.end = end
-        # self.seasonality = seasonality
         # self.anomalies = anomalies
         # self.missing = missing
         # self.min_value = min_value
@@ -156,8 +156,35 @@ class Timeseries:
 
         return y + noise
 
-    # def _apply_seasonality(self):
-    #     pass
+    def _apply_seasonality(self, y: np.ndarray) -> np.ndarray:
+        if not self.seasonality:
+            return y
+
+        season_map = {
+            "minute": 60,
+            "hour": 24,
+            "day": 7,
+            "week": 52,
+            "month": 12,
+        }
+
+        seasonality = self.seasonality
+        if not isinstance(seasonality, list):
+            seasonality = [seasonality]
+
+        t = np.arange(self.periods)
+
+        for s in seasonality:
+            if isinstance(s, str):
+                period = season_map[s]
+                amplitude = 10
+            else:
+                period = season_map[s["type"]]
+                amplitude = s["amplitude"]
+
+            y += amplitude * np.sin(2 * np.pi * t / period)
+
+        return y
 
     # def _inject_anomalies(self):
     #     pass
@@ -175,4 +202,5 @@ class Timeseries:
         y = self._generate_baseline()
         y = self._apply_trend(y)
         y = self._apply_noise(y)
+        y = self._apply_seasonality(y)
         return list(zip(t, y))
