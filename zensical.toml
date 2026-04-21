@@ -18,18 +18,21 @@ repo = "fontawesome/brands/github"
 
 nav = [
     { "Get Started" = "index.md" },
-    { "Usage" = [
-        { "Numbers" = "usage/numbers.md" },
-        { "Strings" = "usage/strings.md" },
-        { "Booleans" = "usage/boolean.md" },
-        { "UUID" = "usage/uuid.md" },
-        { "Datetime" = "usage/datetime.md" },
-        { "Lists" = "usage/lists.md" },
-        { "Dicts" = "usage/dicts.md" },
-        { "Tuples" = "usage/tuples.md" },
-        { "Sets" = "usage/sets.md" },
-        { "Literals and Enums" = "usage/enums-literals.md" },
-        # { "Examples" = "usage/examples.md" },
+    { "Pydantic" = [
+        { "Numbers" = "pydantic/numbers.md" },
+        { "Strings" = "pydantic/strings.md" },
+        { "Booleans" = "pydantic/boolean.md" },
+        { "UUID" = "pydantic/uuid.md" },
+        { "Datetime" = "pydantic/datetime.md" },
+        { "Lists" = "pydantic/lists.md" },
+        { "Dicts" = "pydantic/dicts.md" },
+        { "Tuples" = "pydantic/tuples.md" },
+        { "Sets" = "pydantic/sets.md" },
+        { "Literals and Enums" = "pydantic/enums-literals.md" },
+        # { "Examples" = "pydantic/examples.md" },
+    ] },
+    { "Timeseries" = [
+        { "Getting Started" = "timeseries/getting-started.md" },
     ] },
     { "Reference" = [
         { "How It Works" = "internals/how-it-works.md" },

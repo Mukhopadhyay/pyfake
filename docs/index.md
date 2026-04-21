@@ -159,23 +159,7 @@ $ python example.py
 
 - Python **3.8+**
 - Pydantic **v2+**
-
-
-### Verify Installation
-
-After installing, you can verify everything is working correctly:
-
-```python
-import pyfake
-
-print(pyfake.__version__)
-```
-
-If no errors are raised, you're good to go 🚀
-
-
-!!! note "From source"
-    **pyfake** can be downloaded directly from github as well
+- Numpy
 
 ## How It Works
 
@@ -192,5 +176,4 @@ flowchart LR
     C --> D[Validated Fake Data]
 ```
 
-
-
+Read more about the design and implementation in the [how it works](internals/how-it-works.md) section.
