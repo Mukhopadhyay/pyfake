@@ -48,10 +48,10 @@ class Timeseries:
         start: datetime | str,
         periods: int,
         freq: freq_literals,
+        trend: Optional[Union[trend_literals, TrendDict]] = "upward",
         baseline: float = 100.0,
         seed: Optional[int] = None,
         # end: Optional[datetime | str] = None,
-        # trend: Optional[Union[trend_literals, TrendDict]] = None,
         # seasonality: Optional[
         #     Union[freq_literals, SeasonalityDict, List[Union[freq_literals, SeasonalityDict]]]
         # ] = None,
@@ -70,8 +70,14 @@ class Timeseries:
         self.baseline = baseline
         self.seed = seed
 
+        print("Trend input:", trend)
+        if trend is None:
+            trend = "upward"
+
+        self.trend = trend
+        print(self.trend)
+
         # self.end = end
-        # self.trend = trend
         # self.seasonality = seasonality
         # self.noise = noise
         # self.anomalies = anomalies
@@ -96,8 +102,22 @@ class Timeseries:
         """
         return np.full(self.periods, self.baseline, dtype=float)
 
-    # def _apply_trend(self):
-    #     pass
+    def _apply_trend(self, y: np.ndarray) -> np.ndarray:
+
+        t = np.arange(self.periods)
+
+        if isinstance(self.trend, str):
+            slope = {"upward": 0.1, "downward": -0.1, "flat": 0}[self.trend]
+        else:
+            base = self.trend["slope"]
+            if self.trend["type"] == "downward":
+                slope = -abs(base)
+            elif self.trend["type"] == "upward":
+                slope = abs(base)
+            else:
+                slope = 0
+
+        return y + slope * t
 
     # def _apply_seasonality(self):
     #     pass
@@ -119,4 +139,5 @@ class Timeseries:
         self._set_seed()
         t = self._generate_time_index()
         y = self._generate_baseline()
+        y = self._apply_trend(y)
         return list(zip(t, y))
