@@ -31,7 +31,7 @@ nav = [
         { "Literals and Enums" = "pydantic/enums-literals.md" },
         # { "Examples" = "pydantic/examples.md" },
     ] },
-    { "Timeseries" = [
+    { "Timeseries 📈" = [
         { "Getting Started" = "timeseries/getting-started.md" },
     ] },
     { "Reference" = [

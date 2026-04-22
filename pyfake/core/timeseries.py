@@ -1,7 +1,8 @@
 import numpy as np
+from pydantic import Field
 from datetime import timedelta
 from datetime import datetime
-from typing import Literal, TypedDict, Optional, Union, List
+from typing import Literal, TypedDict, Optional, Union, List, Annotated
 
 trend_literals = Literal["upward", "downward", "flat"]
 
@@ -19,7 +20,7 @@ class SeasonalityDict(TypedDict):
     amplitude: float
 
 
-class NoiceDict(TypedDict):
+class NoiseDict(TypedDict):
     distribution: Literal["normal", "uniform"]
     mean: float
     std: float
@@ -36,11 +37,6 @@ class AnomalyDict(TypedDict):
     seasonality: freq_literals | None
 
 
-class MissingDict(TypedDict):
-    probability: float
-    pattern: Literal["random", "block", "seasonal"]
-
-
 class Timeseries:
 
     def __init__(
@@ -51,16 +47,26 @@ class Timeseries:
         trend: Optional[Union[trend_literals, TrendDict]] = "upward",
         baseline: float = 100.0,
         seed: Optional[int] = None,
+        noise: Optional[Union[float, NoiseDict]] = None,
+        seasonality: Optional[
+            Union[freq_literals, SeasonalityDict, List[Union[freq_literals, SeasonalityDict]]]
+        ] = None,
+        anomalies: Optional[AnomalyDict] = None,
+        missing: Optional[float] = None,
+        min_value: Optional[float] = None,
+        max_value: Optional[float] = None,
         # end: Optional[datetime | str] = None,
-        # seasonality: Optional[
-        #     Union[freq_literals, SeasonalityDict, List[Union[freq_literals, SeasonalityDict]]]
-        # ] = None,
-        # noise: Optional[Union[float, NoiceDict]] = None,
-        # anomalies: Optional[AnomalyDict] = None,
-        # missing: Optional[Union[float, MissingDict]] = None,
-        # min_value: Optional[float] = None,
-        # max_value: Optional[float] = None,
     ):
+        """
+        # Timeseries Data Generator
+        ### Noise
+        - If noise is a single number, it is interpreted as the standard deviation of Gaussian noise.
+        - If noise is a NoiseDict, it can specify either a normal or uniform distribution for the noise.
+            - For **normal** distribution, `mean` and `std` parameters are used.
+            - For **uniform** distribution, `mean` and `std` parameters define the range of the uniform distribution
+                as [mean - std, mean + std].
+
+        """
 
         if isinstance(start, str):
             start = datetime.fromisoformat(start)
@@ -74,14 +80,15 @@ class Timeseries:
             trend = "upward"
 
         self.trend = trend
+        self.noise = noise
+        self.seasonality = seasonality
+        self.anomalies = anomalies
+        self.missing = missing
+
+        self.min_value = min_value
+        self.max_value = max_value
 
         # self.end = end
-        # self.seasonality = seasonality
-        # self.noise = noise
-        # self.anomalies = anomalies
-        # self.missing = missing
-        # self.min_value = min_value
-        # self.max_value = max_value
 
     def _generate_time_index(self):
         delta_map = {
@@ -117,25 +124,120 @@ class Timeseries:
 
         return y + slope * t
 
-    # def _apply_seasonality(self):
-    #     pass
+    def _apply_noise(self, y: np.ndarray) -> np.ndarray:
+        if not self.noise:
+            return y
 
-    # def _apply_noise(self):
-    #     pass
+        if isinstance(self.noise, (int, float)):
+            # Generate simple Gaussian noise if noise is provided
+            # as a single number (std deviation)
+            scale = self.noise
+            noise = np.random.normal(0, scale=scale, size=self.periods)
 
-    # def _inject_anomalies(self):
-    #     pass
+        else:
+            if self.noise["distribution"] == "normal":
+                noise = np.random.normal(
+                    loc=self.noise.get("mean", 0),
+                    scale=self.noise.get("std", 1),
+                    size=self.periods,
+                )
+            else:
+                std = self.noise.get("std", 1)
+                mean = self.noise.get("mean", 0)
+                noise = np.random.uniform(
+                    low=mean - std,
+                    high=mean + std,
+                    size=self.periods,
+                )
 
-    # def _inject_missing(self):
-    #     pass
+        return y + noise
+
+    def _apply_seasonality(self, y: np.ndarray) -> np.ndarray:
+        if not self.seasonality:
+            return y
+
+        season_map = {
+            "minute": 60,
+            "hour": 24,
+            "day": 7,
+            "week": 52,
+            "month": 12,
+        }
+
+        seasonality = self.seasonality
+        if not isinstance(seasonality, list):
+            seasonality = [seasonality]
+
+        t = np.arange(self.periods)
+
+        for s in seasonality:
+            if isinstance(s, str):
+                period = season_map[s]
+                amplitude = 10
+            else:
+                period = season_map[s["type"]]
+                amplitude = s["amplitude"]
+
+            y += amplitude * np.sin(2 * np.pi * t / period)
+
+        return y
+
+    def _inject_anomalies(self, y: np.ndarray) -> np.ndarray:
+        if not self.anomalies:
+            return y
+        count = self.anomalies.get("count")
+        if not count:
+            percentage = self.anomalies.get("percentage", 0)
+            count = int(self.periods * percentage)
+
+        idx = np.random.choice(self.periods, count, replace=False)
+        magnitude = self.anomalies["magnitude"]
+        anomaly_type = self.anomalies["type"]
+
+        if anomaly_type == "spike":
+            y[idx] *= 1 + magnitude
+        elif anomaly_type == "dip":
+            y[idx] *= 1 - magnitude
+        elif anomaly_type == "shift":
+            y[idx:] += magnitude
+        elif anomaly_type == "outlier":
+            y[idx] = y[idx] + np.random.normal(0, magnitude * 10, size=count)
+
+        return y
+
+    def _inject_missing(self, y: np.ndarray) -> np.ndarray:
+        if not self.missing:
+            return y
+
+        prob = self.missing
+
+        missing_idx = np.random.rand(self.periods) < prob
+        y[missing_idx] = np.nan
+        return y
+
+    def _apply_constraints(self, y: np.ndarray) -> np.ndarray:
+        if self.min_value is not None:
+            y = np.maximum(y, self.min_value)
+        if self.max_value is not None:
+            y = np.minimum(y, self.max_value)
+        return y
 
     def _set_seed(self):
         if self.seed is not None:
             np.random.seed(self.seed)
+
+    def _format_output(self, t: List[datetime], y: np.ndarray) -> List[tuple]:
+        return list(zip(t, y))
 
     def generate(self):
         self._set_seed()
         t = self._generate_time_index()
         y = self._generate_baseline()
         y = self._apply_trend(y)
-        return list(zip(t, y))
+        y = self._apply_noise(y)
+        y = self._apply_seasonality(y)
+        y = self._inject_anomalies(y)
+        y = self._inject_missing(y)
+        y = self._apply_constraints(y)
+
+        return self._format_output(t, y)
