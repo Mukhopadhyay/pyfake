@@ -9,6 +9,22 @@ hide:
 
 # Changelog 🕓
 
+### `0.0.12` - 2026-06-23
+
+**Major changes**
+
+* Feature, allowing users to create more realistic and complex time series data. The implementation is designed to be extensible for future enhancements. (`pyfake/core/timeseries.py`)
+
+* Implemented support for `noise`, `seasonality`, `anomalies`, `missing values`, and value `constraints` in the **`Timeseries`** class. The class now includes methods to inject these features into generated data, and the constructor accepts new parameters for each
+
+**Docs**
+
+* Added detailed documentation for the new timeseries features, including explanations of noise, seasonality, anomalies, missing values, and constraints, along with code examples and usage guidelines. (`docs/timeseries/advanced-features.md`)
+* Replaced mermaid chart with a static image for better presentation
+
+
+
+
 ### `0.0.11` - 2026-06-21
 
 **Major changes**

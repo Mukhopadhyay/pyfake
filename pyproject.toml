@@ -1,6 +1,6 @@
 [project]
 name = "pyfake"
-version = "0.0.11"
+version = "0.0.12"
 description = "A fake data generator that is pydantic compatible."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -31,6 +31,8 @@ keywords = [
     "data generation",
     "data validation",
     "data modeling",
+    "synthetic data",
+    "timeseries data",
 ]
 
 [project.urls]
