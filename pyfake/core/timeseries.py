@@ -53,9 +53,9 @@ class Timeseries:
         ] = None,
         anomalies: Optional[AnomalyDict] = None,
         missing: Optional[float] = None,
+        min_value: Optional[float] = None,
+        max_value: Optional[float] = None,
         # end: Optional[datetime | str] = None,
-        # min_value: Optional[float] = None,
-        # max_value: Optional[float] = None,
     ):
         """
         # Timeseries Data Generator
@@ -85,9 +85,10 @@ class Timeseries:
         self.anomalies = anomalies
         self.missing = missing
 
+        self.min_value = min_value
+        self.max_value = max_value
+
         # self.end = end
-        # self.min_value = min_value
-        # self.max_value = max_value
 
     def _generate_time_index(self):
         delta_map = {
@@ -214,9 +215,19 @@ class Timeseries:
         y[missing_idx] = np.nan
         return y
 
+    def _apply_constraints(self, y: np.ndarray) -> np.ndarray:
+        if self.min_value is not None:
+            y = np.maximum(y, self.min_value)
+        if self.max_value is not None:
+            y = np.minimum(y, self.max_value)
+        return y
+
     def _set_seed(self):
         if self.seed is not None:
             np.random.seed(self.seed)
+
+    def _format_output(self, t: List[datetime], y: np.ndarray) -> List[tuple]:
+        return list(zip(t, y))
 
     def generate(self):
         self._set_seed()
@@ -226,4 +237,7 @@ class Timeseries:
         y = self._apply_noise(y)
         y = self._apply_seasonality(y)
         y = self._inject_anomalies(y)
-        return list(zip(t, y))
+        y = self._inject_missing(y)
+        y = self._apply_constraints(y)
+
+        return self._format_output(t, y)
