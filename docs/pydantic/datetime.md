@@ -194,6 +194,80 @@ If you need JSON strings rather than Python objects use `fake.json(...)`. That h
 serializes the generated output with `json.dumps(..., default=str)`, so dates and
 datetimes are turned into their `str()` representations (e.g. `"2026-04-07 12:34:56"`).
 
+## Timezone-aware datetimes
+
+Pass any [`datetime.tzinfo`](https://docs.python.org/3/library/datetime.html#datetime.tzinfo)
+subclass — including `datetime.timezone` constants and `zoneinfo.ZoneInfo` instances —
+through `json_schema_extra={"timezone": ...}` on a `datetime` field.
+
+```python
+from pyfake import fake
+from pydantic import BaseModel, Field
+from datetime import datetime, timezone
+from typing import Annotated
+from zoneinfo import ZoneInfo
+
+class Event(BaseModel):
+    # stdlib UTC constant
+    utc_ts: Annotated[datetime, Field(..., json_schema_extra={"timezone": timezone.utc})]
+    # IANA timezone via zoneinfo
+    ny_ts: Annotated[datetime, Field(..., json_schema_extra={"timezone": ZoneInfo("America/New_York")})]
+
+result = fake(Event)
+print(result)
+```
+<!-- termynal -->
+
+```console
+{
+  'utc_ts': datetime.datetime(2024, 3, 15, 9, 42, 17, tzinfo=datetime.timezone.utc),
+  'ny_ts': datetime.datetime(2019, 11, 7, 22, 5, 33, tzinfo=zoneinfo.ZoneInfo(key='America/New_York'))
+}
+```
+
+The timezone is stamped onto the generated datetime via `replace(tzinfo=timezone)` *after*
+the random value is produced, so bounds (`ge`, `gt`, `le`, `lt`) are still expressed as
+naive datetimes:
+
+```python
+from datetime import datetime
+from pydantic import Field
+from typing import Annotated
+from zoneinfo import ZoneInfo
+
+class Bounded(BaseModel):
+    ts: Annotated[
+        datetime,
+        Field(
+            ge=datetime(2020, 1, 1),
+            le=datetime(2020, 12, 31, 23, 59, 59),
+            json_schema_extra={"timezone": ZoneInfo("UTC")},
+        ),
+    ]
+
+result = fake(Bounded)
+print(result)
+```
+<!-- termynal -->
+
+```console
+{'ts': datetime.datetime(2020, 8, 22, 14, 37, 55, tzinfo=zoneinfo.ZoneInfo(key='UTC'))}
+```
+
+Omitting `timezone` (or annotating a field without `json_schema_extra`) always returns
+a naive `datetime`, preserving backward-compatible behaviour.
+
+!!! note "date and time fields"
+    Timezone is only meaningful for `datetime` fields.  If you accidentally pass
+    `timezone` on a `date` or `time` field the generator silently absorbs the argument
+    via `**kwargs` and continues to return a naive value — no error is raised.
+
+## JSON output
+If you need JSON strings rather than Python objects use `fake.json(...)`. That helper
+serializes the generated output with `json.dumps(..., default=str)`, so dates and
+datetimes (including timezone-aware ones) are turned into their `str()` representations
+(e.g. `"2026-04-07 12:34:56+00:00"`).
+
 ## Implementation notes
 - Generator functions: `pyfake.generators.datetime.generate_date`,
   `generate_datetime`, `generate_time`.
@@ -202,8 +276,10 @@ datetimes are turned into their `str()` representations (e.g. `"2026-04-07 12:34
   nullable variants.
 - Generators return native Python objects (not ISO strings) — use `fake.json()` to get
   a string-serialized form.
+- `generate_datetime` accepts a `timezone` keyword argument (any `datetime.tzinfo` subclass).
+  The resolver extracts it from `Field(json_schema_extra={"timezone": ...})` and the
+  registry forwards it through `GeneratorArgs.timezone`.
 
 ## Unsupported / Partial support
-- Timezones: the built-in `generate_datetime` returns naive `datetime` objects (no `tzinfo`).
-- There is no built-in fine-grained timezone or locale-aware generation.
+- Locale-aware generation: there is no built-in locale or format-string based datetime generation.
 

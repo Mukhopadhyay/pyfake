@@ -45,6 +45,7 @@ class GeneratorArgs(BaseModel):
     )
     # is_optional: Optional[bool] = False
     format: Optional[str] = None
+    timezone: Optional[Any] = None
 
 
 class AnyOfSchema(FieldSchema):

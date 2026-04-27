@@ -1,5 +1,6 @@
 import pytest
-from datetime import date, datetime, timedelta, time as dt_time
+from datetime import date, datetime, timedelta, time as dt_time, timezone as dt_timezone
+from zoneinfo import ZoneInfo
 
 from pyfake.core.context import Context
 from pyfake.generators import datetime as gen_dt
@@ -181,3 +182,60 @@ class TestDatetimeContextDefault:
         result = gen_dt.generate_datetime()
         assert isinstance(result, datetime)
         assert datetime(1970, 1, 1) <= result <= datetime(2100, 12, 31, 23, 59, 59)
+
+
+@pytest.mark.datatypes
+@pytest.mark.datetime
+class TestGenerateDatetimeTimezone:
+    """Tests for timezone (tzinfo) support in generate_datetime."""
+
+    @pytest.mark.parametrize(
+        "tz",
+        [
+            dt_timezone.utc,
+            ZoneInfo("UTC"),
+            ZoneInfo("America/New_York"),
+            ZoneInfo("Europe/London"),
+            ZoneInfo("Asia/Tokyo"),
+        ],
+    )
+    def test_timezone_is_attached(self, tz):
+        ctx = Context(seed=42)
+        result = gen_dt.generate_datetime(timezone=tz, context=ctx)
+        assert isinstance(result, datetime)
+        assert result.tzinfo is tz
+
+    def test_no_timezone_returns_naive(self):
+        result = gen_dt.generate_datetime(context=Context(seed=1))
+        assert result.tzinfo is None
+
+    def test_timezone_with_bounds(self):
+        tz = ZoneInfo("UTC")
+        ge = datetime(2020, 1, 1)
+        le = datetime(2020, 12, 31, 23, 59, 59)
+        result = gen_dt.generate_datetime(ge=ge, le=le, timezone=tz, context=Context(seed=7))
+        assert result.tzinfo is tz
+        # Compare the naive part of the result against the bounds
+        naive = result.replace(tzinfo=None)
+        assert ge <= naive <= le
+
+    def test_timezone_deterministic_with_seed(self):
+        tz = ZoneInfo("Europe/London")
+        a = gen_dt.generate_datetime(timezone=tz, context=Context(seed=99))
+        b = gen_dt.generate_datetime(timezone=tz, context=Context(seed=99))
+        assert a == b
+        assert a.tzinfo is tz
+
+    def test_generate_date_ignores_timezone_kwarg(self):
+        # date has no tzinfo; timezone kwarg must be silently absorbed via **kwargs
+        tz = ZoneInfo("UTC")
+        result = gen_dt.generate_date(timezone=tz, context=Context(seed=1))
+        assert isinstance(result, date)
+        assert not isinstance(result, datetime)
+
+    def test_generate_time_ignores_timezone_kwarg(self):
+        # time without tzinfo; timezone kwarg must be silently absorbed via **kwargs
+        tz = ZoneInfo("UTC")
+        result = gen_dt.generate_time(timezone=tz, context=Context(seed=1))
+        assert isinstance(result, dt_time)
+        assert result.tzinfo is None

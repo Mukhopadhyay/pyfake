@@ -1,6 +1,7 @@
-from datetime import date, datetime, timedelta, time
+from datetime import date, datetime, timedelta, time, timezone as dt_timezone
 from pyfake.core.context import Context
-from typing import Optional
+from typing import Optional, Union
+from zoneinfo import ZoneInfo
 
 
 def generate_date(
@@ -35,12 +36,18 @@ def generate_datetime(
     gt: Optional[datetime] = None,
     le: Optional[datetime] = None,
     ge: Optional[datetime] = None,
+    timezone: Optional[Union[dt_timezone, ZoneInfo]] = None,
     context: Optional[Context] = None,
     **kwargs,
 ) -> datetime:
     """
     Generate a random datetime object within the specified bounds.
-    Returns as datetime ISO 8601 string.
+
+    If *timezone* is provided (any :class:`datetime.tzinfo` subclass, e.g.
+    ``datetime.timezone.utc`` or a ``zoneinfo.ZoneInfo`` instance), the
+    returned datetime will have that timezone attached via
+    ``replace(tzinfo=timezone)``.  Bounds (ge/gt/le/lt) are still evaluated
+    as naive datetimes; the timezone is stamped on the result after generation.
     """
 
     if context is None:
@@ -54,7 +61,12 @@ def generate_datetime(
     delta_seconds = int((max_datetime - min_datetime).total_seconds())
     random_seconds = context.random.randint(0, delta_seconds)
 
-    return min_datetime + timedelta(seconds=random_seconds)
+    result = min_datetime + timedelta(seconds=random_seconds)
+
+    if timezone is not None:
+        result = result.replace(tzinfo=timezone)
+
+    return result
 
 
 def generate_time(
