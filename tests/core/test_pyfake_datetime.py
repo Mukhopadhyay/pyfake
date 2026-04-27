@@ -2,7 +2,8 @@ import pytest
 from pyfake import Pyfake
 from pydantic import BaseModel, Field
 from typing import Annotated, Optional
-from datetime import date, datetime, time
+from datetime import date, datetime, time, timezone as dt_timezone
+from zoneinfo import ZoneInfo
 
 
 @pytest.mark.datatypes
@@ -144,3 +145,97 @@ class TestPyfakeDateTimeBareAnnotation:
         assert isinstance(result["birthday"], date)
         assert isinstance(result["alarm"], time)
         assert isinstance(result["last_seen"], (datetime, type(None)))
+
+
+@pytest.mark.datatypes
+@pytest.mark.datetime
+class TestPyfakeDatetimeTimezone:
+    """Integration tests for timezone support via json_schema_extra."""
+
+    @pytest.mark.parametrize(
+        "tz",
+        [
+            dt_timezone.utc,
+            ZoneInfo("UTC"),
+            ZoneInfo("America/New_York"),
+            ZoneInfo("Europe/London"),
+            ZoneInfo("Asia/Tokyo"),
+        ],
+    )
+    def test_timezone_attached_via_json_schema_extra(self, tz):
+        class Model(BaseModel):
+            ts: Annotated[datetime, Field(..., json_schema_extra={"timezone": tz})]
+
+        result = Pyfake(Model, seed=42).generate()
+        assert isinstance(result["ts"], datetime)
+        assert result["ts"].tzinfo is tz
+
+    @pytest.mark.parametrize("seed", list(range(5)) + [None])
+    def test_timezone_utc_stdlib(self, seed):
+        class Model(BaseModel):
+            ts: Annotated[datetime, Field(..., json_schema_extra={"timezone": dt_timezone.utc})]
+
+        result = Pyfake(Model, seed=seed).generate()
+        assert result["ts"].tzinfo is dt_timezone.utc
+
+    def test_timezone_with_bounds(self):
+        tz = ZoneInfo("UTC")
+
+        class Model(BaseModel):
+            ts: Annotated[
+                datetime,
+                Field(
+                    ge=datetime(2020, 1, 1),
+                    le=datetime(2020, 12, 31, 23, 59, 59),
+                    json_schema_extra={"timezone": tz},
+                ),
+            ]
+
+        for seed in range(10):
+            result = Pyfake(Model, seed=seed).generate()
+            ts = result["ts"]
+            assert ts.tzinfo is tz
+            naive = ts.replace(tzinfo=None)
+            assert datetime(2020, 1, 1) <= naive <= datetime(2020, 12, 31, 23, 59, 59)
+
+    def test_optional_datetime_with_timezone(self):
+        tz = ZoneInfo("America/New_York")
+
+        class Model(BaseModel):
+            ts: Optional[Annotated[datetime, Field(..., json_schema_extra={"timezone": tz})]]
+
+        # Run enough times to get both None and non-None results
+        results = [Pyfake(Model, seed=s).generate()["ts"] for s in range(30)]
+        non_none = [r for r in results if r is not None]
+        assert len(non_none) > 0
+        for ts in non_none:
+            assert ts.tzinfo is tz
+
+    def test_multiple_timezone_fields(self):
+        class Model(BaseModel):
+            utc_ts: Annotated[datetime, Field(..., json_schema_extra={"timezone": ZoneInfo("UTC")})]
+            ny_ts: Annotated[datetime, Field(..., json_schema_extra={"timezone": ZoneInfo("America/New_York")})]
+            naive_ts: datetime
+
+        result = Pyfake(Model, seed=1).generate()
+        assert result["utc_ts"].tzinfo == ZoneInfo("UTC")
+        assert result["ny_ts"].tzinfo == ZoneInfo("America/New_York")
+        assert result["naive_ts"].tzinfo is None
+
+    def test_no_timezone_remains_naive(self):
+        class Model(BaseModel):
+            ts: datetime
+
+        result = Pyfake(Model, seed=7).generate()
+        assert result["ts"].tzinfo is None
+
+    def test_date_and_time_unaffected_by_timezone_kwarg(self):
+        # Passing timezone via json_schema_extra on date/time fields must not crash;
+        # date and time generators absorb it silently via **kwargs.
+        class Model(BaseModel):
+            d: Annotated[date, Field(..., json_schema_extra={"timezone": ZoneInfo("UTC")})]
+            t: Annotated[time, Field(..., json_schema_extra={"timezone": ZoneInfo("UTC")})]
+
+        result = Pyfake(Model, seed=5).generate()
+        assert isinstance(result["d"], date)
+        assert isinstance(result["t"], time)
