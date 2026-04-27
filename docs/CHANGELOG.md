@@ -9,6 +9,21 @@ hide:
 
 # Changelog 🕓
 
+### `0.0.13` - 2026-06-27
+
+**New Features**
+
+* **Timezone-aware datetimes**: Pass any datetime.`tzinfo` subclass — including `datetime.timezone` constants and `zoneinfo.ZoneInfo` instances — through `json_schema_extra={"timezone": ...}` on a datetime field. Supporting attributes such as,
+
+```python
+class Event(BaseModel):
+    # stdlib UTC constant
+    utc_ts: Annotated[datetime, Field(..., json_schema_extra={"timezone": timezone.utc})]
+    # IANA timezone via zoneinfo
+    ny_ts: Annotated[datetime, Field(..., json_schema_extra={"timezone": ZoneInfo("America/New_York")})]
+
+```
+
 ### `0.0.12` - 2026-06-23
 
 **Major changes**
