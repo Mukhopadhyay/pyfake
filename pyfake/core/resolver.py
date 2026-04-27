@@ -6,7 +6,6 @@ from pydantic.types import UuidVersion
 from pydantic_core import PydanticUndefinedType
 from typing import Annotated, Union, Literal, get_args, get_origin
 from enum import Enum
-from rich import print
 
 from pyfake.schemas import GeneratorArgs
 
@@ -107,17 +106,14 @@ class Resolver:
 
     def resolve(self):
         annotation = self.field_info.annotation
-        print("Annotation:", annotation)
 
         def _resolve(tp, inherited_args=None):
             origin = get_origin(tp)
-            print('Resolving:', tp, 'Origin:', origin, 'Inherited Args:', inherited_args)
             generator_args = inherited_args or GeneratorArgs()
 
             # Annotated[T, Field(...)]
             if origin is Annotated:
                 base, *meta = get_args(tp)
-                print('Base:', base, 'Meta:', meta)
 
                 local_args = GeneratorArgs()
 
