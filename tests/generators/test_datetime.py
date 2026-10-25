@@ -1,4 +1,4 @@
-from datetime import UTC, date, datetime
+from datetime import date, datetime, timezone
 from datetime import time as dt_time
 from zoneinfo import ZoneInfo
 
@@ -192,7 +192,7 @@ class TestGenerateDatetimeTimezone:
     @pytest.mark.parametrize(
         "tz",
         [
-            UTC,
+            timezone.utc,
             ZoneInfo("UTC"),
             ZoneInfo("America/New_York"),
             ZoneInfo("Europe/London"),
