@@ -45,6 +45,7 @@ Changelog = "https://mukhopadhyay.is-a.dev/pyfake/CHANGELOG/"
 dev = [
     "marimo>=0.17.6",
     "matplotlib>=3.10.8",
+    "mypy>=2.4.0",
     "pre-commit>=4.6.2",
     "pytest>=8.4.2",
     "pytest-cov>=7.0.0",
@@ -168,3 +169,11 @@ docstring-code-format = false
 # This only has an effect when the `docstring-code-format` setting is
 # enabled.
 docstring-code-line-length = "dynamic"
+
+
+[tool.mypy]
+# Exclude specific directories using regular expressions
+exclude = [
+    '.venv/',
+    'tests/'
+]

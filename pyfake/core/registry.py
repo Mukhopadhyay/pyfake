@@ -6,6 +6,7 @@ import datetime as dt_mod
 import uuid as uuid_mod
 from collections.abc import Callable
 from decimal import Decimal
+from typing import Any
 
 from pydantic.fields import FieldInfo
 
@@ -25,8 +26,8 @@ class GeneratorRegistry:
     3. Generating value based on the resolved type and FieldInfo
     """
 
-    def __init__(self, context: Context = None):
-        self._generators: dict[str, Callable] = {
+    def __init__(self, context: Context | None = None):
+        self._generators: dict[str, Callable[..., Any]] = {
             "integer": primitives.generate_int,
             "null": primitives.generate_none,
             "string": primitives.generate_str,
@@ -58,11 +59,11 @@ class GeneratorRegistry:
         }
         self.__context = context or Context()
 
-    def generate(self, attr: FieldInfo):
+    def generate(self, attr: FieldInfo) -> object:
         schema = Resolver(attr).resolve()["schema"]
         return self._generate(schema)
 
-    def _generate(self, schema):
+    def _generate(self, schema: dict[str, Any]) -> object:
         t = schema["type"]
         args = schema.get("generator_args") or GeneratorArgs()
 
