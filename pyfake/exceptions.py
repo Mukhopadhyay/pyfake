@@ -3,10 +3,10 @@ class PyfakeError(Exception):
 
 
 class GeneratorNotFound(PyfakeError):
-    def __init__(self, type_):
+    def __init__(self, type_: type) -> None:
         super().__init__(f"No generator registered for type {type_}")
 
 
 class InvalidConstraints(PyfakeError):
-    def __init__(self, message):
+    def __init__(self, message: str) -> None:
         super().__init__(message)

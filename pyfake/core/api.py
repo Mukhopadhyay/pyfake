@@ -1,5 +1,5 @@
 import json
-from typing import Any, TypeVar
+from typing import Any, TypeVar, cast
 
 from pydantic import BaseModel
 
@@ -10,7 +10,7 @@ T = TypeVar("T", bound=BaseModel)
 
 
 class Pyfake:
-    def __init__(self, schema: type[T], seed: int | None = None):
+    def __init__(self, schema: type[BaseModel], seed: int | None = None):
         self.schema = schema
         self.context = Context(seed=seed)
         self.engine = Engine(self.context)
@@ -19,10 +19,10 @@ class Pyfake:
     def from_schema(
         cls,
         schema: type[T],
-        num=1,
+        num: int = 1,
         seed: int | None = None,
         as_dict: bool | None = True,
-    ):
+    ) -> BaseModel | dict[str, Any] | list[BaseModel | dict[str, Any]]:
         return cls(schema, seed).generate(num, as_dict=as_dict)
 
     def generate(
@@ -35,9 +35,12 @@ class Pyfake:
             instances = [
                 self.schema(**self.engine.generate(self.schema)) for _ in range(num)
             ]
+            results: list[BaseModel | dict[str, Any]]
             if as_dict:
-                return [instance.model_dump() for instance in instances]
-            return instances
+                results = [instance.model_dump() for instance in instances]
+            else:
+                results = list(instances)
+            return results
         else:
             instance = self.schema(**self.engine.generate(self.schema))
             if as_dict:
@@ -56,7 +59,7 @@ class Fake:
         *,
         as_dict: bool | None = True,
         seed: int | None = None,
-    ):
+    ) -> BaseModel | dict[str, Any] | list[BaseModel | dict[str, Any]]:
         return Pyfake.from_schema(
             schema=schema,
             num=num,
@@ -64,15 +67,25 @@ class Fake:
             as_dict=as_dict,
         )
 
-    def dict(self, schema: type[T], num: int = 1, seed: int | None = None):
-        return self(schema=schema, num=num, as_dict=True, seed=seed)
+    def dict(
+        self, schema: type[T], num: int = 1, seed: int | None = None
+    ) -> dict[str, Any] | list[dict[str, Any]]:
+        return cast(
+            "dict[str, Any] | list[dict[str, Any]]",
+            self(schema=schema, num=num, as_dict=True, seed=seed),
+        )
 
-    def model(self, schema: type[T], num: int = 1, seed: int | None = None):
-        return self(schema=schema, num=num, as_dict=False, seed=seed)
+    def model(
+        self, schema: type[T], num: int = 1, seed: int | None = None
+    ) -> BaseModel | list[BaseModel]:
+        return cast(
+            "BaseModel | list[BaseModel]",
+            self(schema=schema, num=num, as_dict=False, seed=seed),
+        )
 
-    def json(self, schema: type[T], num: int = 1, seed: int | None = None):
+    def json(self, schema: type[T], num: int = 1, seed: int | None = None) -> str:
         data = self(schema=schema, num=num, as_dict=True, seed=seed)
         return json.dumps(data, indent=4, default=str)
 
-    def seed(self, seed: int):
+    def seed(self, seed: int) -> "Fake":
         return Fake(seed=seed)

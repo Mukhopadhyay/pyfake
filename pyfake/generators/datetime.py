@@ -1,5 +1,6 @@
 from datetime import date, datetime, time, timedelta
 from datetime import timezone as dt_timezone
+from typing import Any
 from zoneinfo import ZoneInfo
 
 from pyfake.core.context import Context
@@ -12,7 +13,7 @@ def generate_date(
     le: date | None = None,
     ge: date | None = None,
     context: Context | None = None,
-    **kwargs,
+    **kwargs: Any,
 ) -> date:
     """
     Generate a random date object within the specified bounds.
@@ -47,7 +48,7 @@ def generate_datetime(
     ge: datetime | None = None,
     timezone: dt_timezone | ZoneInfo | None = None,
     context: Context | None = None,
-    **kwargs,
+    **kwargs: Any,
 ) -> datetime:
     """
     Generate a random datetime object within the specified bounds.
@@ -95,8 +96,8 @@ def generate_time(
     ge: time | None = None,
     le: time | None = None,
     context: Context | None = None,
-    **kwargs,
-) -> datetime.time:
+    **kwargs: Any,
+) -> time:
     """
     Generate a random time object, given optional bounds.
     """

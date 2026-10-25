@@ -19,9 +19,9 @@ class Engine:
         self.context = context
         self.registry = GeneratorRegistry(context=self.context)
 
-    def generate(self, schema: BaseModel) -> dict[str, Any]:
+    def generate(self, schema: type[BaseModel]) -> dict[str, Any]:
 
-        _data = {}
+        _data: dict[str, Any] = {}
 
         for prop, attr in schema.model_fields.items():
             _data[prop] = self.registry.generate(attr)

@@ -1,7 +1,7 @@
 import hashlib
 import time
 import uuid
-from typing import Optional
+from typing import Any
 
 from pyfake.core.context import Context
 
@@ -9,16 +9,16 @@ from pyfake.core.context import Context
 def generate_uuid1(
     *,
     context: Context | None = None,
-    **kwargs,
+    **kwargs: Any,
 ) -> str:
     return str(uuid.uuid1())
 
 
 def generate_uuid3(
     *,
-    namespace: str | None = uuid.NAMESPACE_DNS,
+    namespace: uuid.UUID | None = uuid.NAMESPACE_DNS,
     context: Context | None = None,
-    **kwargs,
+    **kwargs: Any,
 ) -> str:
     if not namespace:
         namespace = uuid.NAMESPACE_DNS
@@ -28,16 +28,16 @@ def generate_uuid3(
 def generate_uuid4(
     *,
     context: Context | None = None,
-    **kwargs,
+    **kwargs: Any,
 ) -> str:
     return str(uuid.uuid4())
 
 
 def generate_uuid5(
     *,
-    namespace: str | None = uuid.NAMESPACE_DNS,
+    namespace: uuid.UUID | None = uuid.NAMESPACE_DNS,
     context: Context | None = None,
-    **kwargs,
+    **kwargs: Any,
 ) -> str:
     if not namespace:
         namespace = uuid.NAMESPACE_DNS
@@ -46,8 +46,8 @@ def generate_uuid5(
 
 def generate_uuid6(
     *,
-    context: Optional["Context"] = None,
-    **kwargs,
+    context: Context | None = None,
+    **kwargs: Any,
 ) -> str:
     # Start from UUIDv1 (contains timestamp, clock seq, node)
     u1 = uuid.uuid1()
@@ -87,13 +87,15 @@ def generate_uuid6(
 def generate_uuid7(
     *,
     context: Context | None = None,
-    **kwargs,
-) -> uuid.UUID:
+    **kwargs: Any,
+) -> str:
     # 48-bit timestamp (milliseconds)
     ts = int(time.time() * 1000) & ((1 << 48) - 1)
 
     # 80 bits of randomness
     # rand = random.getrandbits(80)
+    if context is None:
+        context = Context()
     rand = context.random.getrandbits(80)
 
     # Assemble UUID fields
@@ -110,8 +112,8 @@ def generate_uuid8(
     *,
     namespace: str | None = "pyfake",
     context: Context | None = None,
-    **kwargs,
-) -> uuid.UUID:
+    **kwargs: Any,
+) -> str:
 
     if not namespace:
         namespace = "pyfake"

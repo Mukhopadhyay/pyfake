@@ -76,5 +76,5 @@ class ResolvedSchema(BaseModel):
     """
 
     type: str
-    generator_func: Callable | None = None
+    generator_func: Callable[..., Any] | None = None
     args: GeneratorArgs

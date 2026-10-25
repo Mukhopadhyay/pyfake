@@ -1,7 +1,8 @@
 from datetime import datetime, timedelta
-from typing import Literal, TypedDict
+from typing import Any, Literal, TypedDict
 
 import numpy as np
+from numpy.typing import NDArray
 
 trend_literals = Literal["upward", "downward", "flat"]
 
@@ -89,7 +90,7 @@ class Timeseries:
 
         # self.end = end
 
-    def _generate_time_index(self):
+    def _generate_time_index(self) -> list[datetime]:
         delta_map = {
             "minute": timedelta(minutes=1),
             "hour": timedelta(hours=1),
@@ -100,16 +101,17 @@ class Timeseries:
         delta = delta_map[self.freq]
         return [self.start + i * delta for i in range(self.periods)]
 
-    def _generate_baseline(self):
+    def _generate_baseline(self) -> NDArray[np.float64]:
         """
         Generates the baseline values for the time series based on the provided baseline parameter.
         """
         return np.full(self.periods, self.baseline, dtype=float)
 
-    def _apply_trend(self, y: np.ndarray) -> np.ndarray:
+    def _apply_trend(self, y: NDArray[np.float64]) -> NDArray[np.float64]:
 
         t = np.arange(self.periods)
 
+        slope: float
         if isinstance(self.trend, str):
             slope = {"upward": 0.1, "downward": -0.1, "flat": 0}[self.trend]
         else:
@@ -121,9 +123,10 @@ class Timeseries:
             else:
                 slope = 0
 
-        return y + slope * t
+        result: NDArray[np.float64] = y + slope * t
+        return result
 
-    def _apply_noise(self, y: np.ndarray) -> np.ndarray:
+    def _apply_noise(self, y: NDArray[np.float64]) -> NDArray[np.float64]:
         if not self.noise:
             return y
 
@@ -151,7 +154,7 @@ class Timeseries:
 
         return y + noise
 
-    def _apply_seasonality(self, y: np.ndarray) -> np.ndarray:
+    def _apply_seasonality(self, y: NDArray[np.float64]) -> NDArray[np.float64]:
         if not self.seasonality:
             return y
 
@@ -172,7 +175,7 @@ class Timeseries:
         for s in seasonality:
             if isinstance(s, str):
                 period = season_map[s]
-                amplitude = 10
+                amplitude: float = 10
             else:
                 period = season_map[s["type"]]
                 amplitude = s["amplitude"]
@@ -181,12 +184,12 @@ class Timeseries:
 
         return y
 
-    def _inject_anomalies(self, y: np.ndarray) -> np.ndarray:
+    def _inject_anomalies(self, y: NDArray[np.float64]) -> NDArray[np.float64]:
         if not self.anomalies:
             return y
         count = self.anomalies.get("count")
         if not count:
-            percentage = self.anomalies.get("percentage", 0)
+            percentage = self.anomalies.get("percentage") or 0
             count = int(self.periods * percentage)
 
         idx = np.random.choice(self.periods, count, replace=False)
@@ -204,7 +207,7 @@ class Timeseries:
 
         return y
 
-    def _inject_missing(self, y: np.ndarray) -> np.ndarray:
+    def _inject_missing(self, y: NDArray[np.float64]) -> NDArray[np.float64]:
         if not self.missing:
             return y
 
@@ -214,21 +217,23 @@ class Timeseries:
         y[missing_idx] = np.nan
         return y
 
-    def _apply_constraints(self, y: np.ndarray) -> np.ndarray:
+    def _apply_constraints(self, y: NDArray[np.float64]) -> NDArray[np.float64]:
         if self.min_value is not None:
             y = np.maximum(y, self.min_value)
         if self.max_value is not None:
             y = np.minimum(y, self.max_value)
         return y
 
-    def _set_seed(self):
+    def _set_seed(self) -> None:
         if self.seed is not None:
             np.random.seed(self.seed)
 
-    def _format_output(self, t: list[datetime], y: np.ndarray) -> list[tuple]:
+    def _format_output(
+        self, t: list[datetime], y: NDArray[np.float64]
+    ) -> list[tuple[datetime, Any]]:
         return list(zip(t, y))
 
-    def generate(self):
+    def generate(self) -> list[tuple[datetime, Any]]:
         self._set_seed()
         t = self._generate_time_index()
         y = self._generate_baseline()

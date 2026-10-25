@@ -1,11 +1,12 @@
 import string
 from decimal import ROUND_CEILING, ROUND_FLOOR, Decimal
+from typing import Any
 
 from pyfake.core.context import Context
 from pyfake.exceptions import InvalidConstraints
 
 
-def generate_none(*args, **kwargs):
+def generate_none(*args: Any, **kwargs: Any) -> None:
     return None
 
 
@@ -17,8 +18,10 @@ def generate_int(
     ge: int | None = None,
     multiple_of: int | None = None,
     context: Context | None = None,
-    **kwargs,
+    **kwargs: Any,
 ) -> int:
+    if context is None:
+        context = Context()
 
     min_value = ge if ge is not None else (gt + 1 if gt is not None else 0)
     max_value = le if le is not None else (lt - 1 if lt is not None else 100)
@@ -51,8 +54,11 @@ def generate_str(
     max_length: int | None = None,
     length: int | None = 10,
     context: Context | None = None,
-    **kwargs,
+    **kwargs: Any,
 ) -> str:
+    if context is None:
+        context = Context()
+
     # TODO: Support for pattern
     if not length:
         length = 10
@@ -80,8 +86,11 @@ def generate_float(
     multiple_of: float | None = None,
     decimal_places: int | None = None,
     context: Context | None = None,
-    **kwargs,
+    **kwargs: Any,
 ) -> float:
+    if context is None:
+        context = Context()
+
     min_value = ge if ge is not None else (gt + 0.1 if gt is not None else 0.0)
     max_value = le if le is not None else (lt - 0.1 if lt is not None else 100.0)
 
@@ -127,8 +136,11 @@ def generate_decimal(
     multiple_of: float | None = None,
     decimal_places: int | None = None,
     context: Context | None = None,
-    **kwargs,
+    **kwargs: Any,
 ) -> Decimal:
+    if context is None:
+        context = Context()
+
     min_value = ge if ge is not None else (gt + 0.1 if gt is not None else 0.0)
     max_value = le if le is not None else (lt - 0.1 if lt is not None else 100.0)
 
@@ -158,8 +170,7 @@ def generate_decimal(
         random_multiple = context.random.randint(0, count - 1)
         num = start + Decimal(random_multiple) * mult_dec
     else:
-        num = context.random.uniform(min_value, max_value)
-        num = Decimal(num)
+        num = Decimal(context.random.uniform(min_value, max_value))
 
     # Handling decimal places
     if decimal_places is not None:
@@ -172,6 +183,9 @@ def generate_decimal(
 def generate_bool(
     *,
     context: Context | None = None,
-    **kwargs,
+    **kwargs: Any,
 ) -> bool:
+    if context is None:
+        context = Context()
+
     return context.random.choice([True, False])
