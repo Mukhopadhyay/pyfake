@@ -18,9 +18,11 @@ hide:
 from pyfake import fake
 from pydantic import BaseModel
 
+
 class User(BaseModel):
     username: str
     bio: str | None
+
 
 result = fake(User)
 print(result)
@@ -48,8 +50,10 @@ Generate more than one instance by passing `num`:
 from pyfake import fake
 from pydantic import BaseModel
 
+
 class User(BaseModel):
     username: str
+
 
 results = fake(User, num=3)
 print(results)
@@ -73,8 +77,10 @@ By default `pyfake` returns dictionaries. To receive Pydantic model instances se
 from pyfake import fake
 from pydantic import BaseModel
 
+
 class User(BaseModel):
     username: str
+
 
 results = fake(User, num=2, as_dict=False)
 print(results)
@@ -108,9 +114,11 @@ This behavior matches the implementation in `pyfake.generators.primitives.genera
 from pyfake import fake
 from pydantic import BaseModel, Field
 
+
 class User(BaseModel):
     username: str = Field(..., min_length=3, max_length=12)
     code: str = Field(..., min_length=8, max_length=8)
+
 
 result = fake(User)
 print(result)

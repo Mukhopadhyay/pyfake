@@ -20,8 +20,10 @@ from pyfake import fake
 from pydantic import BaseModel
 from datetime import datetime
 
+
 class Event(BaseModel):
     when: datetime
+
 
 result = fake(Event)
 print(result)
@@ -48,10 +50,12 @@ Example:
 from datetime import date, time, datetime
 from pydantic import BaseModel
 
+
 class Mixed(BaseModel):
     d: date
     t: time
     dt: datetime
+
 
 result = fake(Mixed)
 print(result)
@@ -110,8 +114,10 @@ from typing import Optional
 from pydantic import BaseModel
 from datetime import datetime
 
+
 class Maybe(BaseModel):
     when: Optional[datetime]
+
 
 results = fake(Maybe, num=5)
 print(results)
@@ -136,8 +142,10 @@ instead of generating a random one.
 from pydantic import Field
 from datetime import datetime
 
+
 class Meeting(BaseModel):
     when: datetime = Field(default=datetime(2022, 1, 1, 9, 0))
+
 
 result = fake(Meeting)
 print(result)
@@ -167,13 +175,16 @@ from pydantic import Field
 from annotated_types import Ge, Le
 from typing import Annotated
 
+
 class Bounded(BaseModel):
     # annotated bounds (resolver recognizes annotated_types.Ge/Le)
     when: Annotated[datetime, Ge(datetime(2020, 1, 1)), Le(datetime(2030, 1, 1))]
 
+
 class DateOnly(BaseModel):
     # request the date generator explicitly via json_schema_extra
     day: date = Field(json_schema_extra={"format": "date"})
+
 
 print(fake(Bounded))
 print(fake(DateOnly))
@@ -207,11 +218,18 @@ from datetime import datetime, timezone
 from typing import Annotated
 from zoneinfo import ZoneInfo
 
+
 class Event(BaseModel):
     # stdlib UTC constant
-    utc_ts: Annotated[datetime, Field(..., json_schema_extra={"timezone": timezone.utc})]
+    utc_ts: Annotated[
+        datetime, Field(..., json_schema_extra={"timezone": timezone.utc})
+    ]
     # IANA timezone via zoneinfo
-    ny_ts: Annotated[datetime, Field(..., json_schema_extra={"timezone": ZoneInfo("America/New_York")})]
+    ny_ts: Annotated[
+        datetime,
+        Field(..., json_schema_extra={"timezone": ZoneInfo("America/New_York")}),
+    ]
+
 
 result = fake(Event)
 print(result)
@@ -235,6 +253,7 @@ from pydantic import Field
 from typing import Annotated
 from zoneinfo import ZoneInfo
 
+
 class Bounded(BaseModel):
     ts: Annotated[
         datetime,
@@ -244,6 +263,7 @@ class Bounded(BaseModel):
             json_schema_extra={"timezone": ZoneInfo("UTC")},
         ),
     ]
+
 
 result = fake(Bounded)
 print(result)

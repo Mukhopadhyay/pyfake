@@ -1,6 +1,8 @@
-import pytest
-from datetime import date, datetime, timedelta, time as dt_time, timezone as dt_timezone
+from datetime import UTC, date, datetime
+from datetime import time as dt_time
 from zoneinfo import ZoneInfo
+
+import pytest
 
 from pyfake.core.context import Context
 from pyfake.generators import datetime as gen_dt
@@ -10,7 +12,6 @@ from pyfake.generators import datetime as gen_dt
 # @pytest.mark.xfail
 @pytest.mark.datetime
 class TestGenerateDate:
-
     def test_type_and_default_bounds(self):
         ctx = Context(seed=42)
         result = gen_dt.generate_date(context=ctx)
@@ -61,7 +62,6 @@ class TestGenerateDate:
 # @pytest.mark.xfail
 @pytest.mark.datetime
 class TestGenerateDatetime:
-
     def test_type_and_default_bounds(self):
         ctx = Context(seed=99)
         result = gen_dt.generate_datetime(context=ctx)
@@ -192,7 +192,7 @@ class TestGenerateDatetimeTimezone:
     @pytest.mark.parametrize(
         "tz",
         [
-            dt_timezone.utc,
+            UTC,
             ZoneInfo("UTC"),
             ZoneInfo("America/New_York"),
             ZoneInfo("Europe/London"),
@@ -213,7 +213,9 @@ class TestGenerateDatetimeTimezone:
         tz = ZoneInfo("UTC")
         ge = datetime(2020, 1, 1)
         le = datetime(2020, 12, 31, 23, 59, 59)
-        result = gen_dt.generate_datetime(ge=ge, le=le, timezone=tz, context=Context(seed=7))
+        result = gen_dt.generate_datetime(
+            ge=ge, le=le, timezone=tz, context=Context(seed=7)
+        )
         assert result.tzinfo is tz
         # Compare the naive part of the result against the bounds
         naive = result.replace(tzinfo=None)

@@ -3,13 +3,13 @@ Integration and unit tests for complex types: Literal, Enum, List, Set, Tuple, D
 nested models, nullable union, registry fallback, and resolver edge cases.
 """
 
-import pytest
 import uuid as uuid_mod
 from decimal import Decimal
 from enum import Enum
-from typing import Annotated, Dict, List, Literal, Optional, Set, Tuple
+from typing import Annotated, Literal
 
 import pydantic
+import pytest
 from pydantic import BaseModel, Field
 
 from pyfake import Pyfake
@@ -17,7 +17,6 @@ from pyfake.core.context import Context
 from pyfake.core.registry import GeneratorRegistry
 from pyfake.core.resolver import Resolver
 from pyfake.schemas import GeneratorArgs
-
 
 # ---------------------------------------------------------------------------
 # Shared fixtures / helpers
@@ -38,7 +37,6 @@ class Color(Enum):
 @pytest.mark.pyfake
 @pytest.mark.complex
 class TestPyfakeLiteralGeneration:
-
     class LiteralModel(BaseModel):
         status: Literal["active", "inactive", "pending"]
         code: Literal[1, 2, 3]
@@ -59,10 +57,9 @@ class TestPyfakeLiteralGeneration:
 @pytest.mark.pyfake
 @pytest.mark.complex
 class TestPyfakeEnumGeneration:
-
     class EnumModel(BaseModel):
         color: Color
-        optional_color: Optional[Color]
+        optional_color: Color | None
 
     @pytest.mark.parametrize("seed", list(range(10)) + [None])
     def test_enum_field_produces_valid_value(self, seed):
@@ -70,7 +67,9 @@ class TestPyfakeEnumGeneration:
         assert isinstance(result, dict)
         # pydantic model_dump() in Python mode returns the enum member itself
         assert isinstance(result["color"], Color)
-        assert result["optional_color"] is None or isinstance(result["optional_color"], Color)
+        assert result["optional_color"] is None or isinstance(
+            result["optional_color"], Color
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -81,11 +80,10 @@ class TestPyfakeEnumGeneration:
 @pytest.mark.pyfake
 @pytest.mark.complex
 class TestPyfakeCollectionGeneration:
-
     class CollectionModel(BaseModel):
-        int_list: List[int]
-        str_set: Set[str]
-        nested_list: List[List[int]]
+        int_list: list[int]
+        str_set: set[str]
+        nested_list: list[list[int]]
 
     @pytest.mark.parametrize("seed", list(range(5)) + [None])
     def test_list_field_generates_list_of_correct_type(self, seed):
@@ -119,7 +117,7 @@ class TestPyfakeCollectionGeneration:
 
     def test_bounded_list_length(self):
         class BoundedModel(BaseModel):
-            items: Annotated[List[int], Field(min_length=2, max_length=4)]
+            items: Annotated[list[int], Field(min_length=2, max_length=4)]
 
         result = Pyfake(BoundedModel, seed=42).generate()
         assert 2 <= len(result["items"]) <= 4
@@ -133,10 +131,9 @@ class TestPyfakeCollectionGeneration:
 @pytest.mark.pyfake
 @pytest.mark.complex
 class TestPyfakeTupleGeneration:
-
     class TupleModel(BaseModel):
-        variable_tuple: Tuple[int, ...]
-        fixed_tuple: Tuple[int, str]
+        variable_tuple: tuple[int, ...]
+        fixed_tuple: tuple[int, str]
 
     @pytest.mark.parametrize("seed", list(range(5)) + [None])
     def test_variable_tuple_generates_sequence(self, seed):
@@ -174,10 +171,9 @@ class TestPyfakeTupleGeneration:
 @pytest.mark.pyfake
 @pytest.mark.complex
 class TestPyfakeDictGeneration:
-
     class DictModel(BaseModel):
-        scores: Dict[str, int]
-        mapping: Dict[int, float]
+        scores: dict[str, int]
+        mapping: dict[int, float]
 
     @pytest.mark.parametrize("seed", list(range(5)) + [None])
     def test_dict_field_generates_dict_of_correct_types(self, seed):
@@ -211,7 +207,6 @@ class TestPyfakeDictGeneration:
 @pytest.mark.pyfake
 @pytest.mark.complex
 class TestPyfakeNestedModelGeneration:
-
     class Inner(BaseModel):
         x: int
         label: str
@@ -311,7 +306,6 @@ class TestRegistryFallback:
 @pytest.mark.pyfake
 @pytest.mark.complex
 class TestResolverEdgeCases:
-
     def test_json_schema_extra_format_is_parsed(self):
         """Covers resolver.py line 29: json_schema_extra format field."""
 
@@ -346,7 +340,7 @@ class TestResolverEdgeCases:
         """Covers resolver.py line 90: setattr to propagate outer constraints into union variants."""
 
         class M(BaseModel):
-            x: Optional[int] = Field(ge=0, le=100)
+            x: int | None = Field(ge=0, le=100)
 
         fi = M.model_fields["x"]
         result = Resolver(fi).resolve()
@@ -361,7 +355,7 @@ class TestResolverEdgeCases:
         """Covers resolver.py lines 121->131 and 132: UuidVersion metadata in Annotated inner type."""
 
         class M(BaseModel):
-            ids: List[pydantic.UUID1]
+            ids: list[pydantic.UUID1]
 
         fi = M.model_fields["ids"]
         result = Resolver(fi).resolve()
@@ -374,7 +368,7 @@ class TestResolverEdgeCases:
         BoundedInt = Annotated[int, Field(ge=1)]
 
         class M(BaseModel):
-            items: List[Annotated[BoundedInt, Field(le=100)]]
+            items: list[Annotated[BoundedInt, Field(le=100)]]
 
         fi = M.model_fields["items"]
         result = Resolver(fi).resolve()
@@ -420,7 +414,6 @@ class TestResolverEdgeCases:
 @pytest.mark.pyfake
 @pytest.mark.complex
 class TestPyfakeMultipleOf:
-
     class MultipleOfModel(BaseModel):
         even: Annotated[int, Field(multiple_of=2, ge=0, le=20)]
         precise: Annotated[Decimal, Field(decimal_places=2)]

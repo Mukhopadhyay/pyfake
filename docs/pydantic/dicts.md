@@ -20,9 +20,11 @@ from typing import Dict
 from pyfake import fake
 from pydantic import BaseModel
 
+
 class Maps(BaseModel):
-  by_name: Dict[str, int]
-  by_id: dict[int, float]
+    by_name: Dict[str, int]
+    by_id: dict[int, float]
+
 
 print(fake(Maps))
 ```
@@ -49,11 +51,14 @@ By default `pyfake` returns dictionaries (serialized). To obtain Pydantic model 
 from pyfake import fake
 from pydantic import BaseModel
 
+
 class Item(BaseModel):
-  label: str
+    label: str
+
 
 class Container(BaseModel):
-  mapping: dict[int, Item]
+    mapping: dict[int, Item]
+
 
 print(fake(Container, as_dict=False))
 ```
@@ -103,9 +108,14 @@ from typing import Annotated, Dict
 from pydantic import BaseModel, Field
 from pyfake import fake
 
+
 class Constrained(BaseModel):
-  # keys between 1 and 10, values are short strings
-  mapping: Dict[Annotated[int, Field(ge=1, le=10)], Annotated[str, Field(min_length=3, max_length=6)]]
+    # keys between 1 and 10, values are short strings
+    mapping: Dict[
+        Annotated[int, Field(ge=1, le=10)],
+        Annotated[str, Field(min_length=3, max_length=6)],
+    ]
+
 
 print(fake(Constrained, seed=42))
 ```
@@ -122,7 +132,8 @@ print(fake(Constrained, seed=42))
 
 ```python
 class M1(BaseModel):
-  m: Dict[int, str]
+    m: Dict[int, str]
+
 
 print(fake(M1))
 ```
@@ -138,8 +149,10 @@ print(fake(M1))
 ```python
 from typing import List
 
+
 class M2(BaseModel):
-  m: Dict[int, List[int]]
+    m: Dict[int, List[int]]
+
 
 print(fake(M2, seed=1))
 ```
@@ -154,7 +167,8 @@ print(fake(M2, seed=1))
 
 ```python
 class M3(BaseModel):
-  nested: Dict[int, Dict[str, str]]
+    nested: Dict[int, Dict[str, str]]
+
 
 print(fake(M3, seed=2))
 ```
@@ -172,8 +186,13 @@ You can annotate the key or the inner value with `Field` to influence generation
 ```python
 from typing import Annotated
 
+
 class AnnotatedKV(BaseModel):
-  data: Dict[Annotated[int, Field(ge=10, le=20)], Annotated[List[int], Field(min_length=2, max_length=3)]]
+    data: Dict[
+        Annotated[int, Field(ge=10, le=20)],
+        Annotated[List[int], Field(min_length=2, max_length=3)],
+    ]
+
 
 print(fake(AnnotatedKV, seed=3))
 ```
@@ -191,8 +210,10 @@ If a mapping is declared `Optional[Dict[K, V]]` or `Dict[K, V] | None`, the reso
 ```python
 from typing import Optional
 
+
 class MaybeMap(BaseModel):
-  maybe: Optional[Dict[int, str]]
+    maybe: Optional[Dict[int, str]]
+
 
 print(fake(MaybeMap, num=6, seed=1))
 ```
@@ -230,10 +251,10 @@ from pyfake.schemas import GeneratorArgs
 context = Context(seed=0)
 registry = GeneratorRegistry(context=context)
 schema = {
-  'type': dict,
-  'keys': {'type': str, 'generator_args': GeneratorArgs()},
-  'values': {'type': int, 'generator_args': GeneratorArgs()},
-  'generator_args': GeneratorArgs(),
+    "type": dict,
+    "keys": {"type": str, "generator_args": GeneratorArgs()},
+    "values": {"type": int, "generator_args": GeneratorArgs()},
+    "generator_args": GeneratorArgs(),
 }
 
 result = registry._generate(schema)

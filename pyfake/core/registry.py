@@ -2,23 +2,19 @@
 Resolves the datatypes and forms the generator mapping
 """
 
-import uuid as uuid_mod
 import datetime as dt_mod
-
-from pyfake.generators import primitives, uuid, datetime
-from pyfake.core.context import Context
-from pyfake.schemas import (
-    ModelPropertySchema,
-    ResolvedSchema,
-    GeneratorArgs,
-    FieldSchema,
-)
-from pyfake.core.resolver import Resolver
+import uuid as uuid_mod
+from collections.abc import Callable
 from decimal import Decimal
 
-from typing import List, Dict
-from collections.abc import Callable
 from pydantic.fields import FieldInfo
+
+from pyfake.core.context import Context
+from pyfake.core.resolver import Resolver
+from pyfake.generators import datetime, primitives, uuid
+from pyfake.schemas import (
+    GeneratorArgs,
+)
 
 
 class GeneratorRegistry:
@@ -30,7 +26,7 @@ class GeneratorRegistry:
     """
 
     def __init__(self, context: Context = None):
-        self._generators: Dict[str, Callable] = {
+        self._generators: dict[str, Callable] = {
             "integer": primitives.generate_int,
             "null": primitives.generate_none,
             "string": primitives.generate_str,
@@ -49,7 +45,7 @@ class GeneratorRegistry:
             "number": primitives.generate_float,
             "decimal": primitives.generate_decimal,
         }
-        self._type_map: Dict[type, str] = {
+        self._type_map: dict[type, str] = {
             int: "integer",
             float: "number",
             Decimal: "decimal",
@@ -116,7 +112,6 @@ class GeneratorRegistry:
         # Tuple
         # ---------------------
         if t is tuple:
-
             if schema["mode"] == "variable":
                 length = rng.randint(args.min_length or 1, args.max_length or 5)
 
@@ -130,7 +125,10 @@ class GeneratorRegistry:
         if t is dict:
             length = rng.randint(args.min_length or 1, args.max_length or 5)
 
-            return {self._generate(schema["keys"]): self._generate(schema["values"]) for _ in range(length)}
+            return {
+                self._generate(schema["keys"]): self._generate(schema["values"])
+                for _ in range(length)
+            }
 
         # ---------------------
         # Nested Model
@@ -138,7 +136,10 @@ class GeneratorRegistry:
         if t == "model":
             model_cls = schema["model"]
 
-            data = {name: self._generate(field_schema) for name, field_schema in schema["fields"].items()}
+            data = {
+                name: self._generate(field_schema)
+                for name, field_schema in schema["fields"].items()
+            }
 
             return model_cls(**data)
 

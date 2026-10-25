@@ -19,9 +19,11 @@ from typing import List
 from pyfake import fake
 from pydantic import BaseModel
 
+
 class User(BaseModel):
-  tags: List[str]
-  scores: list[int]
+    tags: List[str]
+    scores: list[int]
+
 
 result = fake(User)
 print(result)
@@ -49,8 +51,10 @@ Generate more than one instance by passing `num` (same behaviour as for other ty
 from pyfake import fake
 from pydantic import BaseModel
 
+
 class Wrapper(BaseModel):
-  items: list[str]
+    items: list[str]
+
 
 results = fake(Wrapper, num=3)
 print(results)
@@ -74,11 +78,14 @@ By default `pyfake` returns dictionaries. To receive Pydantic model instances se
 from pyfake import fake
 from pydantic import BaseModel
 
+
 class Inner(BaseModel):
-  x: int
+    x: int
+
 
 class Outer(BaseModel):
-  inners: list[Inner]
+    inners: list[Inner]
+
 
 results = fake(Outer, num=2, as_dict=False)
 print(results)
@@ -115,8 +122,10 @@ from typing import Annotated, List
 from pydantic import BaseModel, Field
 from pyfake import fake
 
+
 class BoundedModel(BaseModel):
-  items: Annotated[List[int], Field(min_length=2, max_length=4)]
+    items: Annotated[List[int], Field(min_length=2, max_length=4)]
+
 
 result = fake(BoundedModel, seed=42)
 print(result)
@@ -150,8 +159,10 @@ from typing import List
 from pydantic import BaseModel
 from pyfake import fake
 
+
 class Mixed(BaseModel):
-  items: List[int | str]
+    items: List[int | str]
+
 
 print(fake(Mixed, seed=0))
 ```
@@ -171,8 +182,10 @@ from typing import Optional
 from pydantic import BaseModel
 from pyfake import fake
 
+
 class MaybeInts(BaseModel):
-  values: list[Optional[int]]
+    values: list[Optional[int]]
+
 
 print(fake(MaybeInts, num=3, seed=1))
 ```
@@ -196,8 +209,10 @@ from typing import List
 from pydantic import BaseModel
 from pyfake import fake
 
+
 class Matrix(BaseModel):
-  matrix: List[List[int]]
+    matrix: List[List[int]]
+
 
 print(fake(Matrix, seed=2))
 ```
@@ -223,8 +238,10 @@ from pydantic.types import UuidVersion
 from pydantic import BaseModel
 from pyfake import fake
 
+
 class VList(BaseModel):
-  ids: List[Annotated[UUID, UuidVersion(1)]]
+    ids: List[Annotated[UUID, UuidVersion(1)]]
+
 
 result = fake(VList, seed=0)
 print(result)

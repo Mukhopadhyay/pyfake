@@ -19,9 +19,11 @@ from typing import Tuple
 from pyfake import fake
 from pydantic import BaseModel
 
+
 class TModel(BaseModel):
-  variable: Tuple[int, ...]
-  fixed: Tuple[int, str]
+    variable: Tuple[int, ...]
+    fixed: Tuple[int, str]
+
 
 result = fake(TModel)
 print(result)
@@ -49,8 +51,10 @@ from pyfake import fake
 from pydantic import BaseModel
 from typing import Tuple
 
+
 class M(BaseModel):
-  pair: Tuple[int, str]
+    pair: Tuple[int, str]
+
 
 instances = fake(M, as_dict=False, num=2)
 print(instances)
@@ -84,8 +88,10 @@ from typing import Annotated, Tuple
 from pydantic import BaseModel, Field
 from pyfake import fake
 
+
 class Bounded(BaseModel):
-  many: Annotated[Tuple[int, ...], Field(min_length=2, max_length=4)]
+    many: Annotated[Tuple[int, ...], Field(min_length=2, max_length=4)]
+
 
 print(fake(Bounded, seed=42))
 ```
@@ -118,8 +124,10 @@ from typing import Tuple
 from pydantic import BaseModel
 from pyfake import fake
 
+
 class Fixed(BaseModel):
-  pair: Tuple[int, str]
+    pair: Tuple[int, str]
+
 
 print(fake(Fixed, seed=0))
 ```
@@ -139,8 +147,10 @@ from typing import Optional, Tuple
 from pydantic import BaseModel
 from pyfake import fake
 
+
 class Mixed(BaseModel):
-  values: Tuple[Optional[int], Optional[str]]
+    values: Tuple[Optional[int], Optional[str]]
+
 
 print(fake(Mixed, num=3, seed=1))
 ```
@@ -166,10 +176,10 @@ from pyfake.core.registry import GeneratorRegistry
 context = Context(seed=0)
 registry = GeneratorRegistry(context=context)
 schema = {
-  'type': tuple,
-  'mode': 'variable',
-  'items': {'type': int, 'generator_args': None},
-  'generator_args': None,
+    "type": tuple,
+    "mode": "variable",
+    "items": {"type": int, "generator_args": None},
+    "generator_args": None,
 }
 
 result = registry._generate(schema)

@@ -1,7 +1,9 @@
-import pytest
-from pyfake.core.registry import GeneratorRegistry
-from pyfake.core.context import Context
 from collections.abc import Callable
+
+import pytest
+
+from pyfake.core.context import Context
+from pyfake.core.registry import GeneratorRegistry
 
 
 @pytest.mark.pyfake

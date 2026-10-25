@@ -25,9 +25,11 @@ from typing import Literal
 from pydantic import BaseModel
 from pyfake import fake
 
+
 class Item(BaseModel):
-    status: Literal['active', 'inactive', 'pending']
+    status: Literal["active", "inactive", "pending"]
     code: Literal[1, 2, 3]
+
 
 print(fake(Item))
 ```
@@ -52,14 +54,17 @@ from enum import Enum
 from pydantic import BaseModel
 from pyfake import fake
 
+
 class Color(Enum):
-    RED = 'red'
-    GREEN = 'green'
-    BLUE = 'blue'
+    RED = "red"
+    GREEN = "green"
+    BLUE = "blue"
+
 
 class Product(BaseModel):
     color: Color
     maybe_color: Color | None
+
 
 print(fake(Product, num=3, seed=0))
 ```
@@ -105,9 +110,11 @@ from typing import Optional
 from pydantic import BaseModel
 from pyfake import fake
 
+
 class Maybe(BaseModel):
-    opt_literal: Optional[Literal['x', 'y']]
+    opt_literal: Optional[Literal["x", "y"]]
     opt_enum: Optional[Color]
+
 
 print(fake(Maybe, num=6, seed=1))
 ```
@@ -134,8 +141,10 @@ If you provide a non-`None` default for a field (e.g. `Field(default=...)` or a 
 ```python
 from pydantic import Field
 
+
 class WithDefault(BaseModel):
     color: Color = Field(default=Color.GREEN)
+
 
 print(fake(WithDefault))
 ```
@@ -164,6 +173,7 @@ Examples:
 class NumChoice(BaseModel):
     level: Literal[0, 1, 2]
 
+
 print(fake(NumChoice))
 ```
 
@@ -174,8 +184,10 @@ class Code(Enum):
     OK = 0
     FAIL = 1
 
+
 class HasCode(BaseModel):
     code: Code
+
 
 print(fake(HasCode))
 ```

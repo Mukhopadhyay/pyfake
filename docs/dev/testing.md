@@ -97,10 +97,10 @@ from pyfake.schemas import GeneratorArgs
 ctx = Context(seed=0)
 registry = GeneratorRegistry(context=ctx)
 schema = {
-    'type': dict,
-    'keys': {'type': str, 'generator_args': GeneratorArgs()},
-    'values': {'type': int, 'generator_args': GeneratorArgs()},
-    'generator_args': GeneratorArgs(),
+    "type": dict,
+    "keys": {"type": str, "generator_args": GeneratorArgs()},
+    "values": {"type": int, "generator_args": GeneratorArgs()},
+    "generator_args": GeneratorArgs(),
 }
 res = registry._generate(schema)
 assert isinstance(res, dict)

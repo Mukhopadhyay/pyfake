@@ -1,6 +1,8 @@
-import pytest
-from pyfake.core.context import Context
 import uuid
+
+import pytest
+
+from pyfake.core.context import Context
 from pyfake.generators import uuid as pyfake_uuid
 
 

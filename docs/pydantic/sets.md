@@ -19,8 +19,10 @@ from typing import Set
 from pyfake import fake
 from pydantic import BaseModel
 
+
 class Collection(BaseModel):
-  tags: Set[str]
+    tags: Set[str]
+
 
 result = fake(Collection)
 print(result)
@@ -49,8 +51,10 @@ from pyfake import fake
 from pydantic import BaseModel
 from typing import Set
 
+
 class S(BaseModel):
-  items: Set[int]
+    items: Set[int]
+
 
 print(fake(S, num=3))
 ```
@@ -74,8 +78,10 @@ from pyfake import fake
 from pydantic import BaseModel
 from typing import Set
 
+
 class M(BaseModel):
-  s: Set[str]
+    s: Set[str]
+
 
 instances = fake(M, as_dict=False, num=2)
 print(instances)
@@ -109,8 +115,10 @@ from typing import Annotated, Set
 from pydantic import BaseModel, Field
 from pyfake import fake
 
+
 class BoundedSet(BaseModel):
-  nums: Annotated[Set[int], Field(min_length=2, max_length=4)]
+    nums: Annotated[Set[int], Field(min_length=2, max_length=4)]
+
 
 print(fake(BoundedSet, seed=42))
 ```
@@ -144,8 +152,10 @@ from typing import Set
 from pydantic import BaseModel
 from pyfake import fake
 
+
 class Mixed(BaseModel):
-  items: Set[int | str]
+    items: Set[int | str]
+
 
 print(fake(Mixed, seed=0))
 ```
@@ -165,8 +175,10 @@ from typing import Optional, Set
 from pydantic import BaseModel
 from pyfake import fake
 
+
 class MaybeSet(BaseModel):
-  vals: Optional[Set[int]]
+    vals: Optional[Set[int]]
+
 
 print(fake(MaybeSet, num=5, seed=1))
 ```
@@ -194,8 +206,10 @@ from pydantic.types import UuidVersion
 from pydantic import BaseModel
 from pyfake import fake
 
+
 class USet(BaseModel):
-  ids: Set[Annotated[UUID, UuidVersion(1)]]
+    ids: Set[Annotated[UUID, UuidVersion(1)]]
+
 
 print(fake(USet, seed=0))
 ```
@@ -218,9 +232,9 @@ from pyfake.schemas import GeneratorArgs
 context = Context(seed=0)
 registry = GeneratorRegistry(context=context)
 schema = {
-  'type': set,
-  'items': {'type': int, 'generator_args': GeneratorArgs()},
-  'generator_args': GeneratorArgs(),
+    "type": set,
+    "items": {"type": int, "generator_args": GeneratorArgs()},
+    "generator_args": GeneratorArgs(),
 }
 
 result = registry._generate(schema)

@@ -18,10 +18,14 @@ hide:
 ```python
 class Event(BaseModel):
     # stdlib UTC constant
-    utc_ts: Annotated[datetime, Field(..., json_schema_extra={"timezone": timezone.utc})]
+    utc_ts: Annotated[
+        datetime, Field(..., json_schema_extra={"timezone": timezone.utc})
+    ]
     # IANA timezone via zoneinfo
-    ny_ts: Annotated[datetime, Field(..., json_schema_extra={"timezone": ZoneInfo("America/New_York")})]
-
+    ny_ts: Annotated[
+        datetime,
+        Field(..., json_schema_extra={"timezone": ZoneInfo("America/New_York")}),
+    ]
 ```
 
 ### `0.0.12` - 2026-06-23

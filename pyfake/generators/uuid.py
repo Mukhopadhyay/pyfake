@@ -1,13 +1,14 @@
-from pyfake.core.context import Context
-from typing import Optional
-import uuid
-import time
 import hashlib
+import time
+import uuid
+from typing import Optional
+
+from pyfake.core.context import Context
 
 
 def generate_uuid1(
     *,
-    context: Optional[Context] = None,
+    context: Context | None = None,
     **kwargs,
 ) -> str:
     return str(uuid.uuid1())
@@ -15,8 +16,8 @@ def generate_uuid1(
 
 def generate_uuid3(
     *,
-    namespace: Optional[str] = uuid.NAMESPACE_DNS,
-    context: Optional[Context] = None,
+    namespace: str | None = uuid.NAMESPACE_DNS,
+    context: Context | None = None,
     **kwargs,
 ) -> str:
     if not namespace:
@@ -26,7 +27,7 @@ def generate_uuid3(
 
 def generate_uuid4(
     *,
-    context: Optional[Context] = None,
+    context: Context | None = None,
     **kwargs,
 ) -> str:
     return str(uuid.uuid4())
@@ -34,8 +35,8 @@ def generate_uuid4(
 
 def generate_uuid5(
     *,
-    namespace: Optional[str] = uuid.NAMESPACE_DNS,
-    context: Optional[Context] = None,
+    namespace: str | None = uuid.NAMESPACE_DNS,
+    context: Context | None = None,
     **kwargs,
 ) -> str:
     if not namespace:
@@ -85,7 +86,7 @@ def generate_uuid6(
 
 def generate_uuid7(
     *,
-    context: Optional[Context] = None,
+    context: Context | None = None,
     **kwargs,
 ) -> uuid.UUID:
     # 48-bit timestamp (milliseconds)
@@ -107,8 +108,8 @@ def generate_uuid7(
 
 def generate_uuid8(
     *,
-    namespace: Optional[str] = "pyfake",
-    context: Optional[Context] = None,
+    namespace: str | None = "pyfake",
+    context: Context | None = None,
     **kwargs,
 ) -> uuid.UUID:
 
