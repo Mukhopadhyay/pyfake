@@ -3,7 +3,7 @@ name = "pyfake"
 version = "0.0.13"
 description = "A fake data generator that is pydantic compatible."
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 dependencies = ["numpy>=2.2.6", "pydantic[email,timezone]>=2.12.5"]
 license = "MIT"
 license-files = ["LICENSE"]
@@ -16,7 +16,6 @@ classifiers = [
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
