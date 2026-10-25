@@ -1,4 +1,4 @@
-from datetime import UTC, date, datetime, time
+from datetime import date, datetime, time, timezone
 from typing import Annotated
 from zoneinfo import ZoneInfo
 
@@ -178,7 +178,7 @@ class TestPyfakeDatetimeTimezone:
     @pytest.mark.parametrize(
         "tz",
         [
-            UTC,
+            timezone.utc,
             ZoneInfo("UTC"),
             ZoneInfo("America/New_York"),
             ZoneInfo("Europe/London"),
@@ -196,10 +196,12 @@ class TestPyfakeDatetimeTimezone:
     @pytest.mark.parametrize("seed", list(range(5)) + [None])
     def test_timezone_utc_stdlib(self, seed):
         class Model(BaseModel):
-            ts: Annotated[datetime, Field(..., json_schema_extra={"timezone": UTC})]
+            ts: Annotated[
+                datetime, Field(..., json_schema_extra={"timezone": timezone.utc})
+            ]
 
         result = Pyfake(Model, seed=seed).generate()
-        assert result["ts"].tzinfo is UTC
+        assert result["ts"].tzinfo is timezone.utc
 
     def test_timezone_with_bounds(self):
         tz = ZoneInfo("UTC")
