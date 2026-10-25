@@ -46,6 +46,7 @@ Changelog = "https://mukhopadhyay.is-a.dev/pyfake/CHANGELOG/"
 dev = [
     "marimo>=0.17.6",
     "matplotlib>=3.10.8",
+    "pre-commit>=4.6.2",
     "pytest>=8.4.2",
     "pytest-cov>=7.0.0",
     "rich>=14.3.1",
