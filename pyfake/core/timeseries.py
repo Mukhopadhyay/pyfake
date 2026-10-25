@@ -1,8 +1,7 @@
+from datetime import datetime, timedelta
+from typing import Literal, TypedDict
+
 import numpy as np
-from pydantic import Field
-from datetime import timedelta
-from datetime import datetime
-from typing import Literal, TypedDict, Optional, Union, List, Annotated
 
 trend_literals = Literal["upward", "downward", "flat"]
 
@@ -38,23 +37,23 @@ class AnomalyDict(TypedDict):
 
 
 class Timeseries:
-
     def __init__(
         self,
         start: datetime | str,
         periods: int,
         freq: freq_literals,
-        trend: Optional[Union[trend_literals, TrendDict]] = "upward",
+        trend: trend_literals | TrendDict | None = "upward",
         baseline: float = 100.0,
-        seed: Optional[int] = None,
-        noise: Optional[Union[float, NoiseDict]] = None,
-        seasonality: Optional[
-            Union[freq_literals, SeasonalityDict, List[Union[freq_literals, SeasonalityDict]]]
-        ] = None,
-        anomalies: Optional[AnomalyDict] = None,
-        missing: Optional[float] = None,
-        min_value: Optional[float] = None,
-        max_value: Optional[float] = None,
+        seed: int | None = None,
+        noise: float | NoiseDict | None = None,
+        seasonality: freq_literals
+        | SeasonalityDict
+        | list[freq_literals | SeasonalityDict]
+        | None = None,
+        anomalies: AnomalyDict | None = None,
+        missing: float | None = None,
+        min_value: float | None = None,
+        max_value: float | None = None,
         # end: Optional[datetime | str] = None,
     ):
         """
@@ -226,7 +225,7 @@ class Timeseries:
         if self.seed is not None:
             np.random.seed(self.seed)
 
-    def _format_output(self, t: List[datetime], y: np.ndarray) -> List[tuple]:
+    def _format_output(self, t: list[datetime], y: np.ndarray) -> list[tuple]:
         return list(zip(t, y))
 
     def generate(self):

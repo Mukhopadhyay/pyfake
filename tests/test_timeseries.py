@@ -1,9 +1,9 @@
-from pyfake import Timeseries
 from datetime import datetime
+
+from pyfake import Timeseries
 
 
 class TestTimeseriesClass:
-
     def test_instantiation(self):
         ts = Timeseries(start="2023-01-01", baseline=100.0, periods=10, freq="day")
         assert ts.start == datetime(2023, 1, 1)
@@ -22,8 +22,12 @@ class TestTimeseriesClass:
         assert len(data) == 10
 
     def test_reproducibility(self):
-        ts1 = Timeseries(start="2023-01-01", baseline=100.0, periods=10, freq="day", seed=42)
-        ts2 = Timeseries(start="2023-01-01", baseline=100.0, periods=10, freq="day", seed=42)
+        ts1 = Timeseries(
+            start="2023-01-01", baseline=100.0, periods=10, freq="day", seed=42
+        )
+        ts2 = Timeseries(
+            start="2023-01-01", baseline=100.0, periods=10, freq="day", seed=42
+        )
         data1 = ts1.generate()
         data2 = ts2.generate()
         assert data1 == data2
@@ -32,7 +36,11 @@ class TestTimeseriesClass:
 class TestTimeseriesTrend:
     def test_trend_generation(self):
         ts = Timeseries(
-            start="2023-01-01", baseline=100.0, periods=10, freq="day", trend={"type": "upward", "slope": 5}
+            start="2023-01-01",
+            baseline=100.0,
+            periods=10,
+            freq="day",
+            trend={"type": "upward", "slope": 5},
         )
         data = ts.generate()
         assert data[0][1] == 100.0

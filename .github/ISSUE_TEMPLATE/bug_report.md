@@ -20,6 +20,7 @@ For the following Pydantic model, I'm getting `a` as None, resulting in a Valida
 ```python
 from pydantic import BaseModel
 
+
 class Something(BaseModel):
     a: int
 ```
@@ -33,8 +34,10 @@ Please provide the **smallest possible code snippet** to reproduce the issue.
 from pyfake import fake
 from pydantic import BaseModel
 
+
 class Something(BaseModel):
     a: int
+
 
 x = fake(Something, num=5)
 assert isinstance(x.a, int)

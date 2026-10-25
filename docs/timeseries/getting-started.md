@@ -45,12 +45,17 @@ This page shows how to use the `Timeseries` helper included in the `pyfake` pack
     # simple instantiation from ISO date string
     ts = Timeseries(start="2023-01-01", periods=10, freq="day", baseline=100.0)
     data = ts.generate()
-    print(type(data), len(data))          # -> list, 10
-    print(data[0])                       # -> (datetime(2023-01-01...), 100.0)
+    print(type(data), len(data))  # -> list, 10
+    print(data[0])  # -> (datetime(2023-01-01...), 100.0)
 
     # explicit trend with a dictionary (5 units per period upward)
-    ts2 = Timeseries(start="2023-01-01", periods=3, freq="day", baseline=100.0,
-                     trend={"type":"upward", "slope": 5})
+    ts2 = Timeseries(
+        start="2023-01-01",
+        periods=3,
+        freq="day",
+        baseline=100.0,
+        trend={"type": "upward", "slope": 5},
+    )
     print([v for _, v in ts2.generate()])
     # -> [100.0, 105.0, 110.0]
     ```
@@ -87,15 +92,25 @@ assert ts.generate()[0][1] == 100.0
 assert ts.generate()[1][1] == 100.1
 
 # 2) explicit upward slope of 5 per period
-ts = Timeseries(start="2023-01-01", baseline=100.0, periods=3, freq="day",
-                trend={"type": "upward", "slope": 5})
+ts = Timeseries(
+    start="2023-01-01",
+    baseline=100.0,
+    periods=3,
+    freq="day",
+    trend={"type": "upward", "slope": 5},
+)
 data = ts.generate()
 assert data[1][1] == 105.0
 assert data[2][1] == 110.0
 
 # 3) explicit downward slope
-ts = Timeseries(start="2023-01-01", baseline=100.0, periods=3, freq="day",
-                trend={"type": "downward", "slope": 3})
+ts = Timeseries(
+    start="2023-01-01",
+    baseline=100.0,
+    periods=3,
+    freq="day",
+    trend={"type": "downward", "slope": 3},
+)
 data = ts.generate()
 assert data[1][1] == 97.0
 assert data[2][1] == 94.0

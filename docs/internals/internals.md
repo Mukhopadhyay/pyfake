@@ -113,23 +113,23 @@ The registry owns the mapping from type keys and format strings to generator cal
 
 ```python
 _generators = {
-    "integer":   generate_int,
-    "number":    generate_float,
-    "string":    generate_str,
-    "bool":      generate_bool,
-    "uuid":      generate_uuid4,
-    "uuid1":     generate_uuid1,
+    "integer": generate_int,
+    "number": generate_float,
+    "string": generate_str,
+    "bool": generate_bool,
+    "uuid": generate_uuid4,
+    "uuid1": generate_uuid1,
     # … uuid3 through uuid8
-    "date":      generate_date,
+    "date": generate_date,
     "date-time": generate_datetime,
-    "time":      generate_time,
+    "time": generate_time,
 }
 
 _type_map = {
-    int:       "integer",
-    float:     "number",
-    str:       "string",
-    bool:      "bool",
+    int: "integer",
+    float: "number",
+    str: "string",
+    bool: "bool",
     uuid.UUID: "uuid",
 }
 ```

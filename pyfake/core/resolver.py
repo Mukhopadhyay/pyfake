@@ -1,11 +1,12 @@
-import annotated_types
 import types
+from enum import Enum
+from typing import Annotated, Literal, Union, get_args, get_origin
+
+import annotated_types
 from pydantic import BaseModel
 from pydantic.fields import FieldInfo
 from pydantic.types import UuidVersion
 from pydantic_core import PydanticUndefinedType
-from typing import Annotated, Union, Literal, get_args, get_origin
-from enum import Enum
 
 from pyfake.schemas import GeneratorArgs
 
@@ -19,7 +20,9 @@ class Resolver:
 
         generator_args = GeneratorArgs()
         # Default value
-        if field_info.default is not None and not isinstance(field_info.default, PydanticUndefinedType):
+        if field_info.default is not None and not isinstance(
+            field_info.default, PydanticUndefinedType
+        ):
             generator_args.default = field_info.default
         # Examples
         if field_info.examples:
@@ -213,7 +216,10 @@ class Resolver:
                 return {
                     "type": "model",
                     "model": tp,
-                    "fields": {k: Resolver(v).resolve()["schema"] for k, v in tp.model_fields.items()},
+                    "fields": {
+                        k: Resolver(v).resolve()["schema"]
+                        for k, v in tp.model_fields.items()
+                    },
                     "generator_args": generator_args,
                 }
 

@@ -1,22 +1,29 @@
-import pytest
-from pyfake import Pyfake
-from pydantic import BaseModel, Field
-from typing import Annotated, Optional
-from datetime import date, datetime, time, timezone as dt_timezone
+from datetime import date, datetime, time, timezone
+from typing import Annotated
 from zoneinfo import ZoneInfo
+
+import pytest
+from pydantic import BaseModel, Field
+
+from pyfake import Pyfake
 
 
 @pytest.mark.datatypes
 @pytest.mark.datetime
 # @pytest.mark.xfail
 class TestPyfakeDateTimeGeneration:
-
     class StressTestDateModel(BaseModel):
         date_basic: date
-        date_optional: Optional[date]
-        date_with_bounds: Annotated[date, Field(ge=date(2000, 1, 1), le=date(2020, 12, 31))]
-        date_with_gt_lt: Annotated[date, Field(gt=date(2010, 1, 1), lt=date(2010, 1, 10))]
-        date_optional_default: Optional[Annotated[date, Field(ge=date(1990, 1, 1), default=date(1995, 5, 5))]] = None
+        date_optional: date | None
+        date_with_bounds: Annotated[
+            date, Field(ge=date(2000, 1, 1), le=date(2020, 12, 31))
+        ]
+        date_with_gt_lt: Annotated[
+            date, Field(gt=date(2010, 1, 1), lt=date(2010, 1, 10))
+        ]
+        date_optional_default: (
+            Annotated[date, Field(ge=date(1990, 1, 1), default=date(1995, 5, 5))] | None
+        ) = None
 
     @pytest.mark.parametrize(
         "seed",
@@ -33,16 +40,18 @@ class TestPyfakeDateTimeGeneration:
         assert date(2000, 1, 1) <= result["date_with_bounds"] <= date(2020, 12, 31)
         assert date(2010, 1, 1) < result["date_with_gt_lt"] < date(2010, 1, 10)
         if result["date_optional_default"] is not None:
-            assert result["date_optional_default"] == date(1995, 5, 5) or result["date_optional_default"] >= date(
-                1990, 1, 1
-            )
+            assert result["date_optional_default"] == date(1995, 5, 5) or result[
+                "date_optional_default"
+            ] >= date(1990, 1, 1)
 
     class StressTestDatetimeModel(BaseModel):
         datetime_basic: datetime
-        datetime_optional: Optional[datetime]
+        datetime_optional: datetime | None
         datetime_with_bounds: Annotated[
             datetime,
-            Field(ge=datetime(2000, 1, 1, 0, 0, 0), le=datetime(2000, 12, 31, 23, 59, 59)),
+            Field(
+                ge=datetime(2000, 1, 1, 0, 0, 0), le=datetime(2000, 12, 31, 23, 59, 59)
+            ),
         ]
         datetime_with_gt_lt: Annotated[
             datetime,
@@ -69,19 +78,33 @@ class TestPyfakeDateTimeGeneration:
         assert isinstance(result["datetime_basic"], datetime)
         assert isinstance(result["datetime_optional"], (datetime, type(None)))
 
-        assert datetime(2000, 1, 1, 0, 0, 0) <= result["datetime_with_bounds"] <= datetime(2000, 12, 31, 23, 59, 59)
-        assert datetime(2020, 1, 1, 0, 0, 0) < result["datetime_with_gt_lt"] < datetime(2020, 1, 1, 0, 0, 10)
+        assert (
+            datetime(2000, 1, 1, 0, 0, 0)
+            <= result["datetime_with_bounds"]
+            <= datetime(2000, 12, 31, 23, 59, 59)
+        )
+        assert (
+            datetime(2020, 1, 1, 0, 0, 0)
+            < result["datetime_with_gt_lt"]
+            < datetime(2020, 1, 1, 0, 0, 10)
+        )
         if result["datetime_with_defaults"] is not None:
-            assert result["datetime_with_defaults"] == datetime(2010, 1, 1, 13, 0, 0) or (
-                datetime(2010, 1, 1) <= result["datetime_with_defaults"] <= datetime(2010, 1, 2)
+            assert result["datetime_with_defaults"] == datetime(
+                2010, 1, 1, 13, 0, 0
+            ) or (
+                datetime(2010, 1, 1)
+                <= result["datetime_with_defaults"]
+                <= datetime(2010, 1, 2)
             )
 
     class StressTestTimeModel(BaseModel):
         time_basic: time
-        time_optional: Optional[time]
+        time_optional: time | None
         time_with_bounds: Annotated[time, Field(ge=time(1, 0, 0), le=time(5, 0, 0))]
         time_with_gt_lt: Annotated[time, Field(gt=time(10, 0, 0), lt=time(10, 0, 10))]
-        time_optional_default: Optional[Annotated[time, Field(default=time(12, 0, 0))]] = None
+        time_optional_default: Annotated[time, Field(default=time(12, 0, 0))] | None = (
+            None
+        )
 
     @pytest.mark.parametrize(
         "seed",
@@ -121,7 +144,7 @@ class TestPyfakeDateTimeGeneration:
             t: Annotated[time, Field(gt=time(12, 0, 59))]
 
         pyfake = Pyfake(Model)
-        with pytest.raises(Exception):
+        with pytest.raises(ValueError):
             pyfake.generate()
 
 
@@ -134,7 +157,7 @@ class TestPyfakeDateTimeBareAnnotation:
         joined_at: datetime
         birthday: date
         alarm: time
-        last_seen: Optional[datetime]
+        last_seen: datetime | None
 
     @pytest.mark.parametrize("seed", list(range(10)) + [None])
     def test_bare_datetime_types(self, seed):
@@ -155,7 +178,7 @@ class TestPyfakeDatetimeTimezone:
     @pytest.mark.parametrize(
         "tz",
         [
-            dt_timezone.utc,
+            timezone.utc,
             ZoneInfo("UTC"),
             ZoneInfo("America/New_York"),
             ZoneInfo("Europe/London"),
@@ -173,10 +196,12 @@ class TestPyfakeDatetimeTimezone:
     @pytest.mark.parametrize("seed", list(range(5)) + [None])
     def test_timezone_utc_stdlib(self, seed):
         class Model(BaseModel):
-            ts: Annotated[datetime, Field(..., json_schema_extra={"timezone": dt_timezone.utc})]
+            ts: Annotated[
+                datetime, Field(..., json_schema_extra={"timezone": timezone.utc})
+            ]
 
         result = Pyfake(Model, seed=seed).generate()
-        assert result["ts"].tzinfo is dt_timezone.utc
+        assert result["ts"].tzinfo is timezone.utc
 
     def test_timezone_with_bounds(self):
         tz = ZoneInfo("UTC")
@@ -202,7 +227,10 @@ class TestPyfakeDatetimeTimezone:
         tz = ZoneInfo("America/New_York")
 
         class Model(BaseModel):
-            ts: Optional[Annotated[datetime, Field(..., json_schema_extra={"timezone": tz})]]
+            ts: (
+                Annotated[datetime, Field(..., json_schema_extra={"timezone": tz})]
+                | None
+            )
 
         # Run enough times to get both None and non-None results
         results = [Pyfake(Model, seed=s).generate()["ts"] for s in range(30)]
@@ -213,8 +241,15 @@ class TestPyfakeDatetimeTimezone:
 
     def test_multiple_timezone_fields(self):
         class Model(BaseModel):
-            utc_ts: Annotated[datetime, Field(..., json_schema_extra={"timezone": ZoneInfo("UTC")})]
-            ny_ts: Annotated[datetime, Field(..., json_schema_extra={"timezone": ZoneInfo("America/New_York")})]
+            utc_ts: Annotated[
+                datetime, Field(..., json_schema_extra={"timezone": ZoneInfo("UTC")})
+            ]
+            ny_ts: Annotated[
+                datetime,
+                Field(
+                    ..., json_schema_extra={"timezone": ZoneInfo("America/New_York")}
+                ),
+            ]
             naive_ts: datetime
 
         result = Pyfake(Model, seed=1).generate()
@@ -233,8 +268,12 @@ class TestPyfakeDatetimeTimezone:
         # Passing timezone via json_schema_extra on date/time fields must not crash;
         # date and time generators absorb it silently via **kwargs.
         class Model(BaseModel):
-            d: Annotated[date, Field(..., json_schema_extra={"timezone": ZoneInfo("UTC")})]
-            t: Annotated[time, Field(..., json_schema_extra={"timezone": ZoneInfo("UTC")})]
+            d: Annotated[
+                date, Field(..., json_schema_extra={"timezone": ZoneInfo("UTC")})
+            ]
+            t: Annotated[
+                time, Field(..., json_schema_extra={"timezone": ZoneInfo("UTC")})
+            ]
 
         result = Pyfake(Model, seed=5).generate()
         assert isinstance(result["d"], date)

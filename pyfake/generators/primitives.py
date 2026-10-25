@@ -1,7 +1,7 @@
 import string
-from decimal import Decimal, ROUND_CEILING, ROUND_FLOOR
+from decimal import ROUND_CEILING, ROUND_FLOOR, Decimal
+
 from pyfake.core.context import Context
-from typing import Optional
 from pyfake.exceptions import InvalidConstraints
 
 
@@ -11,12 +11,12 @@ def generate_none(*args, **kwargs):
 
 def generate_int(
     *,
-    lt: Optional[int] = None,
-    gt: Optional[int] = None,
-    le: Optional[int] = None,
-    ge: Optional[int] = None,
-    multiple_of: Optional[int] = None,
-    context: Optional[Context] = None,
+    lt: int | None = None,
+    gt: int | None = None,
+    le: int | None = None,
+    ge: int | None = None,
+    multiple_of: int | None = None,
+    context: Context | None = None,
     **kwargs,
 ) -> int:
 
@@ -25,7 +25,6 @@ def generate_int(
 
     # Handling multiple_of within the range
     if multiple_of is not None:
-
         mult = int(multiple_of)
         if mult <= 0:
             raise InvalidConstraints("multiple_of must be a positive integer")
@@ -34,7 +33,9 @@ def generate_int(
         start = k_start * mult
 
         if start > max_value:
-            raise InvalidConstraints("No valid integer can be generated with the given constraints.")
+            raise InvalidConstraints(
+                "No valid integer can be generated with the given constraints."
+            )
 
         count = ((max_value - start) // mult) + 1
         random_multiple = context.random.randint(0, count - 1)
@@ -45,11 +46,11 @@ def generate_int(
 
 def generate_str(
     *,
-    pattern: Optional[str] = None,
-    min_length: Optional[int] = None,
-    max_length: Optional[int] = None,
-    length: Optional[int] = 10,
-    context: Optional[Context] = None,
+    pattern: str | None = None,
+    min_length: int | None = None,
+    max_length: int | None = None,
+    length: int | None = 10,
+    context: Context | None = None,
     **kwargs,
 ) -> str:
     # TODO: Support for pattern
@@ -72,13 +73,13 @@ def generate_str(
 
 def generate_float(
     *,
-    lt: Optional[int] = None,
-    gt: Optional[int] = None,
-    le: Optional[int] = None,
-    ge: Optional[int] = None,
-    multiple_of: Optional[float] = None,
-    decimal_places: Optional[int] = None,
-    context: Optional[Context] = None,
+    lt: int | None = None,
+    gt: int | None = None,
+    le: int | None = None,
+    ge: int | None = None,
+    multiple_of: float | None = None,
+    decimal_places: int | None = None,
+    context: Context | None = None,
     **kwargs,
 ) -> float:
     min_value = ge if ge is not None else (gt + 0.1 if gt is not None else 0.0)
@@ -96,7 +97,9 @@ def generate_float(
         k_start = (min_dec / mult_dec).to_integral_value(rounding=ROUND_CEILING)
         start = k_start * mult_dec
         if start > max_dec:
-            raise InvalidConstraints("No valid float can be generated with the given constraints.")
+            raise InvalidConstraints(
+                "No valid float can be generated with the given constraints."
+            )
 
         k_count = ((max_dec - start) / mult_dec).to_integral_value(rounding=ROUND_FLOOR)
         count = int(k_count) + 1
@@ -117,13 +120,13 @@ def generate_float(
 
 def generate_decimal(
     *,
-    lt: Optional[int] = None,
-    gt: Optional[int] = None,
-    le: Optional[int] = None,
-    ge: Optional[int] = None,
-    multiple_of: Optional[float] = None,
-    decimal_places: Optional[int] = None,
-    context: Optional[Context] = None,
+    lt: int | None = None,
+    gt: int | None = None,
+    le: int | None = None,
+    ge: int | None = None,
+    multiple_of: float | None = None,
+    decimal_places: int | None = None,
+    context: Context | None = None,
     **kwargs,
 ) -> Decimal:
     min_value = ge if ge is not None else (gt + 0.1 if gt is not None else 0.0)
@@ -146,7 +149,9 @@ def generate_decimal(
         start = k_start * mult_dec
 
         if start > max_dec:
-            raise InvalidConstraints("No valid decimal can be generated with the given constraints.")
+            raise InvalidConstraints(
+                "No valid decimal can be generated with the given constraints."
+            )
 
         k_count = ((max_dec - start) / mult_dec).to_integral_value(rounding=ROUND_FLOOR)
         count = int(k_count) + 1
@@ -166,7 +171,7 @@ def generate_decimal(
 
 def generate_bool(
     *,
-    context: Optional[Context] = None,
+    context: Context | None = None,
     **kwargs,
 ) -> bool:
     return context.random.choice([True, False])

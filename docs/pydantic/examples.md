@@ -48,7 +48,7 @@ class User(BaseModel):
 
 result = Pyfake.from_schema(User)
 print(result)
-# 
+#
 ```
 
 <!-- termynal -->
@@ -76,7 +76,7 @@ result = Pyfake.from_schema(User)
 ```python
 fake = Pyfake(User)
 
-first_batch  = fake.generate(num=5)
+first_batch = fake.generate(num=5)
 second_batch = fake.generate(num=5)  # fresh values, same stream
 ```
 
@@ -108,9 +108,9 @@ By default `pyfake` returns plain `dict`s via `.model_dump()`. Set `as_dict=Fals
 ```python
 user = Pyfake.from_schema(User, as_dict=False)
 
-print(type(user))        # <class '__main__.User'>
-print(user.is_active)    # True
-print(user.model_dump()) # {'id': 47, 'username': 'xKLmPqRstU', 'is_active': True}
+print(type(user))  # <class '__main__.User'>
+print(user.is_active)  # True
+print(user.model_dump())  # {'id': 47, 'username': 'xKLmPqRstU', 'is_active': True}
 ```
 
 Every generated value still passes Pydantic's own validation — if it didn't, you'd get a `ValidationError` before it ever reached you.
@@ -159,9 +159,9 @@ from pyfake import Pyfake
 
 
 class Product(BaseModel):
-    price:        Annotated[float, Field(ge=0.01, le=999.99)]
-    stock:        Annotated[int,   Field(ge=0,    le=1000)]
-    discount_pct: Annotated[float, Field(gt=0.0,  lt=50.0)]
+    price: Annotated[float, Field(ge=0.01, le=999.99)]
+    stock: Annotated[int, Field(ge=0, le=1000)]
+    discount_pct: Annotated[float, Field(gt=0.0, lt=50.0)]
 
 
 result = Pyfake.from_schema(Product)
@@ -188,9 +188,9 @@ from pyfake import Pyfake
 
 
 class Profile(BaseModel):
-    handle: Annotated[str, Field(min_length=3,  max_length=20)]
-    bio:    Annotated[str, Field(max_length=160)]
-    pin:    Annotated[str, Field(min_length=4,  max_length=4)]
+    handle: Annotated[str, Field(min_length=3, max_length=20)]
+    bio: Annotated[str, Field(max_length=160)]
+    pin: Annotated[str, Field(min_length=4, max_length=4)]
 
 
 result = Pyfake.from_schema(Profile)
@@ -212,8 +212,8 @@ from pyfake import Pyfake
 
 
 class Event(BaseModel):
-    title:        str
-    description:  Optional[str]
+    title: str
+    description: Optional[str]
     cancelled_at: Optional[str]
 
 
@@ -241,7 +241,7 @@ from pyfake import Pyfake
 
 class Measurement(BaseModel):
     value: Union[
-        Annotated[int,   Field(ge=0,   le=100)],
+        Annotated[int, Field(ge=0, le=100)],
         Annotated[float, Field(ge=0.0, le=1.0)],
     ]
 
@@ -264,7 +264,7 @@ from pyfake import Pyfake
 
 
 class Order(BaseModel):
-    status:   Literal["pending", "processing", "shipped", "delivered", "cancelled"]
+    status: Literal["pending", "processing", "shipped", "delivered", "cancelled"]
     priority: Literal[1, 2, 3]
 
 
@@ -287,7 +287,7 @@ from pyfake import Pyfake
 
 
 class Role(str, Enum):
-    ADMIN  = "admin"
+    ADMIN = "admin"
     EDITOR = "editor"
     VIEWER = "viewer"
 
@@ -298,7 +298,7 @@ class Member(BaseModel):
 
 
 member = Pyfake.from_schema(Member, as_dict=False)
-print(member.role)        # Role.EDITOR
+print(member.role)  # Role.EDITOR
 print(member.role.value)  # 'editor'
 ```
 
@@ -315,8 +315,8 @@ from pyfake import Pyfake
 
 
 class Playlist(BaseModel):
-    track_ids:      List[int]
-    tags:           Annotated[List[str], Field(min_length=2, max_length=5)]
+    track_ids: List[int]
+    tags: Annotated[List[str], Field(min_length=2, max_length=5)]
     unique_ratings: Set[int]
 
 
@@ -358,7 +358,7 @@ from pyfake import Pyfake
 
 class Point(BaseModel):
     coords: Tuple[float, float, float]
-    label:  Tuple[str, int]
+    label: Tuple[str, int]
 
 
 result = Pyfake.from_schema(Point)
@@ -379,14 +379,14 @@ from pyfake import Pyfake
 
 
 class Address(BaseModel):
-    street:   str
-    city:     str
+    street: str
+    city: str
     zip_code: str
 
 
 class Customer(BaseModel):
-    name:    str
-    age:     int
+    name: str
+    age: int
     address: Address
 
 
@@ -452,8 +452,8 @@ from pyfake import Pyfake
 
 class Schedule(BaseModel):
     created_on: date
-    starts_at:  datetime
-    opens_at:   time
+    starts_at: datetime
+    opens_at: time
 
 
 result = Pyfake.from_schema(Schedule)
@@ -475,7 +475,7 @@ from pyfake import Pyfake
 
 class Campaign(BaseModel):
     start_date: Annotated[date, Field(ge=date(2025, 1, 1), le=date(2025, 12, 31))]
-    end_date:   Annotated[date, Field(ge=date(2026, 1, 1), le=date(2026, 12, 31))]
+    end_date: Annotated[date, Field(ge=date(2026, 1, 1), le=date(2026, 12, 31))]
 
 
 result = Pyfake.from_schema(Campaign)
@@ -496,8 +496,8 @@ from pyfake import Pyfake
 class AppConfig(BaseModel):
     version: str = "1.0.0"
     timeout: int = Field(default=30)
-    debug:   bool = Field(default=False)
-    name:    str                          # this one gets generated
+    debug: bool = Field(default=False)
+    name: str  # this one gets generated
 
 
 result = Pyfake.from_schema(AppConfig)
@@ -526,25 +526,25 @@ from pyfake import Pyfake
 
 
 class AccountStatus(str, Enum):
-    ACTIVE    = "active"
+    ACTIVE = "active"
     SUSPENDED = "suspended"
-    PENDING   = "pending"
+    PENDING = "pending"
 
 
 class Address(BaseModel):
-    street:       Annotated[str, Field(min_length=5, max_length=80)]
-    city:         Annotated[str, Field(min_length=2, max_length=50)]
+    street: Annotated[str, Field(min_length=5, max_length=80)]
+    city: Annotated[str, Field(min_length=2, max_length=50)]
     country_code: Annotated[str, Field(min_length=2, max_length=2)]
 
 
 class UserProfile(BaseModel):
-    id:        uuid.UUID
-    username:  Annotated[str,   Field(min_length=3, max_length=30)]
-    age:       Annotated[int,   Field(ge=18, le=120)]
-    score:     Annotated[float, Field(ge=0.0, le=100.0)]
-    status:    AccountStatus
-    tags:      Annotated[List[str], Field(min_length=1, max_length=5)]
-    address:   Address
+    id: uuid.UUID
+    username: Annotated[str, Field(min_length=3, max_length=30)]
+    age: Annotated[int, Field(ge=18, le=120)]
+    score: Annotated[float, Field(ge=0.0, le=100.0)]
+    status: AccountStatus
+    tags: Annotated[List[str], Field(min_length=1, max_length=5)]
+    address: Address
     joined_at: datetime
     last_seen: Optional[datetime]
 

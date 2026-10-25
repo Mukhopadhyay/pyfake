@@ -1,13 +1,14 @@
-import pytest
 import json as json_module
-from pyfake import Pyfake, Fake
+
+import pytest
 from pydantic import BaseModel
+
+from pyfake import Fake, Pyfake
 
 
 @pytest.mark.api
 @pytest.mark.pyfake
 class TestPyfakeInstantiation:
-
     class SampleModel(BaseModel):
         integer_basic: int
         string_basic: str
@@ -45,7 +46,6 @@ class TestPyfakeInstantiation:
 @pytest.mark.api
 @pytest.mark.pyfake
 class TestPyfakeAsDict:
-
     class SampleModel(BaseModel):
         integer_basic: int
         string_basic: str
@@ -94,7 +94,6 @@ class TestPyfakeAsDict:
 @pytest.mark.api
 @pytest.mark.pyfake
 class TestFakeClass:
-
     class SampleModel(BaseModel):
         x: int
         y: str

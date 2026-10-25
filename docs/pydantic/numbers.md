@@ -18,9 +18,11 @@ pyfake supports generating fake data for integer (`<int>`), floating-point (`<fl
 from pyfake import fake
 from pydantic import BaseModel
 
+
 class Product(BaseModel):
     id: int
     price: float
+
 
 result = fake(Product)
 print(result)
@@ -45,6 +47,7 @@ No setup, no fixtures, no config files.
     ```python
     from pydantic import Field
 
+
     class Product(BaseModel):
         id: int = Field(..., gt=0)  # id must be greater than 0
         price: float = Field(..., ge=0.0)  # price must be non-negative
@@ -64,9 +67,11 @@ By default, `pyfake` generates a single instance of your model. But you can easi
 from pyfake import fake
 from pydantic import BaseModel
 
+
 class Product(BaseModel):
     id: int
     price: float
+
 
 results = fake(Product, num=5)
 print(results)
@@ -91,9 +96,11 @@ By default, `pyfake` returns generated data as plain dictionaries. If you want t
 from pyfake import fake
 from pydantic import BaseModel
 
+
 class Product(BaseModel):
     id: int
     price: float
+
 
 results = fake(Product, num=3, as_dict=False)
 print(results)
@@ -123,9 +130,12 @@ pyfake's internal architecture is designed to leverage this metadata effectively
 
 ```python
 from pydantic import BaseModel, Field
+
+
 class Product(BaseModel):
     id: int = Field(..., gt=-4, lt=0)  # id must be greater than 0
     price: float = Field(..., ge=3.0, le=7.0)  # price must be between 3.0 and 7.0
+
 
 results = fake(Product, num=1, as_dict=False)
 print(results)
@@ -164,8 +174,10 @@ The `multiple_of` option can be used with `int`, `float`, and `Decimal` fields t
 ```python
 from pydantic import BaseModel, Field
 
+
 class Item(BaseModel):
     count: int = Field(..., ge=0, le=100, multiple_of=5)
+
 
 results = fake(Item, num=3)
 print(results)
@@ -182,8 +194,10 @@ print(results)
 ```python
 from pydantic import BaseModel, Field
 
+
 class Product(BaseModel):
     expiry: float = Field(..., ge=0.0, le=10.0, multiple_of=0.5)
+
 
 results = fake(Product, num=3)
 print(results)
@@ -201,8 +215,12 @@ print(results)
 from decimal import Decimal
 from pydantic import BaseModel, Field
 
+
 class Price(BaseModel):
-    price: Decimal = Field(..., ge=0, le=10, multiple_of=Decimal('0.25'), decimal_places=2)
+    price: Decimal = Field(
+        ..., ge=0, le=10, multiple_of=Decimal("0.25"), decimal_places=2
+    )
+
 
 result = fake(Price)
 print(result)
@@ -220,9 +238,12 @@ Integers can be generated easily from Pydantic models, such as
 
 ```python
 from pydantic import BaseModel
+
+
 class User(BaseModel):
     id: int
     age: int
+
 
 result = fake(User)
 print(result)
@@ -238,10 +259,12 @@ print(result)
 ```python
 from pydantic import BaseModel, Field
 
+
 class User(BaseModel):
     id: int = Field(..., gt=0)  # id must be greater than 0
     age: int = Field(..., ge=18, le=99)  # age must be between 18 and 99
     score: int = Field(..., gt=-10, lt=100)  # score must be between -10 and 100
+
 
 result = fake(User)
 print(result)
@@ -259,10 +282,12 @@ Floats can also be generated from Pydantic models, such as
 ```python
 from pydantic import BaseModel
 
+
 class Product(BaseModel):
     price: float
     height: float
     width: float
+
 
 result = fake(Product)
 print(result)
@@ -283,11 +308,17 @@ print(result)
 from pydantic import BaseModel, Field
 from typing import Annotated
 
+
 class Product(BaseModel):
     price: float = Field(..., ge=0.0)  # price must be non-negative
     height: float = Field(..., gt=0.0)  # height must be greater than 0
-    width: float = Field(..., gt=0.0, le=100.0)  # width must be greater than 0 and less than or equal to 100
-    expiry: Annotated[float | None, Field(..., gt=0.0, lt=100.0)]  # Optional expiry must be a positive multiple of 0.5
+    width: float = Field(
+        ..., gt=0.0, le=100.0
+    )  # width must be greater than 0 and less than or equal to 100
+    expiry: Annotated[
+        float | None, Field(..., gt=0.0, lt=100.0)
+    ]  # Optional expiry must be a positive multiple of 0.5
+
 
 result = fake(Product)
 print(result)

@@ -18,8 +18,10 @@ from uuid import UUID
 from pyfake import fake
 from pydantic import BaseModel
 
+
 class Item(BaseModel):
-  id: UUID
+    id: UUID
+
 
 result = fake(Item)
 print(result)
@@ -73,8 +75,10 @@ from uuid import UUID
 from pyfake import fake
 from pydantic import BaseModel
 
+
 class Item(BaseModel):
-  id: Optional[UUID]
+    id: Optional[UUID]
+
 
 results = fake(Item, num=5)
 print(results)
@@ -98,8 +102,10 @@ from uuid import UUID
 from pydantic import BaseModel, Field
 from pyfake import fake
 
+
 class User(BaseModel):
-  id: UUID = Field(default=UUID('11111111-1111-1111-1111-111111111111'))
+    id: UUID = Field(default=UUID("11111111-1111-1111-1111-111111111111"))
+
 
 result = fake(User)
 print(result)
@@ -129,8 +135,10 @@ from pydantic import BaseModel
 from pydantic.types import UuidVersion
 from pyfake import fake
 
+
 class Item(BaseModel):
-  id: Annotated[UUID, UuidVersion(1)]  # request UUIDv1
+    id: Annotated[UUID, UuidVersion(1)]  # request UUIDv1
+
 
 print(fake(Item))
 ```
@@ -142,8 +150,10 @@ from uuid import UUID
 from pydantic import BaseModel, Field
 from pyfake import fake
 
+
 class Item(BaseModel):
-  id: UUID = Field(..., json_schema_extra={"format": "uuid7"})
+    id: UUID = Field(..., json_schema_extra={"format": "uuid7"})
+
 
 print(fake(Item))
 ```

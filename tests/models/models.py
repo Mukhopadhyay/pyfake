@@ -1,8 +1,6 @@
-from datetime import date, datetime, time
-from typing import Annotated, Optional, List, Dict, Union
-from uuid import UUID, uuid4
+from typing import Annotated
 
-from pydantic import BaseModel, Field, EmailStr, HttpUrl
+from pydantic import BaseModel, Field
 
 # Field docs:
 # https://docs.pydantic.dev/latest/api/fields/#pydantic.fields.Field
@@ -14,23 +12,19 @@ class StressTestModel(BaseModel):
     # -------------------------
 
     integer_basic: int
-    integer_optional: Optional[int]
+    integer_optional: int | None
     integer_with_bounds: Annotated[int, Field(ge=1, le=100)]
-    integer_with_multiple_annotations: Union[
-        Annotated[int, Field(ge=1, le=100)], Annotated[int, Field(ge=200, le=300)]
-    ]
-    integer_with_multiple_annotations: Union[
-        Annotated[int, Field(ge=1, le=100, default=21)],
-        Annotated[int, Field(ge=200, le=300, default=42)],
-    ]
-    integer_optional_2_defaults: Optional[
-        Annotated[int, Field(ge=1, le=100, default=21)]
-    ] = 42
-    integer_optional_3_defaults: Union[
-        Annotated[int, Field(ge=1, le=10, default=5)],
-        Annotated[int, Field(ge=20, le=30, default=29)],
-    ] = 27
-    integer_optional_default: Optional[int] = 42
+    integer_with_multiple_annotations: (
+        Annotated[int, Field(ge=1, le=100)] | Annotated[int, Field(ge=200, le=300)]
+    )
+    integer_optional_2_defaults: (
+        Annotated[int, Field(ge=1, le=100, default=21)] | None
+    ) = 42
+    integer_optional_3_defaults: (
+        Annotated[int, Field(ge=1, le=10, default=5)]
+        | Annotated[int, Field(ge=20, le=30, default=29)]
+    ) = 27
+    integer_optional_default: int | None = 42
 
     # float_basic: float
     # float_with_bounds: Annotated[float, Field(gt=0.0, lt=1.0)]
@@ -112,13 +106,13 @@ class Model(BaseModel):
     description: str = Field(description="This is a description of the model.")
     alias: str = Field(alias="model_alias")
     examples: str = Field(examples=["example1", 1])
-    examples_annotated: Annotated[Union[str, int], Field(examples=["example2", 2])]
+    examples_annotated: Annotated[str | int, Field(examples=["example2", 2])]
     gt: int = Field(gt=10)
     lt: int = Field(lt=100)
     ge: int = Field(ge=5)
     le: int = Field(le=200)
     default: int = Field(default=42)
-    multi_default: Annotated[Union[int, str], Field(default=99)]
+    multi_default: Annotated[int | str, Field(default=99)]
     pattern: str = Field(pattern=r"^[a-zA-Z0-9_]+$")
     allow_inf_nan: float = Field(allow_inf_nan=False)
     multiple_of: int = Field(multiple_of=3)
