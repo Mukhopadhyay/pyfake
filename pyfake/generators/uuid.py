@@ -1,8 +1,49 @@
-from pyfake.core.context import Context
+"""
+UUID generators.
+
+All randomness comes from the context, so seeded runs give the same UUIDs. Time-based
+versions (v1, v6, v7) use a timestamp from the 24 hours before `context.now`.
+"""
+
 from typing import Optional
 import uuid
-import time
 import hashlib
+from pyfake.core.context import Context
+
+# 100-nanosecond intervals between the Gregorian epoch (1582-10-15)
+# used by v1/v6 and the Unix epoch
+_GREGORIAN_OFFSET = 0x01B21DD213814000
+_MS_PER_DAY = 86_400_000
+
+
+def _with_version(value: int, version: int) -> uuid.UUID:
+    """Set the version and the RFC 4122 variant bits on a 128-bit integer"""
+    value &= ~(0xF << 76)
+    value |= version << 76
+    value &= ~(0b11 << 62)
+    value |= 0b10 << 62
+    return uuid.UUID(int=value)
+
+
+def _timestamp_ms(context: Context) -> int:
+    """Milliseconds since the Unix epoch, within the day before `context.now`"""
+    return int(context.now.timestamp() * 1000) - context.random.randrange(_MS_PER_DAY)
+
+
+def _gregorian_timestamp(context: Context) -> int:
+    """The 60-bit v1/v6 timestamp: 100-nanosecond intervals since the Gregorian epoch"""
+    return (
+        _timestamp_ms(context) * 10_000
+        + context.random.randrange(10_000)
+        + _GREGORIAN_OFFSET
+    )
+
+
+def _clock_seq_and_node(context: Context):
+    clock_seq = context.random.getrandbits(14)
+    # Random node IDs set the multicast bit, so they can't clash with a real MAC address (RFC 4122 §4.5)
+    node = context.random.getrandbits(48) | (1 << 40)
+    return ((clock_seq >> 8) & 0x3F) | 0x80, clock_seq & 0xFF, node
 
 
 def generate_uuid1(
@@ -10,18 +51,39 @@ def generate_uuid1(
     context: Optional[Context] = None,
     **kwargs,
 ) -> str:
-    return str(uuid.uuid1())
+    if context is None:
+        context = Context()
+
+    timestamp = _gregorian_timestamp(context)
+    clock_seq_hi, clock_seq_low, node = _clock_seq_and_node(context)
+
+    time_low = timestamp & 0xFFFFFFFF
+    time_mid = (timestamp >> 32) & 0xFFFF
+    time_hi_version = ((timestamp >> 48) & 0x0FFF) | (1 << 12)
+
+    return str(
+        uuid.UUID(
+            fields=(
+                time_low,
+                time_mid,
+                time_hi_version,
+                clock_seq_hi,
+                clock_seq_low,
+                node,
+            )
+        )
+    )
 
 
 def generate_uuid3(
     *,
-    namespace: Optional[str] = uuid.NAMESPACE_DNS,
+    namespace: Optional[uuid.UUID] = uuid.NAMESPACE_DNS,
     context: Optional[Context] = None,
     **kwargs,
 ) -> str:
     if not namespace:
         namespace = uuid.NAMESPACE_DNS
-    return str(uuid.uuid3(namespace, str(uuid.uuid4())))
+    return str(uuid.uuid3(namespace, generate_uuid4(context=context)))
 
 
 def generate_uuid4(
@@ -29,80 +91,65 @@ def generate_uuid4(
     context: Optional[Context] = None,
     **kwargs,
 ) -> str:
-    return str(uuid.uuid4())
+    if context is None:
+        context = Context()
+    return str(_with_version(context.random.getrandbits(128), 4))
 
 
 def generate_uuid5(
     *,
-    namespace: Optional[str] = uuid.NAMESPACE_DNS,
+    namespace: Optional[uuid.UUID] = uuid.NAMESPACE_DNS,
     context: Optional[Context] = None,
     **kwargs,
 ) -> str:
     if not namespace:
         namespace = uuid.NAMESPACE_DNS
-    return str(uuid.uuid5(namespace, str(uuid.uuid4())))
+    return str(uuid.uuid5(namespace, generate_uuid4(context=context)))
 
 
 def generate_uuid6(
     *,
-    context: Optional["Context"] = None,
+    context: Optional[Context] = None,
     **kwargs,
 ) -> str:
-    # Start from UUIDv1 (contains timestamp, clock seq, node)
-    u1 = uuid.uuid1()
+    if context is None:
+        context = Context()
 
-    time_low, time_mid, time_hi_version, clock_seq_hi, clock_seq_low, node = u1.fields
+    # Same fields as UUIDv1, but the timestamp is stored big-endian so the UUIDs sort by time
+    timestamp = _gregorian_timestamp(context)
+    clock_seq_hi, clock_seq_low, node = _clock_seq_and_node(context)
 
-    # Reconstruct the 60-bit timestamp from UUIDv1
-    timestamp = ((time_hi_version & 0x0FFF) << 48) | (time_mid << 32) | time_low
-
-    # UUIDv6 timestamp is big-endian
     time_high = (timestamp >> 28) & 0xFFFFFFFF
     time_mid = (timestamp >> 12) & 0xFFFF
-    time_low = timestamp & 0xFFF
+    time_low_version = (timestamp & 0x0FFF) | (6 << 12)
 
-    # Assemble UUID fields
-    time_hi_version = time_low | (6 << 12)
-
-    # Preserve clock sequence
-    clock_seq = ((clock_seq_hi & 0x3F) << 8) | clock_seq_low
-    clock_seq_hi = (clock_seq >> 8) | 0x80  # RFC 4122 variant
-    clock_seq_low = clock_seq & 0xFF
-
-    u6 = uuid.UUID(
-        fields=(
-            time_high,
-            time_mid,
-            time_hi_version,
-            clock_seq_hi,
-            clock_seq_low,
-            node,
+    return str(
+        uuid.UUID(
+            fields=(
+                time_high,
+                time_mid,
+                time_low_version,
+                clock_seq_hi,
+                clock_seq_low,
+                node,
+            )
         )
     )
-
-    return str(u6)
 
 
 def generate_uuid7(
     *,
     context: Optional[Context] = None,
     **kwargs,
-) -> uuid.UUID:
-    # 48-bit timestamp (milliseconds)
-    ts = int(time.time() * 1000) & ((1 << 48) - 1)
+) -> str:
+    if context is None:
+        context = Context()
 
-    # 80 bits of randomness
-    # rand = random.getrandbits(80)
+    # 48-bit timestamp (milliseconds), followed by 80 bits of randomness
+    ts = _timestamp_ms(context) & ((1 << 48) - 1)
     rand = context.random.getrandbits(80)
 
-    # Assemble UUID fields
-    value = (ts << 80) | (0x7 << 76) | (rand & ((1 << 76) - 1))  # version 7
-
-    # Set RFC 4122 variant (10xx)
-    value &= ~(0b11 << 62)
-    value |= 0b10 << 62
-
-    return str(uuid.UUID(int=value))
+    return str(_with_version((ts << 80) | rand, 7))
 
 
 def generate_uuid8(
@@ -110,22 +157,16 @@ def generate_uuid8(
     namespace: Optional[str] = "pyfake",
     context: Optional[Context] = None,
     **kwargs,
-) -> uuid.UUID:
+) -> str:
+    if context is None:
+        context = Context()
 
     if not namespace:
         namespace = "pyfake"
 
-    ts = int(time.time() * 1000)
-    h = hashlib.sha256(f"{namespace}:{ts}".encode()).digest()
+    # UUIDv8 layout is vendor-defined: here, a hash of the namespace and random bits
+    h = hashlib.sha256(
+        f"{namespace}:{context.random.getrandbits(128)}".encode()
+    ).digest()
 
-    value = int.from_bytes(h[:16], "big")
-
-    # set version 8
-    value &= ~(0xF << 76)
-    value |= 8 << 76
-
-    # set variant
-    value &= ~(0b11 << 62)
-    value |= 0b10 << 62
-
-    return str(uuid.UUID(int=value))
+    return str(_with_version(int.from_bytes(h[:16], "big"), 8))
