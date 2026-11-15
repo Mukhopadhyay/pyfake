@@ -115,3 +115,51 @@ class TestGenerateUUIDs:
         result = pyfake_uuid.generate_uuid8(namespace=None, context=context)
         assert isinstance(result, str)
         assert uuid.UUID(result).version == 8
+
+
+@pytest.mark.datatypes
+@pytest.mark.uuid
+class TestUUIDReproducibility:
+    GENERATORS = [
+        pyfake_uuid.generate_uuid1,
+        pyfake_uuid.generate_uuid3,
+        pyfake_uuid.generate_uuid4,
+        pyfake_uuid.generate_uuid5,
+        pyfake_uuid.generate_uuid6,
+        pyfake_uuid.generate_uuid7,
+        pyfake_uuid.generate_uuid8,
+    ]
+
+    @pytest.mark.parametrize("generator", GENERATORS)
+    def test_same_seed_same_uuid(self, generator):
+        assert generator(context=Context(seed=1)) == generator(context=Context(seed=1))
+
+    @pytest.mark.parametrize("generator", GENERATORS)
+    def test_different_seeds_different_uuids(self, generator):
+        assert generator(context=Context(seed=1)) != generator(context=Context(seed=2))
+
+    @pytest.mark.parametrize("generator", GENERATORS)
+    def test_stream_gives_distinct_uuids(self, generator):
+        context = Context(seed=1)
+        values = {generator(context=context) for _ in range(100)}
+        assert len(values) == 100
+
+    @pytest.mark.parametrize("generator", GENERATORS)
+    def test_variant_is_rfc_4122(self, generator):
+        assert uuid.UUID(generator(context=Context(seed=3))).variant == uuid.RFC_4122
+
+    def test_time_based_uuids_use_context_now(self):
+        from datetime import datetime, timedelta, timezone
+
+        now = datetime(2024, 5, 1, tzinfo=timezone.utc)
+        u7 = uuid.UUID(pyfake_uuid.generate_uuid7(context=Context(seed=1, now=now)))
+        ts = datetime.fromtimestamp((u7.int >> 80) / 1000, tz=timezone.utc)
+        assert now - timedelta(days=1) <= ts <= now
+
+        u1 = uuid.UUID(pyfake_uuid.generate_uuid1(context=Context(seed=1, now=now)))
+        ts1 = datetime(1582, 10, 15, tzinfo=timezone.utc) + timedelta(microseconds=u1.time // 10)
+        assert now - timedelta(days=1) <= ts1 <= now
+
+    @pytest.mark.parametrize("generator", GENERATORS)
+    def test_no_context_creates_one(self, generator):
+        assert uuid.UUID(generator())

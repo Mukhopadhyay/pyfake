@@ -3,6 +3,7 @@ Integration and unit tests for complex types: Literal, Enum, List, Set, Tuple, D
 nested models, nullable union, registry fallback, and resolver edge cases.
 """
 
+import pathlib
 import pytest
 import uuid as uuid_mod
 from decimal import Decimal
@@ -16,8 +17,8 @@ from pyfake import Pyfake
 from pyfake.core.context import Context
 from pyfake.core.registry import GeneratorRegistry
 from pyfake.core.resolver import Resolver
+from pyfake.exceptions import GeneratorNotFound
 from pyfake.schemas import GeneratorArgs
-
 
 # ---------------------------------------------------------------------------
 # Shared fixtures / helpers
@@ -70,7 +71,9 @@ class TestPyfakeEnumGeneration:
         assert isinstance(result, dict)
         # pydantic model_dump() in Python mode returns the enum member itself
         assert isinstance(result["color"], Color)
-        assert result["optional_color"] is None or isinstance(result["optional_color"], Color)
+        assert result["optional_color"] is None or isinstance(
+            result["optional_color"], Color
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -285,7 +288,7 @@ class TestNullableUnion:
 
 
 # ---------------------------------------------------------------------------
-# Registry fallback (line 164)
+# Registry fallback
 # ---------------------------------------------------------------------------
 
 
@@ -294,13 +297,20 @@ class TestNullableUnion:
 class TestRegistryFallback:
     """Tests the fallback path in GeneratorRegistry._generate for unsupported types."""
 
-    def test_unknown_type_returns_none(self):
+    def test_unknown_type_raises_generator_not_found(self):
         context = Context(seed=0)
         registry = GeneratorRegistry(context=context)
-        # bytes is not in _type_map → falls through to `return None`
-        schema = {"type": bytes, "generator_args": GeneratorArgs()}
-        result = registry._generate(schema)
-        assert result is None
+        # pathlib.Path has no generator a clear error instead of a silent None
+        schema = {"type": pathlib.Path, "generator_args": GeneratorArgs()}
+        with pytest.raises(GeneratorNotFound, match="Model.path"):
+            registry._generate(schema, "Model.path")
+
+    def test_unknown_field_type_names_the_field(self):
+        class M(BaseModel):
+            location: pathlib.Path
+
+        with pytest.raises(GeneratorNotFound, match="M.location"):
+            Pyfake(M, seed=0).generate()
 
 
 # ---------------------------------------------------------------------------
@@ -358,7 +368,7 @@ class TestResolverEdgeCases:
         assert int_variant["generator_args"].le == 100
 
     def test_annotated_uuid_inside_list_covers_uuid_version_branch(self):
-        """Covers resolver.py lines 121->131 and 132: UuidVersion metadata in Annotated inner type."""
+        """Covers resolver.py lines 121 -> 131 and 132: UuidVersion metadata in Annotated inner type."""
 
         class M(BaseModel):
             ids: List[pydantic.UUID1]

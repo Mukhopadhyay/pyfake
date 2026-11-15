@@ -40,3 +40,12 @@ class TestExceptions:
     def test_invalid_constraints_is_caught_as_pyfake_error(self):
         with pytest.raises(PyfakeError):
             raise InvalidConstraints("invalid")
+
+    def test_generator_not_found_message_contains_path(self):
+        exc = GeneratorNotFound("mytype", "User.avatar")
+        assert "User.avatar" in str(exc)
+        assert exc.path == "User.avatar"
+        assert exc.type == "mytype"
+
+    def test_invalid_constraints_is_value_error(self):
+        assert isinstance(InvalidConstraints("bad"), ValueError)
