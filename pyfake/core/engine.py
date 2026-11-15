@@ -19,10 +19,5 @@ class Engine:
         self.registry = GeneratorRegistry(context=self.context)
 
     def generate(self, schema: BaseModel) -> Dict[str, Any]:
-
-        _data = {}
-
-        for prop, attr in schema.model_fields.items():
-            _data[prop] = self.registry.generate(attr)
-
-        return _data
+        # The registry resolves each field once per model and reuses it for every row
+        return self.registry.generate_fields(schema)

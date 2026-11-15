@@ -1,10 +1,13 @@
 [project]
 name = "pyfake"
-version = "0.0.13"
+version = "0.0.14"
 description = "A fake data generator that is pydantic compatible."
 readme = "README.md"
 requires-python = ">=3.10"
-dependencies = ["numpy>=2.2.6", "pydantic[email,timezone]>=2.12.5"]
+dependencies = [
+    "numpy>=2.2.6",
+    "pydantic[email,timezone]>=2.12.5",
+]
 license = "MIT"
 license-files = ["LICENSE"]
 authors = [
@@ -46,6 +49,7 @@ Changelog = "https://mukhopadhyay.is-a.dev/pyfake/CHANGELOG/"
 dev = [
     "marimo>=0.17.6",
     "matplotlib>=3.10.8",
+    "pre-commit>=4.6.2",
     "pytest>=8.4.2",
     "pytest-cov>=7.0.0",
     "rich>=14.3.1",
@@ -70,6 +74,8 @@ markers = [
     "registry: All pyfake registry GeneratorRegistry() related tests.",
     "exceptions: Tests for pyfake exception classes.",
     "complex: Tests for complex types (list, set, tuple, dict, enum, literal, nested models).",
+    "network: Email, URL and IP address related tests, generator + pydantic integration.",
+    "timeseries: Tests for the `Timeseries` generator.",
 ]
 
 [build-system]
