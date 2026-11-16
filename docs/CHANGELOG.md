@@ -9,7 +9,7 @@ hide:
 
 # Changelog 🕓
 
-### `0.0.14` - 2026-10-30
+### `0.0.14` - 2026-11-17
 
 A bug-fix release. Models that used to crash or fail validation now generate valid data, and many more pydantic types are supported.
 
