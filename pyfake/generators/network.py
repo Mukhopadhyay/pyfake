@@ -7,7 +7,6 @@ values never point at a real server or mailbox.
 
 import ipaddress
 import string
-from typing import Optional
 
 from pydantic.networks import UrlConstraints
 
@@ -27,7 +26,7 @@ def _word(context: Context) -> str:
 
 def generate_email(
     *,
-    context: Optional[Context] = None,
+    context: Context | None = None,
     **kwargs,
 ) -> str:
     if context is None:
@@ -37,7 +36,7 @@ def generate_email(
 
 def generate_name_email(
     *,
-    context: Optional[Context] = None,
+    context: Context | None = None,
     **kwargs,
 ) -> str:
     if context is None:
@@ -48,8 +47,8 @@ def generate_name_email(
 
 def generate_url(
     *,
-    constraints: Optional[UrlConstraints] = None,
-    context: Optional[Context] = None,
+    constraints: UrlConstraints | None = None,
+    context: Context | None = None,
     **kwargs,
 ) -> str:
     """
@@ -79,8 +78,8 @@ def generate_url(
 
 def generate_ip_address(
     *,
-    version: Optional[int] = None,
-    context: Optional[Context] = None,
+    version: int | None = None,
+    context: Context | None = None,
     **kwargs,
 ) -> str:
     if context is None:
@@ -91,8 +90,8 @@ def generate_ip_address(
 
 def generate_ip_network(
     *,
-    version: Optional[int] = None,
-    context: Optional[Context] = None,
+    version: int | None = None,
+    context: Context | None = None,
     **kwargs,
 ) -> str:
     if context is None:
@@ -104,8 +103,8 @@ def generate_ip_network(
 
 def generate_ip_interface(
     *,
-    version: Optional[int] = None,
-    context: Optional[Context] = None,
+    version: int | None = None,
+    context: Context | None = None,
     **kwargs,
 ) -> str:
     if context is None:
@@ -114,7 +113,7 @@ def generate_ip_interface(
     return f"{address}/{prefix}"
 
 
-def _random_address(version: Optional[int], context: Context):
+def _random_address(version: int | None, context: Context):
     """A random address of the given IP version (4 or 6, random if None) and a prefix length for it"""
     version = version or context.random.choice((4, 6))
     if version == 4:

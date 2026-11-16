@@ -1,11 +1,11 @@
 import pytest
-from pyfake.exceptions import PyfakeError, GeneratorNotFound, InvalidConstraints
+
+from pyfake.exceptions import GeneratorNotFound, InvalidConstraints, PyfakeError
 
 
 @pytest.mark.pyfake
 @pytest.mark.exceptions
 class TestExceptions:
-
     def test_generator_not_found_is_pyfake_error(self):
         exc = GeneratorNotFound("int")
         assert isinstance(exc, PyfakeError)

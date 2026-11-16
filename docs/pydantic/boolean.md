@@ -18,8 +18,10 @@ hide:
 from pyfake import fake
 from pydantic import BaseModel
 
+
 class Feature(BaseModel):
-  enabled: bool
+    enabled: bool
+
 
 result = fake(Feature)
 print(result)
@@ -38,8 +40,10 @@ Generate more than one instance by passing `num`:
 from pyfake import fake
 from pydantic import BaseModel
 
+
 class Feature(BaseModel):
-  enabled: bool
+    enabled: bool
+
 
 results = fake(Feature, num=3)
 print(results)
@@ -60,8 +64,10 @@ By default `pyfake` returns dictionaries. To receive Pydantic model instances se
 from pyfake import fake
 from pydantic import BaseModel
 
+
 class Feature(BaseModel):
-  enabled: bool
+    enabled: bool
+
 
 results = fake(Feature, num=2, as_dict=False)
 print(results)
@@ -84,8 +90,10 @@ from typing import Optional
 from pyfake import fake
 from pydantic import BaseModel
 
+
 class Feature(BaseModel):
-  enabled: Optional[bool]
+    enabled: Optional[bool]
+
 
 results = fake(Feature, num=5)
 print(results)
@@ -108,8 +116,10 @@ If you provide an explicit (non-`None`) default for a field, `pyfake` will retur
 from pydantic import BaseModel, Field
 from pyfake import fake
 
+
 class User(BaseModel):
-  active: bool = Field(default=True)
+    active: bool = Field(default=True)
+
 
 result = fake(User)
 print(result)

@@ -1,13 +1,14 @@
-import pytest
 import json as json_module
-from pyfake import Pyfake, Fake
+
+import pytest
 from pydantic import BaseModel
+
+from pyfake import Fake, Pyfake
 
 
 @pytest.mark.api
 @pytest.mark.pyfake
 class TestPyfakeInstantiation:
-
     class SampleModel(BaseModel):
         integer_basic: int
         string_basic: str
@@ -45,7 +46,6 @@ class TestPyfakeInstantiation:
 @pytest.mark.api
 @pytest.mark.pyfake
 class TestPyfakeAsDict:
-
     class SampleModel(BaseModel):
         integer_basic: int
         string_basic: str
@@ -94,7 +94,6 @@ class TestPyfakeAsDict:
 @pytest.mark.api
 @pytest.mark.pyfake
 class TestFakeClass:
-
     class SampleModel(BaseModel):
         x: int
         y: str
@@ -198,7 +197,6 @@ class TestFakeClass:
 @pytest.mark.api
 @pytest.mark.pyfake
 class TestNum:
-
     class SampleModel(BaseModel):
         x: int
 
@@ -223,7 +221,6 @@ class TestNum:
 @pytest.mark.api
 @pytest.mark.pyfake
 class TestSeededStreams:
-
     class SampleModel(BaseModel):
         x: int
         y: str
@@ -234,11 +231,17 @@ class TestSeededStreams:
 
     def test_seeded_fake_sequence_is_reproducible(self):
         a, b = Fake().seed(42), Fake().seed(42)
-        assert [a(self.SampleModel) for _ in range(5)] == [b(self.SampleModel) for _ in range(5)]
+        assert [a(self.SampleModel) for _ in range(5)] == [
+            b(self.SampleModel) for _ in range(5)
+        ]
 
     def test_seeded_fake_shares_the_stream_across_methods(self):
         a, b = Fake(seed=3), Fake(seed=3)
-        assert [a.dict(self.SampleModel), a.model(self.SampleModel).model_dump(), a.json(self.SampleModel)] == [
+        assert [
+            a.dict(self.SampleModel),
+            a.model(self.SampleModel).model_dump(),
+            a.json(self.SampleModel),
+        ] == [
             b.dict(self.SampleModel),
             b.model(self.SampleModel).model_dump(),
             b.json(self.SampleModel),
@@ -268,13 +271,12 @@ class TestSeededReproducibility:
         import uuid
         from datetime import date, datetime, time
         from decimal import Decimal
-        from typing import Dict, List, Optional, Set
 
         import pydantic
 
         class Inner(BaseModel):
             a: int
-            b: Optional[str]
+            b: str | None
 
         class Everything(BaseModel):
             u1: pydantic.UUID1
@@ -292,9 +294,9 @@ class TestSeededReproducibility:
             url: pydantic.HttpUrl
             ip: pydantic.IPvAnyAddress
             past: pydantic.PastDate
-            items: List[Inner]
-            tags: Set[str]
-            scores: Dict[str, float]
+            items: list[Inner]
+            tags: set[str]
+            scores: dict[str, float]
 
         assert Fake()(Everything, seed=1, num=3) == Fake()(Everything, seed=1, num=3)
         assert Fake()(Everything, seed=1) != Fake()(Everything, seed=2)

@@ -5,9 +5,10 @@ All randomness comes from the context, so seeded runs give the same UUIDs. Time-
 versions (v1, v6, v7) use a timestamp from the 24 hours before `context.now`.
 """
 
-from typing import Optional
-import uuid
 import hashlib
+import uuid
+from typing import Any
+
 from pyfake.core.context import Context
 
 # 100-nanosecond intervals between the Gregorian epoch (1582-10-15)
@@ -48,8 +49,8 @@ def _clock_seq_and_node(context: Context):
 
 def generate_uuid1(
     *,
-    context: Optional[Context] = None,
-    **kwargs,
+    context: Context | None = None,
+    **kwargs: Any,
 ) -> str:
     if context is None:
         context = Context()
@@ -77,9 +78,9 @@ def generate_uuid1(
 
 def generate_uuid3(
     *,
-    namespace: Optional[uuid.UUID] = uuid.NAMESPACE_DNS,
-    context: Optional[Context] = None,
-    **kwargs,
+    namespace: uuid.UUID | None = uuid.NAMESPACE_DNS,
+    context: Context | None = None,
+    **kwargs: Any,
 ) -> str:
     if not namespace:
         namespace = uuid.NAMESPACE_DNS
@@ -88,8 +89,8 @@ def generate_uuid3(
 
 def generate_uuid4(
     *,
-    context: Optional[Context] = None,
-    **kwargs,
+    context: Context | None = None,
+    **kwargs: Any,
 ) -> str:
     if context is None:
         context = Context()
@@ -98,9 +99,9 @@ def generate_uuid4(
 
 def generate_uuid5(
     *,
-    namespace: Optional[uuid.UUID] = uuid.NAMESPACE_DNS,
-    context: Optional[Context] = None,
-    **kwargs,
+    namespace: uuid.UUID | None = uuid.NAMESPACE_DNS,
+    context: Context | None = None,
+    **kwargs: Any,
 ) -> str:
     if not namespace:
         namespace = uuid.NAMESPACE_DNS
@@ -109,8 +110,8 @@ def generate_uuid5(
 
 def generate_uuid6(
     *,
-    context: Optional[Context] = None,
-    **kwargs,
+    context: Context | None = None,
+    **kwargs: Any,
 ) -> str:
     if context is None:
         context = Context()
@@ -139,8 +140,8 @@ def generate_uuid6(
 
 def generate_uuid7(
     *,
-    context: Optional[Context] = None,
-    **kwargs,
+    context: Context | None = None,
+    **kwargs: Any,
 ) -> str:
     if context is None:
         context = Context()
@@ -154,9 +155,9 @@ def generate_uuid7(
 
 def generate_uuid8(
     *,
-    namespace: Optional[str] = "pyfake",
-    context: Optional[Context] = None,
-    **kwargs,
+    namespace: str | None = "pyfake",
+    context: Context | None = None,
+    **kwargs: Any,
 ) -> str:
     if context is None:
         context = Context()

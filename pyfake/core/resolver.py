@@ -1,13 +1,14 @@
-import annotated_types
 import collections
 import collections.abc
 import types
+from enum import Enum
+from typing import Annotated, Any, Literal, Union, cast, get_args, get_origin
+
+import annotated_types
 from pydantic import BaseModel
 from pydantic.fields import FieldInfo
 from pydantic.types import UuidVersion
 from pydantic_core import PydanticUndefinedType
-from typing import Annotated, Any, Union, Literal, get_args, get_origin
-from enum import Enum
 
 from pyfake.schemas import GeneratorArgs
 
@@ -40,7 +41,7 @@ class Resolver:
         self.field_info = field_info
 
     @staticmethod
-    def __parse(field_info: FieldInfo):
+    def __parse(field_info: FieldInfo) -> GeneratorArgs:
 
         generator_args = GeneratorArgs()
         # Default value
@@ -52,9 +53,11 @@ class Resolver:
         if field_info.examples:
             generator_args.examples = field_info.examples
         # Format / Timezone (a callable json_schema_extra only edits the JSON schema, so it's skipped)
-        if isinstance(field_info.json_schema_extra, dict):
-            generator_args.format = field_info.json_schema_extra.get("format")
-            generator_args.timezone = field_info.json_schema_extra.get("timezone")
+        extra = field_info.json_schema_extra
+        if isinstance(extra, dict):
+            fmt = extra.get("format")
+            generator_args.format = fmt if isinstance(fmt, str) else None
+            generator_args.timezone = extra.get("timezone")
 
         Resolver.__apply_metadata(generator_args, field_info.metadata)
         return generator_args
@@ -78,15 +81,15 @@ class Resolver:
     def __apply_metadata(generator_args: GeneratorArgs, metadata):
         for meta in Resolver.__flatten(metadata):
             if isinstance(meta, annotated_types.Ge):
-                generator_args.ge = meta.ge
+                generator_args.ge = cast("int | float", meta.ge)
             if isinstance(meta, annotated_types.Le):
-                generator_args.le = meta.le
+                generator_args.le = cast("int | float", meta.le)
             if isinstance(meta, annotated_types.Lt):
-                generator_args.lt = meta.lt
+                generator_args.lt = cast("int | float", meta.lt)
             if isinstance(meta, annotated_types.Gt):
-                generator_args.gt = meta.gt
+                generator_args.gt = cast("int | float", meta.gt)
             if isinstance(meta, annotated_types.MultipleOf):
-                generator_args.multiple_of = meta.multiple_of
+                generator_args.multiple_of = cast("float", meta.multiple_of)
             if isinstance(meta, annotated_types.MinLen):
                 generator_args.min_length = meta.min_length
             if isinstance(meta, annotated_types.MaxLen):
@@ -102,7 +105,7 @@ class Resolver:
                     generator_args.max_digits = meta.max_digits
 
     @staticmethod
-    def __merge(schema, root_args):
+    def __merge(schema: dict[str, Any], root_args: GeneratorArgs) -> dict[str, Any]:
 
         # Union → push constraints to variants (but not default)
         if schema.get("type") == "union":
@@ -131,10 +134,12 @@ class Resolver:
 
         return schema
 
-    def resolve(self):
+    def resolve(self) -> dict[str, Any]:
         annotation = self.field_info.annotation
 
-        def _resolve(tp, inherited_args=None):
+        def _resolve(
+            tp: Any, inherited_args: GeneratorArgs | None = None
+        ) -> dict[str, Any]:
             origin = get_origin(tp)
             generator_args = inherited_args or GeneratorArgs()
 
@@ -180,7 +185,7 @@ class Resolver:
             if origin is Union or origin is types.UnionType:
                 args = get_args(tp)
 
-                variants = []
+                variants: list[dict[str, Any]] = []
                 nullable = False
 
                 for arg in args:

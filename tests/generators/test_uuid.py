@@ -1,6 +1,9 @@
-import pytest
-from pyfake.core.context import Context
 import uuid
+from datetime import timezone
+
+import pytest
+
+from pyfake.core.context import Context
 from pyfake.generators import uuid as pyfake_uuid
 
 
@@ -149,7 +152,7 @@ class TestUUIDReproducibility:
         assert uuid.UUID(generator(context=Context(seed=3))).variant == uuid.RFC_4122
 
     def test_time_based_uuids_use_context_now(self):
-        from datetime import datetime, timedelta, timezone
+        from datetime import datetime, timedelta
 
         now = datetime(2024, 5, 1, tzinfo=timezone.utc)
         u7 = uuid.UUID(pyfake_uuid.generate_uuid7(context=Context(seed=1, now=now)))
@@ -157,7 +160,9 @@ class TestUUIDReproducibility:
         assert now - timedelta(days=1) <= ts <= now
 
         u1 = uuid.UUID(pyfake_uuid.generate_uuid1(context=Context(seed=1, now=now)))
-        ts1 = datetime(1582, 10, 15, tzinfo=timezone.utc) + timedelta(microseconds=u1.time // 10)
+        ts1 = datetime(1582, 10, 15, tzinfo=timezone.utc) + timedelta(
+            microseconds=u1.time // 10
+        )
         assert now - timedelta(days=1) <= ts1 <= now
 
     @pytest.mark.parametrize("generator", GENERATORS)

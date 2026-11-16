@@ -59,6 +59,7 @@ class Playlist(BaseModel):
     tags: Annotated[List[str], Field(min_length=2, max_length=5)]
     unique_ratings: Set[int]
 
+
 result = fake(Playlist, as_dict=True)
 print(result)
 ```

@@ -4,11 +4,10 @@ Shared execution state for Pyfake
 
 import random
 from datetime import datetime, timezone
-from typing import Optional
 
 
 class Context:
-    def __init__(self, seed: Optional[int] = None, now: Optional[datetime] = None):
+    def __init__(self, seed: int | None = None, now: datetime | None = None):
         self.seed = seed
         self.random = random.Random(seed)
 

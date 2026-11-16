@@ -1,11 +1,13 @@
-import pytest
-from pyfake.core.registry import GeneratorRegistry
-from pyfake.core.context import Context
-from pyfake.exceptions import GeneratorNotFound
-from pyfake.schemas import GeneratorArgs
 from collections.abc import Callable
 from typing import Annotated
+
+import pytest
 from pydantic import BaseModel, Field
+
+from pyfake.core.context import Context
+from pyfake.core.registry import GeneratorRegistry
+from pyfake.exceptions import GeneratorNotFound
+from pyfake.schemas import GeneratorArgs
 
 
 @pytest.mark.pyfake
@@ -33,14 +35,18 @@ class TestPyfakeRegistry:
     def test_unhashable_type_raises_generator_not_found(self):
         registry = GeneratorRegistry(context=Context(seed=0))
         with pytest.raises(GeneratorNotFound):
-            registry._generate({"type": ["not", "a", "type"], "generator_args": GeneratorArgs()})
+            registry._generate(
+                {"type": ["not", "a", "type"], "generator_args": GeneratorArgs()}
+            )
 
     def test_subclass_of_supported_type(self):
         class Name(str):
             pass
 
         registry = GeneratorRegistry(context=Context(seed=0))
-        assert isinstance(registry._generate({"type": Name, "generator_args": GeneratorArgs()}), str)
+        assert isinstance(
+            registry._generate({"type": Name, "generator_args": GeneratorArgs()}), str
+        )
 
     def test_unknown_non_type_raises_generator_not_found(self):
         registry = GeneratorRegistry(context=Context(seed=0))

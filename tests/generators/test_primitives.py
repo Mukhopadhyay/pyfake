@@ -1,13 +1,14 @@
-import pytest
 from decimal import Decimal
+
+import pytest
+
 from pyfake.core.context import Context
-from pyfake.generators import primitives
 from pyfake.exceptions import InvalidConstraints
+from pyfake.generators import primitives
 
 
 @pytest.mark.datatypes
 class TestGenerateNone:
-
     def test_generate_none(self):
         assert primitives.generate_none() is None
 
@@ -18,7 +19,6 @@ class TestGenerateNone:
 @pytest.mark.datatypes
 @pytest.mark.integer
 class TestGenerateInteger:
-
     @pytest.mark.parametrize(
         "seed",
         list(range(10))
@@ -56,7 +56,6 @@ class TestGenerateInteger:
 @pytest.mark.datatypes
 @pytest.mark.boolean
 class TestGenerateBoolean:
-
     @pytest.mark.parametrize(
         "seed",
         list(range(10))
@@ -72,7 +71,6 @@ class TestGenerateBoolean:
 @pytest.mark.datatypes
 @pytest.mark.string
 class TestGenerateString:
-
     @pytest.mark.parametrize(
         "seed",
         list(range(10))
@@ -96,7 +94,9 @@ class TestGenerateString:
             (0, 0, None, None, 0, 0),
         ],
     )
-    def test_generate_str_length(self, min_length, max_length, length, pattern, expected_min, expected_max):
+    def test_generate_str_length(
+        self, min_length, max_length, length, pattern, expected_min, expected_max
+    ):
         context = Context(seed=42)
         result = primitives.generate_str(
             min_length=min_length,
@@ -113,7 +113,6 @@ class TestGenerateString:
 @pytest.mark.datatypes
 @pytest.mark.float
 class TestGenerateFloat:
-
     @pytest.mark.parametrize(
         "seed",
         list(range(10))
@@ -138,7 +137,9 @@ class TestGenerateFloat:
     def test_generate_float_bounds(self, lt, gt, le, ge):
         context = Context(seed=42)
         for _ in range(100):
-            result = primitives.generate_float(lt=lt, gt=gt, le=le, ge=ge, context=context)
+            result = primitives.generate_float(
+                lt=lt, gt=gt, le=le, ge=ge, context=context
+            )
             if ge is not None:
                 assert result >= ge
             if gt is not None:
@@ -151,7 +152,9 @@ class TestGenerateFloat:
     @pytest.mark.parametrize("decimal_places", [0, 1, 2, 3])
     def test_generate_float_decimal_places(self, decimal_places):
         context = Context(seed=7)
-        result = primitives.generate_float(decimal_places=decimal_places, context=context)
+        result = primitives.generate_float(
+            decimal_places=decimal_places, context=context
+        )
         assert isinstance(result, float)
         # The generator formats the number to the requested decimal places before
         # converting back to float, so rounding to that many places should equal
@@ -162,7 +165,6 @@ class TestGenerateFloat:
 @pytest.mark.datatypes
 @pytest.mark.integer
 class TestGenerateIntegerMultipleOf:
-
     def test_multiple_of_is_divisible(self):
         context = Context(seed=42)
         result = primitives.generate_int(multiple_of=5, context=context)
@@ -195,7 +197,6 @@ class TestGenerateIntegerMultipleOf:
 @pytest.mark.datatypes
 @pytest.mark.float
 class TestGenerateFloatMultipleOf:
-
     def test_multiple_of_basic(self):
         context = Context(seed=42)
         result = primitives.generate_float(multiple_of=0.5, context=context)
@@ -205,7 +206,9 @@ class TestGenerateFloatMultipleOf:
     @pytest.mark.parametrize("seed", list(range(5)) + [None])
     def test_multiple_of_in_range(self, seed):
         context = Context(seed=seed)
-        result = primitives.generate_float(ge=0.0, le=10.0, multiple_of=2.5, context=context)
+        result = primitives.generate_float(
+            ge=0.0, le=10.0, multiple_of=2.5, context=context
+        )
         assert Decimal(str(result)) % Decimal("2.5") == 0
         assert 0.0 <= result <= 10.0
 
@@ -224,7 +227,6 @@ class TestGenerateFloatMultipleOf:
 @pytest.mark.datatypes
 @pytest.mark.decimal
 class TestGenerateDecimal:
-
     def test_generate_decimal_type(self):
         context = Context(seed=42)
         result = primitives.generate_decimal(context=context)
@@ -235,7 +237,7 @@ class TestGenerateDecimal:
         context = Context(seed=seed)
         result = primitives.generate_decimal(context=context)
         assert isinstance(result, Decimal)
-        assert Decimal("0") <= result <= Decimal("100")
+        assert Decimal(0) <= result <= Decimal(100)
 
     @pytest.mark.parametrize(
         "lt,gt,le,ge",
@@ -248,7 +250,9 @@ class TestGenerateDecimal:
     )
     def test_generate_decimal_bounds(self, lt, gt, le, ge):
         context = Context(seed=7)
-        result = primitives.generate_decimal(lt=lt, gt=gt, le=le, ge=ge, context=context)
+        result = primitives.generate_decimal(
+            lt=lt, gt=gt, le=le, ge=ge, context=context
+        )
         if ge is not None:
             assert result >= ge
         if gt is not None:
@@ -260,14 +264,18 @@ class TestGenerateDecimal:
 
     def test_generate_decimal_multiple_of(self):
         context = Context(seed=42)
-        result = primitives.generate_decimal(multiple_of=Decimal("0.5"), context=context)
+        result = primitives.generate_decimal(
+            multiple_of=Decimal("0.5"), context=context
+        )
         assert isinstance(result, Decimal)
         assert result % Decimal("0.5") == 0
 
     @pytest.mark.parametrize("decimal_places", [0, 1, 2, 3])
     def test_generate_decimal_decimal_places(self, decimal_places):
         context = Context(seed=7)
-        result = primitives.generate_decimal(decimal_places=decimal_places, context=context)
+        result = primitives.generate_decimal(
+            decimal_places=decimal_places, context=context
+        )
         assert isinstance(result, Decimal)
         quantizer = Decimal(10) ** -decimal_places
         assert result == result.quantize(quantizer)
@@ -299,10 +307,14 @@ class TestOneSidedBounds:
 
     def test_int_bound_inside_default_range_keeps_default(self):
         for seed in range(20):
-            assert 50 <= primitives.generate_int(ge=50, context=Context(seed=seed)) <= 100
+            assert (
+                50 <= primitives.generate_int(ge=50, context=Context(seed=seed)) <= 100
+            )
 
     def test_int_multiple_of_with_one_sided_bound(self):
-        result = primitives.generate_int(gt=1000, multiple_of=7, context=Context(seed=3))
+        result = primitives.generate_int(
+            gt=1000, multiple_of=7, context=Context(seed=3)
+        )
         assert result > 1000
         assert result % 7 == 0
 
@@ -313,12 +325,17 @@ class TestOneSidedBounds:
 
     def test_float_exclusive_bounds_close_together(self):
         for seed in range(50):
-            result = primitives.generate_float(gt=0.0, lt=0.05, context=Context(seed=seed))
+            result = primitives.generate_float(
+                gt=0.0, lt=0.05, context=Context(seed=seed)
+            )
             assert 0.0 < result < 0.05
 
     @pytest.mark.parametrize("seed", list(range(10)) + [None])
     def test_decimal_one_sided_bounds(self, seed):
-        assert primitives.generate_decimal(ge=Decimal("500"), context=Context(seed=seed)) >= 500
+        assert (
+            primitives.generate_decimal(ge=Decimal("500"), context=Context(seed=seed))
+            >= 500
+        )
         assert primitives.generate_decimal(le=-5, context=Context(seed=seed)) <= -5
 
     @pytest.mark.parametrize(
@@ -341,7 +358,6 @@ class TestOneSidedBounds:
 @pytest.mark.datatypes
 @pytest.mark.decimal
 class TestGenerateDecimalDigits:
-
     @staticmethod
     def _digits(value: Decimal):
         # Same counting rule as pydantic: (total digits, decimal places)
@@ -369,7 +385,10 @@ class TestGenerateDecimalDigits:
     def test_max_digits_respected(self, max_digits, decimal_places, ge):
         for seed in range(50):
             result = primitives.generate_decimal(
-                max_digits=max_digits, decimal_places=decimal_places, ge=ge, context=Context(seed=seed)
+                max_digits=max_digits,
+                decimal_places=decimal_places,
+                ge=ge,
+                context=Context(seed=seed),
             )
             digits, decimals = self._digits(result)
             assert digits <= max_digits
@@ -379,17 +398,23 @@ class TestGenerateDecimalDigits:
                 assert result >= ge
 
     def test_bounds_closer_than_a_cent(self):
-        result = primitives.generate_decimal(gt=0, lt=Decimal("0.01"), context=Context(seed=1))
+        result = primitives.generate_decimal(
+            gt=0, lt=Decimal("0.01"), context=Context(seed=1)
+        )
         assert 0 < result < Decimal("0.01")
 
     def test_multiple_of_with_decimal_places(self):
-        result = primitives.generate_decimal(multiple_of=Decimal("0.25"), decimal_places=2, context=Context(seed=1))
+        result = primitives.generate_decimal(
+            multiple_of=Decimal("0.25"), decimal_places=2, context=Context(seed=1)
+        )
         assert result % Decimal("0.25") == 0
         assert result == result.quantize(Decimal("0.01"))
 
     @pytest.mark.parametrize("seed", list(range(20)))
     def test_multiple_of_with_exclusive_bounds_on_a_multiple(self, seed):
-        result = primitives.generate_decimal(gt=0, lt=1, multiple_of=Decimal("0.5"), context=Context(seed=seed))
+        result = primitives.generate_decimal(
+            gt=0, lt=1, multiple_of=Decimal("0.5"), context=Context(seed=seed)
+        )
         assert result == Decimal("0.5")
 
     def test_impossible_max_digits_raises(self):
@@ -398,25 +423,31 @@ class TestGenerateDecimalDigits:
 
     def test_exclusive_bounds(self):
         for seed in range(50):
-            result = primitives.generate_decimal(gt=1, lt=2, decimal_places=1, context=Context(seed=seed))
+            result = primitives.generate_decimal(
+                gt=1, lt=2, decimal_places=1, context=Context(seed=seed)
+            )
             assert Decimal("1") < result < Decimal("2")
 
 
 @pytest.mark.datatypes
 @pytest.mark.string
 class TestGenerateStringPattern:
-
     @pytest.mark.parametrize("seed", list(range(10)) + [None])
     def test_pattern_is_matched(self, seed):
         import re
 
-        result = primitives.generate_str(pattern=r"^[A-Z]{3}-\d{4}$", context=Context(seed=seed))
+        result = primitives.generate_str(
+            pattern=r"^[A-Z]{3}-\d{4}$", context=Context(seed=seed)
+        )
         assert re.fullmatch(r"[A-Z]{3}-\d{4}", result)
 
     def test_pattern_with_length_bounds(self):
         for seed in range(20):
             result = primitives.generate_str(
-                pattern=r"^[a-z]+$", min_length=4, max_length=6, context=Context(seed=seed)
+                pattern=r"^[a-z]+$",
+                min_length=4,
+                max_length=6,
+                context=Context(seed=seed),
             )
             assert 4 <= len(result) <= 6
             assert result.isalpha() and result.islower()
@@ -424,10 +455,11 @@ class TestGenerateStringPattern:
 
 @pytest.mark.datatypes
 class TestGenerateBytesAndAny:
-
     @pytest.mark.parametrize("seed", list(range(10)) + [None])
     def test_generate_bytes(self, seed):
-        result = primitives.generate_bytes(min_length=2, max_length=4, context=Context(seed=seed))
+        result = primitives.generate_bytes(
+            min_length=2, max_length=4, context=Context(seed=seed)
+        )
         assert isinstance(result, bytes)
         assert 2 <= len(result) <= 4
         # ASCII, so it can be serialised to JSON
@@ -435,4 +467,6 @@ class TestGenerateBytesAndAny:
 
     @pytest.mark.parametrize("seed", list(range(20)) + [None])
     def test_generate_any_is_a_json_scalar(self, seed):
-        assert isinstance(primitives.generate_any(context=Context(seed=seed)), (int, float, str, bool))
+        assert isinstance(
+            primitives.generate_any(context=Context(seed=seed)), (int, float, str, bool)
+        )

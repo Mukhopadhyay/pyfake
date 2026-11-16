@@ -1,35 +1,45 @@
 import math
 import string
-from decimal import Decimal, ROUND_CEILING, ROUND_FLOOR
+from decimal import ROUND_CEILING, ROUND_FLOOR, Decimal
+from typing import Any
+
 from pyfake.core.context import Context
-from typing import Optional
 from pyfake.exceptions import InvalidConstraints
 from pyfake.generators import regex
-from pyfake.generators.bounds import resolve_bounds, check_range
+from pyfake.generators.bounds import check_range, resolve_bounds
 
 
-def generate_none(*args, **kwargs):
+def generate_none(*args: Any, **kwargs: Any) -> None:
     return None
 
 
 def generate_int(
     *,
-    lt: Optional[int] = None,
-    gt: Optional[int] = None,
-    le: Optional[int] = None,
-    ge: Optional[int] = None,
-    multiple_of: Optional[int] = None,
-    context: Optional[Context] = None,
-    **kwargs,
+    lt: int | None = None,
+    gt: int | None = None,
+    le: int | None = None,
+    ge: int | None = None,
+    multiple_of: int | None = None,
+    context: Context | None = None,
+    **kwargs: Any,
 ) -> int:
+    if context is None:
+        context = Context()
 
-    min_value = math.ceil(ge) if ge is not None else (math.floor(gt) + 1 if gt is not None else None)
-    max_value = math.floor(le) if le is not None else (math.ceil(lt) - 1 if lt is not None else None)
+    min_value = (
+        math.ceil(ge)
+        if ge is not None
+        else (math.floor(gt) + 1 if gt is not None else None)
+    )
+    max_value = (
+        math.floor(le)
+        if le is not None
+        else (math.ceil(lt) - 1 if lt is not None else None)
+    )
     min_value, max_value = resolve_bounds(min_value, max_value, 0, 100)
 
     # Handling multiple_of within the range
     if multiple_of is not None:
-
         mult = int(multiple_of)
         if mult <= 0:
             raise InvalidConstraints("multiple_of must be a positive integer")
@@ -38,7 +48,9 @@ def generate_int(
         start = k_start * mult
 
         if start > max_value:
-            raise InvalidConstraints("No valid integer can be generated with the given constraints.")
+            raise InvalidConstraints(
+                "No valid integer can be generated with the given constraints."
+            )
 
         count = ((max_value - start) // mult) + 1
         random_multiple = context.random.randint(0, count - 1)
@@ -50,62 +62,87 @@ def generate_int(
 
 def generate_str(
     *,
-    pattern: Optional[str] = None,
-    min_length: Optional[int] = None,
-    max_length: Optional[int] = None,
-    length: Optional[int] = 10,
-    context: Optional[Context] = None,
-    **kwargs,
+    pattern: str | None = None,
+    min_length: int | None = None,
+    max_length: int | None = None,
+    length: int | None = 10,
+    context: Context | None = None,
+    **kwargs: Any,
 ) -> str:
+    if context is None:
+        context = Context()
+
     if pattern is not None:
-        return regex.generate_matching(pattern, min_length=min_length, max_length=max_length, context=context)
+        return regex.generate_matching(
+            pattern, min_length=min_length, max_length=max_length, context=context
+        )
 
     if not length:
         length = 10
 
     # Figuring out the length based on min & max length
     if min_length is not None and max_length is not None:
-        l = context.random.randint(min_length, max_length)
+        size = context.random.randint(min_length, max_length)
     elif min_length is not None:
-        l = min_length
+        size = min_length
     elif max_length is not None:
-        l = max_length
+        size = max_length
     else:
-        l = length
+        size = length
 
     letters = string.ascii_letters
-    return "".join(context.random.choice(letters) for _ in range(l))
+    return "".join(context.random.choice(letters) for _ in range(size))
 
 
 def generate_bytes(
     *,
-    min_length: Optional[int] = None,
-    max_length: Optional[int] = None,
-    context: Optional[Context] = None,
-    **kwargs,
+    min_length: int | None = None,
+    max_length: int | None = None,
+    context: Context | None = None,
+    **kwargs: Any,
 ) -> bytes:
     # ASCII letters, so the value can still be serialised to JSON
-    return generate_str(min_length=min_length, max_length=max_length, context=context).encode()
+    return generate_str(
+        min_length=min_length, max_length=max_length, context=context
+    ).encode()
 
 
 def generate_float(
     *,
-    lt: Optional[float] = None,
-    gt: Optional[float] = None,
-    le: Optional[float] = None,
-    ge: Optional[float] = None,
-    multiple_of: Optional[float] = None,
-    decimal_places: Optional[int] = None,
-    context: Optional[Context] = None,
-    **kwargs,
+    lt: float | None = None,
+    gt: float | None = None,
+    le: float | None = None,
+    ge: float | None = None,
+    multiple_of: float | None = None,
+    decimal_places: int | None = None,
+    context: Context | None = None,
+    **kwargs: Any,
 ) -> float:
     num = 0.0
     if multiple_of is not None:
-        num = float(_pick_multiple(lt=lt, gt=gt, le=le, ge=ge, multiple_of=multiple_of, kind="float", context=context))
+        num = float(
+            _pick_multiple(
+                lt=lt,
+                gt=gt,
+                le=le,
+                ge=ge,
+                multiple_of=multiple_of,
+                kind="float",
+                context=context,
+            )
+        )
     else:
         # The closest floats inside exclusive bounds
-        min_value = ge if ge is not None else (math.nextafter(gt, math.inf) if gt is not None else None)
-        max_value = le if le is not None else (math.nextafter(lt, -math.inf) if lt is not None else None)
+        min_value = (
+            ge
+            if ge is not None
+            else (math.nextafter(gt, math.inf) if gt is not None else None)
+        )
+        max_value = (
+            le
+            if le is not None
+            else (math.nextafter(lt, -math.inf) if lt is not None else None)
+        )
         min_value, max_value = resolve_bounds(min_value, max_value, 0.0, 100.0)
         check_range(min_value, max_value, "float")
         num = context.random.uniform(min_value, max_value)
@@ -122,18 +159,26 @@ def generate_float(
 
 def generate_decimal(
     *,
-    lt: Optional[Decimal] = None,
-    gt: Optional[Decimal] = None,
-    le: Optional[Decimal] = None,
-    ge: Optional[Decimal] = None,
-    multiple_of: Optional[Decimal] = None,
-    decimal_places: Optional[int] = None,
-    max_digits: Optional[int] = None,
-    context: Optional[Context] = None,
-    **kwargs,
+    lt: Decimal | None = None,
+    gt: Decimal | None = None,
+    le: Decimal | None = None,
+    ge: Decimal | None = None,
+    multiple_of: Decimal | None = None,
+    decimal_places: int | None = None,
+    max_digits: int | None = None,
+    context: Context | None = None,
+    **kwargs: Any,
 ) -> Decimal:
     if multiple_of is not None:
-        num = _pick_multiple(lt=lt, gt=gt, le=le, ge=ge, multiple_of=multiple_of, kind="decimal", context=context)
+        num = _pick_multiple(
+            lt=lt,
+            gt=gt,
+            le=le,
+            ge=ge,
+            multiple_of=multiple_of,
+            kind="decimal",
+            context=context,
+        )
 
         # Handling decimal places
         if decimal_places is not None:
@@ -144,18 +189,34 @@ def generate_decimal(
 
     # Prefer 2 decimal places. Fall back to fewer when max_digits leaves no room for the
     # integer part, or to more when the bounds are closer together than 0.01.
-    candidates = range(decimal_places, -1, -1) if decimal_places is not None else (2, 1, 0, 3, 4, 5, 6)
+    candidates = (
+        range(decimal_places, -1, -1)
+        if decimal_places is not None
+        else (2, 1, 0, 3, 4, 5, 6)
+    )
     for places in candidates:
         if max_digits is not None and places > max_digits:
             continue
-        num = _scaled_decimal(lt=lt, gt=gt, le=le, ge=ge, places=places, max_digits=max_digits, context=context)
+        num = _scaled_decimal(
+            lt=lt,
+            gt=gt,
+            le=le,
+            ge=ge,
+            places=places,
+            max_digits=max_digits,
+            context=context,
+        )
         if num is not None:
             return num
 
-    raise InvalidConstraints("No valid decimal can be generated with the given constraints.")
+    raise InvalidConstraints(
+        "No valid decimal can be generated with the given constraints."
+    )
 
 
-def _scaled_decimal(*, lt, gt, le, ge, places: int, max_digits: Optional[int], context: Context) -> Optional[Decimal]:
+def _scaled_decimal(
+    *, lt, gt, le, ge, places: int, max_digits: int | None, context: Context
+) -> Decimal | None:
     """
     A random Decimal with exactly ``places`` decimal places, generated as a scaled integer
     so it never carries float noise. Returns None when no such value fits the constraints.
@@ -187,7 +248,9 @@ def _scale(value, scale: Decimal, rounding: str) -> int:
     return int((Decimal(str(value)) * scale).to_integral_value(rounding=rounding))
 
 
-def _pick_multiple(*, lt, gt, le, ge, multiple_of, kind: str, context: Context) -> Decimal:
+def _pick_multiple(
+    *, lt, gt, le, ge, multiple_of, kind: str, context: Context
+) -> Decimal:
     """
     Pick a random multiple of ``multiple_of`` within the bounds. Decimal arithmetic avoids
     float rounding errors and incorrect floor/ceil logic.
@@ -196,7 +259,9 @@ def _pick_multiple(*, lt, gt, le, ge, multiple_of, kind: str, context: Context) 
     if mult <= 0:
         raise InvalidConstraints("multiple_of must be a positive number")
 
-    lower, upper = resolve_bounds(ge if ge is not None else gt, le if le is not None else lt, 0, 100)
+    lower, upper = resolve_bounds(
+        ge if ge is not None else gt, le if le is not None else lt, 0, 100
+    )
     lower, upper = Decimal(str(lower)), Decimal(str(upper))
 
     # The smallest and largest k such that k * mult is within the bounds
@@ -208,24 +273,31 @@ def _pick_multiple(*, lt, gt, le, ge, multiple_of, kind: str, context: Context) 
         k_end -= 1
 
     if k_start > k_end:
-        raise InvalidConstraints(f"No valid {kind} can be generated with the given constraints.")
+        raise InvalidConstraints(
+            f"No valid {kind} can be generated with the given constraints."
+        )
 
     return context.random.randint(int(k_start), int(k_end)) * mult
 
 
 def generate_bool(
     *,
-    context: Optional[Context] = None,
-    **kwargs,
+    context: Context | None = None,
+    **kwargs: Any,
 ) -> bool:
+    if context is None:
+        context = Context()
+
     return context.random.choice([True, False])
 
 
 def generate_any(
     *,
-    context: Optional[Context] = None,
-    **kwargs,
+    context: Context | None = None,
+    **kwargs: Any,
 ):
     """A random JSON-safe scalar, for `Any` and `object` fields"""
-    generator = context.random.choice([generate_int, generate_float, generate_str, generate_bool])
+    generator = context.random.choice(
+        [generate_int, generate_float, generate_str, generate_bool]
+    )
     return generator(context=context)

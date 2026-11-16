@@ -1,9 +1,11 @@
 import math
-from datetime import date, datetime, timedelta, time, timezone as dt_timezone
-from pyfake.core.context import Context
-from pyfake.generators.bounds import resolve_bounds, check_range
-from typing import Optional, Union
+from datetime import date, datetime, time, timedelta
+from datetime import timezone as dt_timezone
+from typing import Any
 from zoneinfo import ZoneInfo
+
+from pyfake.core.context import Context
+from pyfake.generators.bounds import check_range, resolve_bounds
 
 ONE_DAY = timedelta(days=1)
 ONE_SECOND = timedelta(seconds=1)
@@ -11,12 +13,12 @@ ONE_SECOND = timedelta(seconds=1)
 
 def generate_date(
     *,
-    lt: Optional[date] = None,
-    gt: Optional[date] = None,
-    le: Optional[date] = None,
-    ge: Optional[date] = None,
-    context: Optional[Context] = None,
-    **kwargs,
+    lt: date | None = None,
+    gt: date | None = None,
+    le: date | None = None,
+    ge: date | None = None,
+    context: Context | None = None,
+    **kwargs: Any,
 ) -> date:
     """
     Generate a random date object within the specified bounds.
@@ -46,10 +48,10 @@ def generate_date(
 
 def generate_past_date(
     *,
-    lt: Optional[date] = None,
-    le: Optional[date] = None,
-    context: Optional[Context] = None,
-    **kwargs,
+    lt: date | None = None,
+    le: date | None = None,
+    context: Context | None = None,
+    **kwargs: Any,
 ) -> date:
     """
     Generate a date before today, for `PastDate` fields. The two-day margin keeps the
@@ -66,10 +68,10 @@ def generate_past_date(
 
 def generate_future_date(
     *,
-    gt: Optional[date] = None,
-    ge: Optional[date] = None,
-    context: Optional[Context] = None,
-    **kwargs,
+    gt: date | None = None,
+    ge: date | None = None,
+    context: Context | None = None,
+    **kwargs: Any,
 ) -> date:
     """
     Generate a date after today, for `FutureDate` fields. The two-day margin keeps the
@@ -86,13 +88,13 @@ def generate_future_date(
 
 def generate_datetime(
     *,
-    lt: Optional[datetime] = None,
-    gt: Optional[datetime] = None,
-    le: Optional[datetime] = None,
-    ge: Optional[datetime] = None,
-    timezone: Optional[Union[dt_timezone, ZoneInfo]] = None,
-    context: Optional[Context] = None,
-    **kwargs,
+    lt: datetime | None = None,
+    gt: datetime | None = None,
+    le: datetime | None = None,
+    ge: datetime | None = None,
+    timezone: dt_timezone | ZoneInfo | None = None,
+    context: Context | None = None,
+    **kwargs: Any,
 ) -> datetime:
     """
     Generate a random datetime object within the specified bounds.
@@ -151,9 +153,9 @@ def generate_datetime(
 
 def generate_aware_datetime(
     *,
-    timezone: Optional[Union[dt_timezone, ZoneInfo]] = None,
-    context: Optional[Context] = None,
-    **kwargs,
+    timezone: dt_timezone | ZoneInfo | None = None,
+    context: Context | None = None,
+    **kwargs: Any,
 ) -> datetime:
     """
     Generate a timezone-aware datetime, for `AwareDatetime` fields. Uses UTC unless a timezone is given.
@@ -165,13 +167,13 @@ def generate_aware_datetime(
 
 def generate_past_datetime(
     *,
-    lt: Optional[datetime] = None,
-    gt: Optional[datetime] = None,
-    le: Optional[datetime] = None,
-    ge: Optional[datetime] = None,
-    timezone: Optional[Union[dt_timezone, ZoneInfo]] = None,
-    context: Optional[Context] = None,
-    **kwargs,
+    lt: datetime | None = None,
+    gt: datetime | None = None,
+    le: datetime | None = None,
+    ge: datetime | None = None,
+    timezone: dt_timezone | ZoneInfo | None = None,
+    context: Context | None = None,
+    **kwargs: Any,
 ) -> datetime:
     """
     Generate a timezone-aware datetime before now, for `PastDatetime` fields.
@@ -195,13 +197,13 @@ def generate_past_datetime(
 
 def generate_future_datetime(
     *,
-    lt: Optional[datetime] = None,
-    gt: Optional[datetime] = None,
-    le: Optional[datetime] = None,
-    ge: Optional[datetime] = None,
-    timezone: Optional[Union[dt_timezone, ZoneInfo]] = None,
-    context: Optional[Context] = None,
-    **kwargs,
+    lt: datetime | None = None,
+    gt: datetime | None = None,
+    le: datetime | None = None,
+    ge: datetime | None = None,
+    timezone: dt_timezone | ZoneInfo | None = None,
+    context: Context | None = None,
+    **kwargs: Any,
 ) -> datetime:
     """
     Generate a timezone-aware datetime after now, for `FutureDatetime` fields.
@@ -239,12 +241,12 @@ def _relative_datetime(
 
 def generate_time(
     *,
-    gt: Optional[time] = None,
-    lt: Optional[time] = None,
-    ge: Optional[time] = None,
-    le: Optional[time] = None,
-    context: Optional[Context] = None,
-    **kwargs,
+    gt: time | None = None,
+    lt: time | None = None,
+    ge: time | None = None,
+    le: time | None = None,
+    context: Context | None = None,
+    **kwargs: Any,
 ) -> time:
     """
     Generate a random time object, given optional bounds.
@@ -278,12 +280,12 @@ def generate_time(
 
 def generate_timedelta(
     *,
-    lt: Optional[timedelta] = None,
-    gt: Optional[timedelta] = None,
-    le: Optional[timedelta] = None,
-    ge: Optional[timedelta] = None,
-    context: Optional[Context] = None,
-    **kwargs,
+    lt: timedelta | None = None,
+    gt: timedelta | None = None,
+    le: timedelta | None = None,
+    ge: timedelta | None = None,
+    context: Context | None = None,
+    **kwargs: Any,
 ) -> timedelta:
     """
     Generate a random whole-second timedelta, between 0 and 30 days by default.
@@ -303,8 +305,9 @@ def generate_timedelta(
         ceiling=timedelta.max,
     )
 
-    min_seconds, max_seconds = math.ceil(lower.total_seconds()), math.floor(
-        upper.total_seconds()
+    min_seconds, max_seconds = (
+        math.ceil(lower.total_seconds()),
+        math.floor(upper.total_seconds()),
     )
     check_range(min_seconds, max_seconds, "timedelta")
 
@@ -316,7 +319,7 @@ def _seconds(value: time, round_up: bool = False) -> int:
     return seconds + 1 if round_up and value.microsecond else seconds
 
 
-def _as_utc(value: Optional[datetime]) -> Optional[datetime]:
+def _as_utc(value: datetime | None) -> datetime | None:
     if value is not None and value.tzinfo is None:
         return value.replace(tzinfo=dt_timezone.utc)
     return value

@@ -2,28 +2,29 @@
 Pydantic classes for various models used in PyFake
 """
 
-from dataclasses import dataclass
-from pydantic import BaseModel, ConfigDict
-from typing import Literal, Dict, List, Optional, Any, Union
 from collections.abc import Callable
+from dataclasses import dataclass
+from typing import Any, Literal
+
+from pydantic import BaseModel, ConfigDict
 
 
 class FieldSchema(BaseModel):
     # title: Optional[str] = None
-    type: Optional[str] = None
-    description: Optional[str] = None  # description
-    examples: Optional[List[Any]] = None  # examples
-    exclusiveMinimum: Optional[Union[int, float]] = None  # lt
-    exclusiveMaximum: Optional[Union[int, float]] = None  # gt
-    minimum: Optional[Union[int, float]] = None  # ge
-    maximum: Optional[Union[int, float]] = None  # le
-    default: Optional[Any] = None  # default
-    pattern: Optional[str] = None  # pattern
-    multipleOf: Optional[float] = None  # multiple_of
-    decimal_places: Optional[int] = None  # decimal_places
-    minLength: Optional[int] = None  # min_length
-    maxLength: Optional[int] = None  # max_length
-    format: Optional[str] = None  # format
+    type: str | None = None
+    description: str | None = None  # description
+    examples: list[Any] | None = None  # examples
+    exclusiveMinimum: int | float | None = None  # lt
+    exclusiveMaximum: int | float | None = None  # gt
+    minimum: int | float | None = None  # ge
+    maximum: int | float | None = None  # le
+    default: Any | None = None  # default
+    pattern: str | None = None  # pattern
+    multipleOf: float | None = None  # multiple_of
+    decimal_places: int | None = None  # decimal_places
+    minLength: int | None = None  # min_length
+    maxLength: int | None = None  # max_length
+    format: str | None = None  # format
 
 
 @dataclass
@@ -33,20 +34,22 @@ class GeneratorArgs:
     """
 
     # Bounds can be numbers, Decimals, dates, datetimes, times or timedeltas
-    lt: Optional[Any] = None
-    gt: Optional[Any] = None
-    le: Optional[Any] = None
-    ge: Optional[Any] = None
-    default: Optional[Any] = None
-    pattern: Optional[str] = None
-    multiple_of: Optional[Any] = None
-    decimal_places: Optional[int] = None
-    max_digits: Optional[int] = None
-    min_length: Optional[int] = None
-    max_length: Optional[int] = None
-    examples: Optional[List[Any]] = None  # Will be handled by the registry not the generators
-    format: Optional[str] = None
-    timezone: Optional[Any] = None
+    lt: Any | None = None
+    gt: Any | None = None
+    le: Any | None = None
+    ge: Any | None = None
+    default: Any | None = None
+    pattern: str | None = None
+    multiple_of: Any | None = None
+    decimal_places: int | None = None
+    max_digits: int | None = None
+    min_length: int | None = None
+    max_length: int | None = None
+    examples: list[Any] | None = (
+        None  # Will be handled by the registry not the generators
+    )
+    format: str | None = None
+    timezone: Any | None = None
 
 
 class AnyOfSchema(FieldSchema):
@@ -55,18 +58,18 @@ class AnyOfSchema(FieldSchema):
 
 
 class ModelPropertySchema(FieldSchema):
-    title: Optional[str] = None
+    title: str | None = None
     # If multi type then anyOf will be there
-    anyOf: Optional[List[AnyOfSchema]] = None
+    anyOf: list[AnyOfSchema] | None = None
 
     # Allow extra to True
     model_config = ConfigDict(extra="allow")
 
 
 class ModelJSONSchema(BaseModel):
-    properties: Dict[str, ModelPropertySchema]
+    properties: dict[str, ModelPropertySchema]
     type: Literal["object"]
-    required: List[str]
+    required: list[str]
     title: str
 
 
@@ -76,5 +79,5 @@ class ResolvedSchema(BaseModel):
     """
 
     type: str
-    generator_func: Optional[Callable] = None
+    generator_func: Callable[..., Any] | None = None
     args: GeneratorArgs

@@ -1,6 +1,9 @@
-import pytest
-from datetime import date, datetime, timedelta, time as dt_time, timezone as dt_timezone
+from datetime import date, datetime, timedelta
+from datetime import time as dt_time
+from datetime import timezone as dt_timezone
 from zoneinfo import ZoneInfo
+
+import pytest
 
 from pyfake.core.context import Context
 from pyfake.generators import datetime as gen_dt
@@ -10,7 +13,6 @@ from pyfake.generators import datetime as gen_dt
 # @pytest.mark.xfail
 @pytest.mark.datetime
 class TestGenerateDate:
-
     def test_type_and_default_bounds(self):
         ctx = Context(seed=42)
         result = gen_dt.generate_date(context=ctx)
@@ -61,7 +63,6 @@ class TestGenerateDate:
 # @pytest.mark.xfail
 @pytest.mark.datetime
 class TestGenerateDatetime:
-
     def test_type_and_default_bounds(self):
         ctx = Context(seed=99)
         result = gen_dt.generate_datetime(context=ctx)
@@ -213,7 +214,9 @@ class TestGenerateDatetimeTimezone:
         tz = ZoneInfo("UTC")
         ge = datetime(2020, 1, 1)
         le = datetime(2020, 12, 31, 23, 59, 59)
-        result = gen_dt.generate_datetime(ge=ge, le=le, timezone=tz, context=Context(seed=7))
+        result = gen_dt.generate_datetime(
+            ge=ge, le=le, timezone=tz, context=Context(seed=7)
+        )
         assert result.tzinfo is tz
         # Compare the naive part of the result against the bounds
         naive = result.replace(tzinfo=None)
@@ -266,8 +269,12 @@ class TestOneSidedDateBounds:
 
     @pytest.mark.parametrize("seed", list(range(10)) + [None])
     def test_datetime_one_sided_bounds(self, seed):
-        assert gen_dt.generate_datetime(gt=datetime(2200, 1, 1), context=Context(seed=seed)) > datetime(2200, 1, 1)
-        assert gen_dt.generate_datetime(le=datetime(1900, 1, 1), context=Context(seed=seed)) <= datetime(1900, 1, 1)
+        assert gen_dt.generate_datetime(
+            gt=datetime(2200, 1, 1), context=Context(seed=seed)
+        ) > datetime(2200, 1, 1)
+        assert gen_dt.generate_datetime(
+            le=datetime(1900, 1, 1), context=Context(seed=seed)
+        ) <= datetime(1900, 1, 1)
 
     def test_datetime_aware_bounds(self):
         ge = datetime(2020, 1, 1, tzinfo=dt_timezone.utc)
@@ -279,7 +286,9 @@ class TestOneSidedDateBounds:
         ge = datetime(2020, 1, 1, tzinfo=dt_timezone.utc)
         le = datetime(2020, 1, 2, tzinfo=dt_timezone.utc)
         tz = ZoneInfo("Asia/Tokyo")
-        result = gen_dt.generate_datetime(ge=ge, le=le, timezone=tz, context=Context(seed=4))
+        result = gen_dt.generate_datetime(
+            ge=ge, le=le, timezone=tz, context=Context(seed=4)
+        )
         assert result.tzinfo is tz
         assert ge <= result <= le
 
@@ -287,7 +296,6 @@ class TestOneSidedDateBounds:
 @pytest.mark.datatypes
 @pytest.mark.datetime
 class TestGenerateTimeEdges:
-
     @pytest.mark.parametrize("seed", list(range(10)) + [None])
     def test_gt_at_second_59(self, seed):
         result = gen_dt.generate_time(gt=dt_time(12, 0, 59), context=Context(seed=seed))
@@ -301,7 +309,9 @@ class TestGenerateTimeEdges:
     def test_sub_second_bounds_round_inwards(self):
         for seed in range(20):
             result = gen_dt.generate_time(
-                ge=dt_time(12, 0, 0, 500_000), le=dt_time(12, 0, 2), context=Context(seed=seed)
+                ge=dt_time(12, 0, 0, 500_000),
+                le=dt_time(12, 0, 2),
+                context=Context(seed=seed),
             )
             assert dt_time(12, 0, 0, 500_000) <= result <= dt_time(12, 0, 2)
 
@@ -326,17 +336,23 @@ class TestRelativeDates:
     def test_future_date(self):
         ctx_now = datetime(2026, 6, 15, tzinfo=dt_timezone.utc)
         for seed in range(50):
-            result = gen_dt.generate_future_date(context=Context(seed=seed, now=ctx_now))
+            result = gen_dt.generate_future_date(
+                context=Context(seed=seed, now=ctx_now)
+            )
             assert result > date(2026, 6, 15)
 
     def test_past_date_respects_user_bounds(self):
         for seed in range(50):
-            result = gen_dt.generate_past_date(ge=date(2020, 1, 1), lt=date(2021, 1, 1), context=Context(seed=seed))
+            result = gen_dt.generate_past_date(
+                ge=date(2020, 1, 1), lt=date(2021, 1, 1), context=Context(seed=seed)
+            )
             assert date(2020, 1, 1) <= result < date(2021, 1, 1)
 
     def test_future_date_respects_user_bounds(self):
         for seed in range(50):
-            result = gen_dt.generate_future_date(gt=date(2150, 1, 1), context=Context(seed=seed))
+            result = gen_dt.generate_future_date(
+                gt=date(2150, 1, 1), context=Context(seed=seed)
+            )
             assert result > date(2150, 1, 1)
 
     def test_past_and_future_datetimes(self):
@@ -352,11 +368,17 @@ class TestRelativeDates:
         result = gen_dt.generate_past_datetime(
             ge=datetime(2020, 1, 1), le=datetime(2020, 1, 2), context=Context(seed=1)
         )
-        assert datetime(2020, 1, 1, tzinfo=dt_timezone.utc) <= result <= datetime(2020, 1, 2, tzinfo=dt_timezone.utc)
+        assert (
+            datetime(2020, 1, 1, tzinfo=dt_timezone.utc)
+            <= result
+            <= datetime(2020, 1, 2, tzinfo=dt_timezone.utc)
+        )
 
     def test_relative_datetime_timezone(self):
         tz = ZoneInfo("America/New_York")
-        result = gen_dt.generate_future_datetime(lt=datetime(2200, 1, 1), timezone=tz, context=Context(seed=2))
+        result = gen_dt.generate_future_datetime(
+            lt=datetime(2200, 1, 1), timezone=tz, context=Context(seed=2)
+        )
         assert result.tzinfo is tz
 
     def test_aware_datetime_defaults_to_utc(self):
@@ -364,15 +386,14 @@ class TestRelativeDates:
         assert result.tzinfo is dt_timezone.utc
 
     def test_same_seed_same_output(self):
-        assert gen_dt.generate_past_datetime(context=Context(seed=7)) == gen_dt.generate_past_datetime(
+        assert gen_dt.generate_past_datetime(
             context=Context(seed=7)
-        )
+        ) == gen_dt.generate_past_datetime(context=Context(seed=7))
 
 
 @pytest.mark.datatypes
 @pytest.mark.datetime
 class TestGenerateTimedelta:
-
     @pytest.mark.parametrize("seed", list(range(10)) + [None])
     def test_default_range(self, seed):
         result = gen_dt.generate_timedelta(context=Context(seed=seed))
@@ -386,7 +407,9 @@ class TestGenerateTimedelta:
             assert timedelta(hours=1) < result < timedelta(hours=2)
 
     def test_negative_one_sided_bound(self):
-        result = gen_dt.generate_timedelta(le=timedelta(days=-100), context=Context(seed=1))
+        result = gen_dt.generate_timedelta(
+            le=timedelta(days=-100), context=Context(seed=1)
+        )
         assert result <= timedelta(days=-100)
 
     @pytest.mark.parametrize(

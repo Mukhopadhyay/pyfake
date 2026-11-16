@@ -4,24 +4,14 @@ bytes, relative dates, ...) and abstract container types.
 """
 
 import ipaddress
-from collections import Counter, OrderedDict, deque
+from collections import Counter, OrderedDict, defaultdict, deque
+from collections.abc import Iterable, Mapping, MutableMapping, MutableSequence, Sequence
 from datetime import date, datetime, timedelta, timezone
 from typing import (
     AbstractSet,
-    Any,
     Annotated,
-    DefaultDict,
-    Dict,
-    FrozenSet,
-    Iterable,
-    List,
+    Any,
     Literal,
-    Mapping,
-    MutableMapping,
-    MutableSequence,
-    Optional,
-    Sequence,
-    Tuple,
 )
 
 import pydantic
@@ -52,8 +42,8 @@ class NetworkModel(BaseModel):
     net_any: pydantic.IPvAnyNetwork
     iface6: ipaddress.IPv6Interface
     iface_any: pydantic.IPvAnyInterface
-    emails: List[pydantic.EmailStr]
-    maybe_url: Optional[pydantic.HttpUrl]
+    emails: list[pydantic.EmailStr]
+    maybe_url: pydantic.HttpUrl | None
 
 
 class SecretsAndBytesModel(BaseModel):
@@ -74,7 +64,9 @@ class TimeModel(BaseModel):
     naive: pydantic.NaiveDatetime
     since_2020: Annotated[pydantic.PastDate, Field(ge=date(2020, 1, 1))]
     duration: timedelta
-    short_duration: Annotated[timedelta, Field(ge=timedelta(minutes=1), lt=timedelta(minutes=5))]
+    short_duration: Annotated[
+        timedelta, Field(ge=timedelta(minutes=1), lt=timedelta(minutes=5))
+    ]
 
 
 class ContainerModel(BaseModel):
@@ -85,16 +77,16 @@ class ContainerModel(BaseModel):
     mapping: Mapping[str, int]
     mutable_mapping: MutableMapping[str, int]
     ordered: OrderedDict[str, int]
-    default_dict: DefaultDict[str, int]
+    default_dict: defaultdict[str, int]
     counter: Counter[str]
     abstract_set: AbstractSet[int]
-    frozen: FrozenSet[Literal["a", "b", "c"]]
+    frozen: frozenset[Literal["a", "b", "c"]]
     anything: Any
     obj: object
     bare_list: list
     bare_dict: dict
     bare_tuple: tuple
-    any_dict: Dict[Any, Any]
+    any_dict: dict[Any, Any]
     nothing: None
 
 
@@ -102,7 +94,6 @@ class ContainerModel(BaseModel):
 @pytest.mark.pyfake
 @pytest.mark.network
 class TestNetworkTypes:
-
     @pytest.mark.parametrize("seed", SEEDS)
     def test_network_model_is_valid(self, seed):
         model = fake(NetworkModel, seed=seed, as_dict=False)
@@ -138,7 +129,6 @@ class TestNetworkTypes:
 @pytest.mark.datatypes
 @pytest.mark.pyfake
 class TestSecretsAndBytes:
-
     @pytest.mark.parametrize("seed", SEEDS)
     def test_model_is_valid(self, seed):
         model = fake(SecretsAndBytesModel, seed=seed, as_dict=False)
@@ -152,7 +142,6 @@ class TestSecretsAndBytes:
 @pytest.mark.datetime
 @pytest.mark.pyfake
 class TestRelativeAndAwareDatetimes:
-
     @pytest.mark.parametrize("seed", SEEDS)
     def test_model_is_valid(self, seed):
         model = fake(TimeModel, seed=seed, as_dict=False)
@@ -172,7 +161,9 @@ class TestRelativeAndAwareDatetimes:
         tz = ZoneInfo("Asia/Tokyo")
 
         class M(BaseModel):
-            ts: Annotated[pydantic.AwareDatetime, Field(json_schema_extra={"timezone": tz})]
+            ts: Annotated[
+                pydantic.AwareDatetime, Field(json_schema_extra={"timezone": tz})
+            ]
 
         assert fake(M, seed=1)["ts"].tzinfo is tz
 
@@ -183,7 +174,6 @@ class TestRelativeAndAwareDatetimes:
 @pytest.mark.pyfake
 @pytest.mark.complex
 class TestAbstractContainers:
-
     @pytest.mark.parametrize("seed", SEEDS)
     def test_model_is_valid(self, seed):
         model = fake(ContainerModel, seed=seed, as_dict=False)
@@ -195,11 +185,15 @@ class TestAbstractContainers:
 
     def test_frozenset_of_literals_stays_within_values(self):
         for seed in range(20):
-            assert fake(ContainerModel, seed=seed, as_dict=False).frozen <= {"a", "b", "c"}
+            assert fake(ContainerModel, seed=seed, as_dict=False).frozen <= {
+                "a",
+                "b",
+                "c",
+            }
 
     def test_fixed_tuple_of_special_types(self):
         class M(BaseModel):
-            pair: Tuple[pydantic.EmailStr, ipaddress.IPv4Address]
+            pair: tuple[pydantic.EmailStr, ipaddress.IPv4Address]
 
         result = Pyfake(M, seed=2).generate(as_dict=False)
         assert isinstance(result.pair[1], ipaddress.IPv4Address)

@@ -8,7 +8,6 @@ import re
 import string
 import sys
 from functools import lru_cache
-from typing import Optional
 
 from pyfake.core.context import Context
 from pyfake.exceptions import InvalidConstraints
@@ -52,9 +51,9 @@ _ATOMIC_GROUP = getattr(sre_constants, "ATOMIC_GROUP", None)
 def generate_matching(
     pattern: str,
     *,
-    min_length: Optional[int] = None,
-    max_length: Optional[int] = None,
-    context: Optional[Context] = None,
+    min_length: int | None = None,
+    max_length: int | None = None,
+    context: Context | None = None,
 ) -> str:
     """
     Generate a string that matches pattern and the length bounds.

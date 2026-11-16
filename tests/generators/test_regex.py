@@ -38,11 +38,12 @@ PATTERNS = [
 @pytest.mark.datatypes
 @pytest.mark.string
 class TestGenerateMatching:
-
     @pytest.mark.parametrize("pattern", PATTERNS)
     def test_output_matches_pattern(self, pattern):
         for seed in range(50):
-            assert re.search(pattern, generate_matching(pattern, context=Context(seed=seed)))
+            assert re.search(
+                pattern, generate_matching(pattern, context=Context(seed=seed))
+            )
 
     @pytest.mark.parametrize("pattern", PATTERNS)
     def test_deterministic_with_seed(self, pattern):
@@ -50,15 +51,22 @@ class TestGenerateMatching:
             pattern, context=Context(seed=9)
         )
 
-    @pytest.mark.skipif(sys.version_info < (3, 11), reason="atomic groups and possessive repeats need Python 3.11+")
+    @pytest.mark.skipif(
+        sys.version_info < (3, 11),
+        reason="atomic groups and possessive repeats need Python 3.11+",
+    )
     @pytest.mark.parametrize("pattern", [r"^(?>ab|a)c$", r"^a++b$"])
     def test_atomic_and_possessive(self, pattern):
         for seed in range(20):
-            assert re.search(pattern, generate_matching(pattern, context=Context(seed=seed)))
+            assert re.search(
+                pattern, generate_matching(pattern, context=Context(seed=seed))
+            )
 
     def test_length_bounds(self):
         for seed in range(30):
-            result = generate_matching(r"^[a-z]+$", min_length=10, max_length=12, context=Context(seed=seed))
+            result = generate_matching(
+                r"^[a-z]+$", min_length=10, max_length=12, context=Context(seed=seed)
+            )
             assert 10 <= len(result) <= 12
 
     def test_no_context_creates_one(self):

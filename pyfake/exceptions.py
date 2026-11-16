@@ -3,7 +3,7 @@ class PyfakeError(Exception):
 
 
 class GeneratorNotFound(PyfakeError):
-    def __init__(self, type_, path=None):
+    def __init__(self, type_: type, path: str | None = None) -> None:
         self.type = type_
         self.path = path
         location = f" (field '{path}')" if path else ""
@@ -14,5 +14,5 @@ class GeneratorNotFound(PyfakeError):
 
 
 class InvalidConstraints(PyfakeError, ValueError):
-    def __init__(self, message):
+    def __init__(self, message: str) -> None:
         super().__init__(message)

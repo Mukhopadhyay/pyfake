@@ -1,17 +1,16 @@
-import pytest
 import uuid
 
-from pyfake import Pyfake
 import pydantic
+import pytest
 from pydantic import BaseModel, Field
-from typing import Optional, Annotated
+
+from pyfake import Pyfake
 
 
 @pytest.mark.datatypes
 @pytest.mark.pyfake
 @pytest.mark.uuid
 class TestPyfakeUUIDGeneration:
-
     class StressTestUUIDModel(BaseModel):
         native_uuid: uuid.UUID
         native_uuid_default_factory: uuid.UUID = Field(default_factory=uuid.uuid4)
@@ -23,7 +22,7 @@ class TestPyfakeUUIDGeneration:
         uuid6: pydantic.UUID6
         uuid7: pydantic.UUID7
         uuid8: pydantic.UUID8
-        uuid_optional: Optional[uuid.UUID]
+        uuid_optional: uuid.UUID | None
 
     def _as_uuid(self, value):
         if isinstance(value, uuid.UUID):

@@ -6,7 +6,17 @@ aliases, self-referencing models, container lengths and uniqueness.
 import re
 from datetime import date, datetime
 from decimal import Decimal
-from typing import Annotated, Dict, FrozenSet, List, Literal, Optional, Set, Tuple, Union
+from typing import (
+    Annotated,
+    Dict,
+    FrozenSet,
+    List,
+    Literal,
+    Optional,
+    Set,
+    Tuple,
+    Union,
+)
 
 import pytest
 from annotated_types import Gt, Interval, Lt
@@ -39,7 +49,9 @@ class TestConstrainedTypes:
         word: constr(min_length=2, max_length=4)
         ratio: confloat(ge=1.5, le=1.6)
         price: condecimal(max_digits=5, decimal_places=2)
-        upper: Annotated[str, StringConstraints(min_length=3, max_length=3, to_upper=True)]
+        upper: Annotated[
+            str, StringConstraints(min_length=3, max_length=3, to_upper=True)
+        ]
         interval: Annotated[int, Interval(gt=1, lt=5)]
         raw: Annotated[int, Gt(10), Lt(13)]
         smalls: List[conint(gt=0, lt=3)]
@@ -64,7 +76,6 @@ class TestConstrainedTypes:
 @pytest.mark.pyfake
 @pytest.mark.complex
 class TestOneSidedBoundsIntegration:
-
     class Model(BaseModel):
         big: Annotated[int, Field(ge=500)]
         negative: Annotated[int, Field(le=-5)]
@@ -85,10 +96,11 @@ class TestOneSidedBoundsIntegration:
 @pytest.mark.pyfake
 @pytest.mark.complex
 class TestPattern:
-
     class Model(BaseModel):
         sku: Annotated[str, Field(pattern=r"^[A-Z]{3}-\d{4}$")]
-        slug: Annotated[str, Field(pattern=r"^[a-z0-9]+(?:-[a-z0-9]+)*$", max_length=20)]
+        slug: Annotated[
+            str, Field(pattern=r"^[a-z0-9]+(?:-[a-z0-9]+)*$", max_length=20)
+        ]
         codes: List[Annotated[str, Field(pattern=r"^\d{3}$")]]
 
     @pytest.mark.parametrize("seed", SEEDS)
@@ -121,7 +133,6 @@ class AliasedOuter(BaseModel):
 @pytest.mark.pyfake
 @pytest.mark.complex
 class TestAliases:
-
     @pytest.mark.parametrize("seed", SEEDS)
     def test_aliased_fields_are_generated(self, seed):
         result = fake(AliasedOuter, seed=seed)
@@ -199,7 +210,6 @@ def _depth(node: dict, key: str) -> int:
 @pytest.mark.pyfake
 @pytest.mark.complex
 class TestSelfReferencingModels:
-
     @pytest.mark.parametrize("seed", SEEDS)
     def test_list_of_self(self, seed):
         result = fake(Node, seed=seed)
@@ -239,7 +249,6 @@ class TestSelfReferencingModels:
 @pytest.mark.pyfake
 @pytest.mark.complex
 class TestContainerLengths:
-
     class Model(BaseModel):
         empty_list: Annotated[List[int], Field(min_length=0, max_length=0)]
         maybe_empty: Annotated[List[int], Field(min_length=0, max_length=2)]
@@ -259,14 +268,15 @@ class TestContainerLengths:
         assert len(result["empty_set"]) == 0
 
     def test_min_length_zero_can_be_empty(self):
-        lengths = {len(fake(self.Model, seed=seed)["maybe_empty"]) for seed in range(50)}
+        lengths = {
+            len(fake(self.Model, seed=seed)["maybe_empty"]) for seed in range(50)
+        }
         assert 0 in lengths
 
 
 @pytest.mark.pyfake
 @pytest.mark.complex
 class TestUniqueCollections:
-
     class Model(BaseModel):
         flags: Annotated[Set[bool], Field(min_length=2)]
         exact: Annotated[Set[int], Field(min_length=5, max_length=5)]
@@ -298,7 +308,9 @@ class TestUniqueCollections:
 
     def test_impossible_int_range_raises(self):
         class M(BaseModel):
-            values: Annotated[Set[Annotated[int, Field(ge=1, le=2)]], Field(min_length=3)]
+            values: Annotated[
+                Set[Annotated[int, Field(ge=1, le=2)]], Field(min_length=3)
+            ]
 
         with pytest.raises(InvalidConstraints, match="distinct"):
             fake(M, seed=1)
@@ -307,7 +319,6 @@ class TestUniqueCollections:
 @pytest.mark.pyfake
 @pytest.mark.complex
 class TestJsonSchemaExtra:
-
     def test_callable_json_schema_extra_is_ignored(self):
         def extra(schema):
             schema["examples"] = ["x"]
@@ -321,7 +332,6 @@ class TestJsonSchemaExtra:
 @pytest.mark.pyfake
 @pytest.mark.complex
 class TestDecimalDigits:
-
     class Model(BaseModel):
         plain: Decimal
         digits: Decimal = Field(max_digits=4)

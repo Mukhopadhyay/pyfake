@@ -2,26 +2,26 @@
 Resolves the datatypes and forms the generator mapping
 """
 
+import datetime as dt_mod
 import ipaddress
 import uuid as uuid_mod
-import datetime as dt_mod
-
-from pyfake.generators import primitives, uuid, datetime, network
-from pyfake.generators.bounds import resolve_bounds, check_range
-from pyfake.core.context import Context
-from pyfake.exceptions import GeneratorNotFound, InvalidConstraints
-from pyfake.schemas import GeneratorArgs
-from pyfake.core.resolver import Resolver
+from collections.abc import Callable
 from dataclasses import fields
 from decimal import Decimal
 from functools import partial
+from typing import Any
 
 import pydantic
+from pydantic import BaseModel
+from pydantic.fields import FieldInfo
 from pydantic.networks import UrlConstraints
 
-from typing import Any, Dict, List
-from collections.abc import Callable
-from pydantic.fields import FieldInfo
+from pyfake.core.context import Context
+from pyfake.core.resolver import Resolver
+from pyfake.exceptions import GeneratorNotFound, InvalidConstraints
+from pyfake.generators import datetime, network, primitives, uuid
+from pyfake.generators.bounds import check_range, resolve_bounds
+from pyfake.schemas import GeneratorArgs
 
 # Arguments that the registry uses itself rather than passing to generators
 _REGISTRY_ARGS = {"default", "examples", "format"}
@@ -41,10 +41,10 @@ class GeneratorRegistry:
     3. Generating value based on the resolved type and FieldInfo
     """
 
-    def __init__(self, context: Context = None):
+    def __init__(self, context: Context | None = None):
         # Keys match the JSON schema `format` names where one exists, so
         # `json_schema_extra={"format": ...}` can pick any of these generators
-        self._generators: Dict[str, Callable] = {
+        self._generators: dict[str, Callable[..., Any]] = {
             "integer": primitives.generate_int,
             "null": primitives.generate_none,
             "string": primitives.generate_str,
@@ -83,7 +83,7 @@ class GeneratorRegistry:
             "ipv6interface": partial(network.generate_ip_interface, version=6),
             "ipvanyinterface": network.generate_ip_interface,
         }
-        self._type_map: Dict[Any, str] = {
+        self._type_map: dict[Any, str] = {
             int: "integer",
             float: "number",
             Decimal: "decimal",
@@ -119,15 +119,17 @@ class GeneratorRegistry:
             pydantic.IPvAnyInterface: "ipvanyinterface",
         }
         self.__context = context or Context()
-        self._model_fields: Dict[type, Dict[str, dict]] = {}
+        self._model_fields: dict[type, dict[str, dict]] = {}
         # Models currently being generated, outermost first
-        self._model_stack: List[type] = []
+        self._model_stack: list[type] = []
 
-    def generate(self, attr: FieldInfo, path: str = ""):
+    def generate(self, attr: FieldInfo, path: str = "") -> object:
         schema = Resolver(attr).resolve()["schema"]
         return self._generate(schema, path)
 
-    def generate_fields(self, model, path: str = None) -> Dict[str, Any]:
+    def generate_fields(
+        self, model: type[BaseModel], path: str | None = None
+    ) -> dict[str, Any]:
         """
         Generate a value for every field of a pydantic model, keyed by field name
         """
@@ -145,18 +147,20 @@ class GeneratorRegistry:
                 model.model_rebuild()
 
             self._model_fields[model] = {
-                name: Resolver(field_info).resolve()["schema"] for name, field_info in model.model_fields.items()
+                name: Resolver(field_info).resolve()["schema"]
+                for name, field_info in model.model_fields.items()
             }
 
         self._model_stack.append(model)
         try:
             return {
-                name: self._generate(schema, f"{path}.{name}") for name, schema in self._model_fields[model].items()
+                name: self._generate(schema, f"{path}.{name}")
+                for name, schema in self._model_fields[model].items()
             }
         finally:
             self._model_stack.pop()
 
-    def _generate(self, schema, path: str = ""):
+    def _generate(self, schema: dict[str, Any], path: str = "") -> object:
         t = schema["type"]
         args = schema.get("generator_args") or GeneratorArgs()
 
@@ -215,13 +219,17 @@ class GeneratorRegistry:
         # Tuple
         # ---------------------
         if t is tuple:
-
             if schema["mode"] == "variable":
                 length = self._length(args, [schema["items"]])
 
-                return tuple(self._generate(schema["items"], f"{path}[]") for _ in range(length))
+                return tuple(
+                    self._generate(schema["items"], f"{path}[]") for _ in range(length)
+                )
 
-            return tuple(self._generate(item, f"{path}[{i}]") for i, item in enumerate(schema["items"]))
+            return tuple(
+                self._generate(item, f"{path}[{i}]")
+                for i, item in enumerate(schema["items"])
+            )
 
         # ---------------------
         # Dict
@@ -230,7 +238,10 @@ class GeneratorRegistry:
             length = self._length(args, [schema["keys"], schema["values"]])
             keys = self._unique(schema["keys"], length, args.min_length, f"{path}[key]")
 
-            return {key: self._generate(schema["values"], f"{path}[{key!r}]") for key in keys}
+            return {
+                key: self._generate(schema["values"], f"{path}[{key!r}]")
+                for key in keys
+            }
 
         # ---------------------
         # Nested Model
@@ -267,7 +278,11 @@ class GeneratorRegistry:
         raise GeneratorNotFound(t, path)
 
     def _call(self, gen_func: Callable, args: GeneratorArgs, **extra):
-        gen_kwargs = {f.name: getattr(args, f.name) for f in fields(args) if f.name not in _REGISTRY_ARGS}
+        gen_kwargs = {
+            f.name: getattr(args, f.name)
+            for f in fields(args)
+            if f.name not in _REGISTRY_ARGS
+        }
         return gen_func(context=self.__context, **gen_kwargs, **extra)
 
     def _type_key(self, t):
@@ -305,7 +320,9 @@ class GeneratorRegistry:
         minimum = min_length or 0
         if domain is not None:
             if domain < minimum:
-                raise InvalidConstraints(f"'{path}' needs {minimum} distinct values, but only {domain} exist.")
+                raise InvalidConstraints(
+                    f"'{path}' needs {minimum} distinct values, but only {domain} exist."
+                )
             length = min(length, domain)
 
         # dict keys keep the generation order, so seeded output is stable
@@ -354,7 +371,9 @@ class GeneratorRegistry:
         elif t in (list, set, frozenset):
             children = [schema["items"]]
         elif t is tuple:
-            children = schema["items"] if schema["mode"] == "fixed" else [schema["items"]]
+            children = (
+                schema["items"] if schema["mode"] == "fixed" else [schema["items"]]
+            )
         elif t is dict:
             children = [schema["keys"], schema["values"]]
         else:

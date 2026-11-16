@@ -1,34 +1,30 @@
+from typing import Annotated
+
 import pytest
-from pyfake import Pyfake
-from pydantic import BaseModel
 from pydantic import BaseModel, Field
-from typing import Annotated, Optional, Union
+
+from pyfake import Pyfake
 
 
 @pytest.mark.datatypes
 @pytest.mark.pyfake
 @pytest.mark.integer
 class TestPyfakeIntegerGeneration:
-
     class StressTestModel(BaseModel):
         integer_basic: int
-        integer_optional: Optional[int]
+        integer_optional: int | None
         integer_with_bounds: Annotated[int, Field(ge=1, le=100)]
-        integer_with_multiple_annotations: Union[
-            Annotated[int, Field(ge=1, le=100)], Annotated[int, Field(ge=200, le=300)]
-        ]
-        integer_with_multiple_annotations: Union[
-            Annotated[int, Field(ge=1, le=100, default=21)],
-            Annotated[int, Field(ge=200, le=300, default=42)],
-        ]
-        integer_optional_2_defaults: Optional[
-            Annotated[int, Field(ge=1, le=100, default=21)]
-        ] = 42
-        integer_optional_3_defaults: Union[
-            Annotated[int, Field(ge=1, le=10, default=5)],
-            Annotated[int, Field(ge=20, le=30, default=29)],
-        ] = 27
-        integer_optional_default: Optional[int] = 42
+        integer_with_multiple_annotations: (
+            Annotated[int, Field(ge=1, le=100)] | Annotated[int, Field(ge=200, le=300)]
+        )
+        integer_optional_2_defaults: (
+            Annotated[int, Field(ge=1, le=100, default=21)] | None
+        ) = 42
+        integer_optional_3_defaults: (
+            Annotated[int, Field(ge=1, le=10, default=5)]
+            | Annotated[int, Field(ge=20, le=30, default=29)]
+        ) = 27
+        integer_optional_default: int | None = 42
 
     @pytest.mark.parametrize(
         "seed",
@@ -75,18 +71,17 @@ class TestPyfakeIntegerGeneration:
 @pytest.mark.pyfake
 @pytest.mark.string
 class TestPyfakeStringGeneration:
-
     class StressTestStringModel(BaseModel):
         string_basic: str
-        string_optional: Optional[str]
+        string_optional: str | None
         string_with_bounds: Annotated[str, Field(min_length=1, max_length=100)]
-        string_with_multiple_annotations: Union[
-            Annotated[str, Field(min_length=1, max_length=5, default=5)],
-            Annotated[str, Field(min_length=10, max_length=15, default=12)],
-        ] = 50
-        string_optional_default: Optional[
-            Annotated[str, Field(min_length=1, max_length=10, default="abc")]
-        ] = "xyz"
+        string_with_multiple_annotations: (
+            Annotated[str, Field(min_length=1, max_length=5, default=5)]
+            | Annotated[str, Field(min_length=10, max_length=15, default=12)]
+        ) = 50
+        string_optional_default: (
+            Annotated[str, Field(min_length=1, max_length=10, default="abc")] | None
+        ) = "xyz"
         string_with_length_default: Annotated[
             str, Field(min_length=3, max_length=3, default="abc")
         ] = "def"
@@ -133,15 +128,14 @@ class TestPyfakeStringGeneration:
 @pytest.mark.pyfake
 @pytest.mark.float
 class TestPyfakeFloatGeneration:
-
     class StressTestFloatModel(BaseModel):
         float_basic: float
-        float_optional: Optional[float]
+        float_optional: float | None
         float_with_bounds: Annotated[float, Field(ge=1.0, le=100.0)]
-        float_with_multiple_annotations: Union[
-            Annotated[float, Field(ge=1.0, le=100.0)],
-            Annotated[float, Field(ge=200.0, le=300.0)],
-        ]
+        float_with_multiple_annotations: (
+            Annotated[float, Field(ge=1.0, le=100.0)]
+            | Annotated[float, Field(ge=200.0, le=300.0)]
+        )
         float_with_defaults: Annotated[float, Field(ge=1.0, le=10.0, default=5.5)] = 6.6
 
     @pytest.mark.parametrize(
@@ -174,7 +168,6 @@ class TestPyfakeFloatGeneration:
 @pytest.mark.pyfake
 @pytest.mark.pyfake
 class TestPyfakeInstantiation:
-
     class SampleModel(BaseModel):
         integer_basic: int
         string_basic: str

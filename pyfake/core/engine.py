@@ -1,8 +1,9 @@
-from pyfake.core.context import Context
-from pyfake.core.registry import GeneratorRegistry
+from typing import Any
 
 from pydantic import BaseModel
-from typing import Optional, Dict, Any
+
+from pyfake.core.context import Context
+from pyfake.core.registry import GeneratorRegistry
 
 
 class Engine:
@@ -14,10 +15,10 @@ class Engine:
     3. Controlling the output format (dict, list, pydantic model, etc)
     """
 
-    def __init__(self, context: Optional[Context] = None):
+    def __init__(self, context: Context | None = None):
         self.context = context
         self.registry = GeneratorRegistry(context=self.context)
 
-    def generate(self, schema: BaseModel) -> Dict[str, Any]:
+    def generate(self, schema: type[BaseModel]) -> dict[str, Any]:
         # The registry resolves each field once per model and reuses it for every row
         return self.registry.generate_fields(schema)
