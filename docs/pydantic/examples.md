@@ -155,10 +155,10 @@ from pyfake import fake
 
 seeded = fake.seed(42)
 rows = [seeded(User), seeded(User)]
-assert rows[0] != rows[1]                     # a new row each call
+assert rows[0] != rows[1]  # a new row each call
 
 again = fake.seed(42)
-assert rows == [again(User), again(User)]     # the same sequence every run
+assert rows == [again(User), again(User)]  # the same sequence every run
 ```
 
 A `seed=` passed to a single call always starts a fresh stream, so `fake(User, seed=42)` returns the same row every time.

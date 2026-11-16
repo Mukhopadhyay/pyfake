@@ -83,8 +83,12 @@ A series with only a baseline and a trend has no randomness, so it is identical 
 ```python
 from pyfake import Timeseries
 
-a = Timeseries(start="2023-01-01", periods=30, freq="day", noise=2.0, seed=42).generate()
-b = Timeseries(start="2023-01-01", periods=30, freq="day", noise=2.0, seed=42).generate()
+a = Timeseries(
+    start="2023-01-01", periods=30, freq="day", noise=2.0, seed=42
+).generate()
+b = Timeseries(
+    start="2023-01-01", periods=30, freq="day", noise=2.0, seed=42
+).generate()
 assert a == b
 ```
 

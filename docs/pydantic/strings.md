@@ -152,10 +152,12 @@ from typing import Annotated
 from pydantic import BaseModel, Field, constr
 from pyfake import fake
 
+
 class Product(BaseModel):
     sku: Annotated[str, Field(pattern=r"^[A-Z]{3}-\d{4}$")]
     slug: constr(pattern=r"^[a-z0-9]+(?:-[a-z0-9]+)*$", max_length=20)
     colour: Annotated[str, Field(pattern=r"^#[0-9a-f]{6}$")]
+
 
 result = fake(Product)
 print(result)

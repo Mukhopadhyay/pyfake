@@ -40,7 +40,7 @@ def _gregorian_timestamp(context: Context) -> int:
     )
 
 
-def _clock_seq_and_node(context: Context):
+def _clock_seq_and_node(context: Context) -> tuple[int, int, int]:
     clock_seq = context.random.getrandbits(14)
     # Random node IDs set the multicast bit, so they can't clash with a real MAC address (RFC 4122 §4.5)
     node = context.random.getrandbits(48) | (1 << 40)

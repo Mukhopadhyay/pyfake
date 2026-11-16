@@ -4,21 +4,22 @@ by walking its parsed form, not the best implementation
 can fail after certain attempts
 """
 
+import random
 import re
 import string
 import sys
 from functools import lru_cache
+from typing import Any
 
 from pyfake.core.context import Context
 from pyfake.exceptions import InvalidConstraints
 
 if sys.version_info >= (3, 11):
-    from re import _constants as sre_constants
-    from re import _parser as sre_parse
+    from re import _constants as sre_constants  # type: ignore[attr-defined]
+    from re import _parser as sre_parse  # type: ignore[attr-defined]
 else:
     import sre_constants
     import sre_parse
-
 
 # Unbounded repeats (*,+,{n,}) add at most this many repetitions
 REPEAT_LIMIT = 8
@@ -83,7 +84,7 @@ def generate_matching(
 
 
 @lru_cache(maxsize=256)
-def _compile(pattern: str):
+def _compile(pattern: str) -> tuple[Any, re.Pattern[str]]:
     try:
         return sre_parse.parse(pattern), re.compile(pattern)
     except re.error as e:
@@ -91,15 +92,15 @@ def _compile(pattern: str):
 
 
 class _PatternWriter:
-    def __init__(self, rng, repeat_limit: int):
+    def __init__(self, rng: random.Random, repeat_limit: int):
         self.rng = rng
         self.repeat_limit = repeat_limit
-        self.groups = {}
+        self.groups: dict[Any, str] = {}
 
-    def write(self, parsed) -> str:
+    def write(self, parsed: Any) -> str:
         return "".join(self._write_node(op, av) for op, av in parsed)
 
-    def _write_node(self, op, av) -> str:
+    def _write_node(self, op: Any, av: Any) -> str:
         if op is sre_constants.LITERAL:
             return chr(av)
         if op is sre_constants.NOT_LITERAL:
@@ -133,7 +134,7 @@ class _PatternWriter:
             return ""
         raise InvalidConstraints(f"Unsupported regex construct: {op}")
 
-    def _charset(self, items) -> str:
+    def _charset(self, items: Any) -> str:
         chars = []
         negate = False
 

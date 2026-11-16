@@ -3,6 +3,8 @@ Integration tests for constrained types (conint, constr, StringConstraints, ...)
 aliases, self-referencing models, container lengths and uniqueness.
 """
 
+# ruff: noqa: UP006, UP007, UP035, UP045
+# String forward references such as List["Node"] must stay typing generics
 import re
 from datetime import date, datetime
 from decimal import Decimal

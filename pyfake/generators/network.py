@@ -7,6 +7,7 @@ values never point at a real server or mailbox.
 
 import ipaddress
 import string
+from typing import Any
 
 from pydantic.networks import UrlConstraints
 
@@ -27,7 +28,7 @@ def _word(context: Context) -> str:
 def generate_email(
     *,
     context: Context | None = None,
-    **kwargs,
+    **kwargs: Any,
 ) -> str:
     if context is None:
         context = Context()
@@ -37,7 +38,7 @@ def generate_email(
 def generate_name_email(
     *,
     context: Context | None = None,
-    **kwargs,
+    **kwargs: Any,
 ) -> str:
     if context is None:
         context = Context()
@@ -49,7 +50,7 @@ def generate_url(
     *,
     constraints: UrlConstraints | None = None,
     context: Context | None = None,
-    **kwargs,
+    **kwargs: Any,
 ) -> str:
     """
     Generate a URL whose scheme is one of `constraints.allowed_schemes` (http/https by default).
@@ -80,7 +81,7 @@ def generate_ip_address(
     *,
     version: int | None = None,
     context: Context | None = None,
-    **kwargs,
+    **kwargs: Any,
 ) -> str:
     if context is None:
         context = Context()
@@ -92,7 +93,7 @@ def generate_ip_network(
     *,
     version: int | None = None,
     context: Context | None = None,
-    **kwargs,
+    **kwargs: Any,
 ) -> str:
     if context is None:
         context = Context()
@@ -105,7 +106,7 @@ def generate_ip_interface(
     *,
     version: int | None = None,
     context: Context | None = None,
-    **kwargs,
+    **kwargs: Any,
 ) -> str:
     if context is None:
         context = Context()
@@ -113,7 +114,9 @@ def generate_ip_interface(
     return f"{address}/{prefix}"
 
 
-def _random_address(version: int | None, context: Context):
+def _random_address(
+    version: int | None, context: Context
+) -> tuple[ipaddress.IPv4Address | ipaddress.IPv6Address, int]:
     """A random address of the given IP version (4 or 6, random if None) and a prefix length for it"""
     version = version or context.random.choice((4, 6))
     if version == 4:

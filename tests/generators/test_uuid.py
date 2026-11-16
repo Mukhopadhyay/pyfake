@@ -123,7 +123,7 @@ class TestGenerateUUIDs:
 @pytest.mark.datatypes
 @pytest.mark.uuid
 class TestUUIDReproducibility:
-    GENERATORS = [
+    GENERATORS = (
         pyfake_uuid.generate_uuid1,
         pyfake_uuid.generate_uuid3,
         pyfake_uuid.generate_uuid4,
@@ -131,7 +131,7 @@ class TestUUIDReproducibility:
         pyfake_uuid.generate_uuid6,
         pyfake_uuid.generate_uuid7,
         pyfake_uuid.generate_uuid8,
-    ]
+    )
 
     @pytest.mark.parametrize("generator", GENERATORS)
     def test_same_seed_same_uuid(self, generator):

@@ -333,7 +333,7 @@ class TestOneSidedBounds:
     @pytest.mark.parametrize("seed", list(range(10)) + [None])
     def test_decimal_one_sided_bounds(self, seed):
         assert (
-            primitives.generate_decimal(ge=Decimal("500"), context=Context(seed=seed))
+            primitives.generate_decimal(ge=Decimal(500), context=Context(seed=seed))
             >= 500
         )
         assert primitives.generate_decimal(le=-5, context=Context(seed=seed)) <= -5
@@ -426,7 +426,7 @@ class TestGenerateDecimalDigits:
             result = primitives.generate_decimal(
                 gt=1, lt=2, decimal_places=1, context=Context(seed=seed)
             )
-            assert Decimal("1") < result < Decimal("2")
+            assert Decimal(1) < result < Decimal(2)
 
 
 @pytest.mark.datatypes

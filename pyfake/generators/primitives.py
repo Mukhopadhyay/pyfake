@@ -1,5 +1,6 @@
 import math
 import string
+from collections.abc import Callable
 from decimal import ROUND_CEILING, ROUND_FLOOR, Decimal
 from typing import Any
 
@@ -26,17 +27,17 @@ def generate_int(
     if context is None:
         context = Context()
 
-    min_value = (
+    low = (
         math.ceil(ge)
         if ge is not None
         else (math.floor(gt) + 1 if gt is not None else None)
     )
-    max_value = (
+    high = (
         math.floor(le)
         if le is not None
         else (math.ceil(lt) - 1 if lt is not None else None)
     )
-    min_value, max_value = resolve_bounds(min_value, max_value, 0, 100)
+    min_value, max_value = resolve_bounds(low, high, 0, 100)
 
     # Handling multiple_of within the range
     if multiple_of is not None:
@@ -118,6 +119,9 @@ def generate_float(
     context: Context | None = None,
     **kwargs: Any,
 ) -> float:
+    if context is None:
+        context = Context()
+
     num = 0.0
     if multiple_of is not None:
         num = float(
@@ -133,17 +137,17 @@ def generate_float(
         )
     else:
         # The closest floats inside exclusive bounds
-        min_value = (
+        low = (
             ge
             if ge is not None
             else (math.nextafter(gt, math.inf) if gt is not None else None)
         )
-        max_value = (
+        high = (
             le
             if le is not None
             else (math.nextafter(lt, -math.inf) if lt is not None else None)
         )
-        min_value, max_value = resolve_bounds(min_value, max_value, 0.0, 100.0)
+        min_value, max_value = resolve_bounds(low, high, 0.0, 100.0)
         check_range(min_value, max_value, "float")
         num = context.random.uniform(min_value, max_value)
 
@@ -169,6 +173,9 @@ def generate_decimal(
     context: Context | None = None,
     **kwargs: Any,
 ) -> Decimal:
+    if context is None:
+        context = Context()
+
     if multiple_of is not None:
         num = _pick_multiple(
             lt=lt,
@@ -197,7 +204,7 @@ def generate_decimal(
     for places in candidates:
         if max_digits is not None and places > max_digits:
             continue
-        num = _scaled_decimal(
+        scaled = _scaled_decimal(
             lt=lt,
             gt=gt,
             le=le,
@@ -206,8 +213,8 @@ def generate_decimal(
             max_digits=max_digits,
             context=context,
         )
-        if num is not None:
-            return num
+        if scaled is not None:
+            return scaled
 
     raise InvalidConstraints(
         "No valid decimal can be generated with the given constraints."
@@ -215,7 +222,14 @@ def generate_decimal(
 
 
 def _scaled_decimal(
-    *, lt, gt, le, ge, places: int, max_digits: int | None, context: Context
+    *,
+    lt: Decimal | None,
+    gt: Decimal | None,
+    le: Decimal | None,
+    ge: Decimal | None,
+    places: int,
+    max_digits: int | None,
+    context: Context,
 ) -> Decimal | None:
     """
     A random Decimal with exactly ``places`` decimal places, generated as a scaled integer
@@ -223,16 +237,17 @@ def _scaled_decimal(
     """
     scale = Decimal(10) ** places
 
-    lower = upper = None
+    low: int | None = None
+    high: int | None = None
     if ge is not None:
-        lower = _scale(ge, scale, ROUND_CEILING)
+        low = _scale(ge, scale, ROUND_CEILING)
     elif gt is not None:
-        lower = _scale(gt, scale, ROUND_FLOOR) + 1
+        low = _scale(gt, scale, ROUND_FLOOR) + 1
     if le is not None:
-        upper = _scale(le, scale, ROUND_FLOOR)
+        high = _scale(le, scale, ROUND_FLOOR)
     elif lt is not None:
-        upper = _scale(lt, scale, ROUND_CEILING) - 1
-    lower, upper = resolve_bounds(lower, upper, 0, 100 * 10**places)
+        high = _scale(lt, scale, ROUND_CEILING) - 1
+    lower, upper = resolve_bounds(low, high, 0, 100 * 10**places)
 
     # A scaled integer with at most max_digits digits gives a Decimal with at most max_digits digits
     if max_digits is not None:
@@ -244,12 +259,19 @@ def _scaled_decimal(
     return Decimal(context.random.randint(lower, upper)).scaleb(-places)
 
 
-def _scale(value, scale: Decimal, rounding: str) -> int:
+def _scale(value: Decimal, scale: Decimal, rounding: str) -> int:
     return int((Decimal(str(value)) * scale).to_integral_value(rounding=rounding))
 
 
 def _pick_multiple(
-    *, lt, gt, le, ge, multiple_of, kind: str, context: Context
+    *,
+    lt: float | Decimal | None,
+    gt: float | Decimal | None,
+    le: float | Decimal | None,
+    ge: float | Decimal | None,
+    multiple_of: float | Decimal,
+    kind: str,
+    context: Context,
 ) -> Decimal:
     """
     Pick a random multiple of ``multiple_of`` within the bounds. Decimal arithmetic avoids
@@ -259,10 +281,10 @@ def _pick_multiple(
     if mult <= 0:
         raise InvalidConstraints("multiple_of must be a positive number")
 
-    lower, upper = resolve_bounds(
+    low, high = resolve_bounds(
         ge if ge is not None else gt, le if le is not None else lt, 0, 100
     )
-    lower, upper = Decimal(str(lower)), Decimal(str(upper))
+    lower, upper = Decimal(str(low)), Decimal(str(high))
 
     # The smallest and largest k such that k * mult is within the bounds
     k_start = (lower / mult).to_integral_value(rounding=ROUND_CEILING)
@@ -295,9 +317,15 @@ def generate_any(
     *,
     context: Context | None = None,
     **kwargs: Any,
-):
+) -> int | float | str | bool:
     """A random JSON-safe scalar, for `Any` and `object` fields"""
-    generator = context.random.choice(
-        [generate_int, generate_float, generate_str, generate_bool]
-    )
-    return generator(context=context)
+    if context is None:
+        context = Context()
+
+    generators: list[Callable[..., int | float | str | bool]] = [
+        generate_int,
+        generate_float,
+        generate_str,
+        generate_bool,
+    ]
+    return context.random.choice(generators)(context=context)

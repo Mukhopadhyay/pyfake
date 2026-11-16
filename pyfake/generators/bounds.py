@@ -2,12 +2,21 @@
 Helpers for turning optional lower/upper constraints into a concrete range
 """
 
+from typing import Any, TypeVar
+
 from pyfake.exceptions import InvalidConstraints
+
+T = TypeVar("T")
 
 
 def resolve_bounds(
-    lower, upper, default_lower, default_upper, floor=None, ceiling=None
-):
+    lower: T | None,
+    upper: T | None,
+    default_lower: T,
+    default_upper: T,
+    floor: T | None = None,
+    ceiling: T | None = None,
+) -> tuple[T, T]:
     """
     Fill in missing bounds with their defaults.
 
@@ -15,34 +24,39 @@ def resolve_bounds(
     upper bound of 100), the range keeps the default width and moves next to the bound
     that was given instead, clamped to floor/ceiling.
     """
-    span = default_upper - default_lower
+    # Bounds can be numbers, dates, datetimes or timedeltas, so the arithmetic below is untyped
+    low: Any = lower
+    high: Any = upper
+    dl: Any = default_lower
+    du: Any = default_upper
+    span = du - dl
 
-    if lower is None:
-        if upper is None or default_lower <= upper:
-            lower = default_lower
+    if low is None:
+        if high is None or dl <= high:
+            low = dl
         else:
             try:
-                lower = upper - span
+                low = high - span
             except OverflowError:
-                lower = floor
+                low = floor
             if floor is not None:
-                lower = max(lower, floor)
+                low = max(low, floor)
 
-    if upper is None:
-        if default_upper >= lower:
-            upper = default_upper
+    if high is None:
+        if du >= low:
+            high = du
         else:
             try:
-                upper = lower + span
+                high = low + span
             except OverflowError:
-                upper = ceiling
+                high = ceiling
             if ceiling is not None:
-                upper = min(upper, ceiling)
+                high = min(high, ceiling)
 
-    return lower, upper
+    return low, high
 
 
-def check_range(lower, upper, kind: str):
+def check_range(lower: Any, upper: Any, kind: str) -> None:
     if lower > upper:
         raise InvalidConstraints(
             f"No valid {kind} can be generated with the given constraints ({lower} > {upper})."

@@ -69,7 +69,9 @@ class Context:
         self.seed = seed
         self.random = random.Random(seed)
         # Defaults to the start of the current UTC day
-        self.now = now or datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
+        self.now = now or datetime.now(timezone.utc).replace(
+            hour=0, minute=0, second=0, microsecond=0
+        )
 ```
 
 `Context` is the only place where randomness lives. Every generator receives it and uses `context.random` exclusively, so the entire generation run is controlled by a single source of entropy. Passing a `seed` makes output fully deterministic.

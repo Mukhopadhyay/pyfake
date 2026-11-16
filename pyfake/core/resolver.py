@@ -1,6 +1,7 @@
 import collections
 import collections.abc
 import types
+from collections.abc import Iterable, Iterator
 from enum import Enum
 from typing import Annotated, Any, Literal, Union, cast, get_args, get_origin
 
@@ -63,7 +64,7 @@ class Resolver:
         return generator_args
 
     @staticmethod
-    def __flatten(metadata):
+    def __flatten(metadata: Iterable[Any]) -> Iterator[Any]:
         """
         Yield the individual constraints in a metadata list. Grouped metadata such as
         `conint(...)`, `constr(...)`, `Interval(...)` and `StringConstraints(...)` is
@@ -78,7 +79,9 @@ class Resolver:
                 yield meta
 
     @staticmethod
-    def __apply_metadata(generator_args: GeneratorArgs, metadata):
+    def __apply_metadata(
+        generator_args: GeneratorArgs, metadata: Iterable[Any]
+    ) -> None:
         for meta in Resolver.__flatten(metadata):
             if isinstance(meta, annotated_types.Ge):
                 generator_args.ge = cast("int | float", meta.ge)
@@ -205,6 +208,7 @@ class Resolver:
             if origin in _LIST_ORIGINS or origin in _SET_ORIGINS or origin is frozenset:
                 args = get_args(tp)
 
+                container: type
                 if origin is frozenset:
                     container = frozenset
                 elif origin in _SET_ORIGINS:
@@ -243,15 +247,17 @@ class Resolver:
             if origin in _DICT_ORIGINS or origin is collections.Counter:
                 args = get_args(tp)
 
+                key_tp: Any
+                value_tp: Any
                 if origin is collections.Counter:
-                    k, v = (args[0] if args else Any), int
+                    key_tp, value_tp = (args[0] if args else Any), int
                 else:
-                    k, v = args if args else (Any, Any)
+                    key_tp, value_tp = args if args else (Any, Any)
 
                 return {
                     "type": dict,
-                    "keys": _resolve(k),
-                    "values": _resolve(v),
+                    "keys": _resolve(key_tp),
+                    "values": _resolve(value_tp),
                     "generator_args": generator_args,
                 }
 

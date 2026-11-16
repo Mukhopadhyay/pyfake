@@ -77,7 +77,10 @@ The `fake` object (`from pyfake import fake`) is a thin wrapper around `Pyfake`.
 ```python
 # Internally, the registry does roughly this:
 if MyModel not in cache:
-    cache[MyModel] = {name: Resolver(info).resolve()["schema"] for name, info in MyModel.model_fields.items()}
+    cache[MyModel] = {
+        name: Resolver(info).resolve()["schema"]
+        for name, info in MyModel.model_fields.items()
+    }
 return {name: registry._generate(schema) for name, schema in cache[MyModel].items()}
 ```
 

@@ -5,7 +5,7 @@ Resolves the datatypes and forms the generator mapping
 import datetime as dt_mod
 import ipaddress
 import uuid as uuid_mod
-from collections.abc import Callable
+from collections.abc import Callable, Iterable
 from dataclasses import fields
 from decimal import Decimal
 from functools import partial
@@ -119,7 +119,7 @@ class GeneratorRegistry:
             pydantic.IPvAnyInterface: "ipvanyinterface",
         }
         self.__context = context or Context()
-        self._model_fields: dict[type, dict[str, dict]] = {}
+        self._model_fields: dict[type, dict[str, dict[str, Any]]] = {}
         # Models currently being generated, outermost first
         self._model_stack: list[type] = []
 
@@ -277,7 +277,9 @@ class GeneratorRegistry:
 
         raise GeneratorNotFound(t, path)
 
-    def _call(self, gen_func: Callable, args: GeneratorArgs, **extra):
+    def _call(
+        self, gen_func: Callable[..., Any], args: GeneratorArgs, **extra: Any
+    ) -> Any:
         gen_kwargs = {
             f.name: getattr(args, f.name)
             for f in fields(args)
@@ -285,7 +287,7 @@ class GeneratorRegistry:
         }
         return gen_func(context=self.__context, **gen_kwargs, **extra)
 
-    def _type_key(self, t):
+    def _type_key(self, t: Any) -> str | None:
         try:
             if t in self._type_map:
                 return self._type_map[t]
@@ -299,7 +301,9 @@ class GeneratorRegistry:
                     return self._type_map[base]
         return None
 
-    def _length(self, args: GeneratorArgs, item_schemas) -> int:
+    def _length(
+        self, args: GeneratorArgs, item_schemas: Iterable[dict[str, Any]]
+    ) -> int:
         """
         Pick a container length within min_length/max_length (1 to 5 by default)
         """
@@ -312,7 +316,13 @@ class GeneratorRegistry:
 
         return self.__context.random.randint(lower, upper)
 
-    def _unique(self, schema, length: int, min_length, path: str) -> list:
+    def _unique(
+        self,
+        schema: dict[str, Any],
+        length: int,
+        min_length: int | None,
+        path: str,
+    ) -> list[Any]:
         """
         Generate `length` distinct values, or at least `min_length` of them
         """
@@ -326,7 +336,7 @@ class GeneratorRegistry:
             length = min(length, domain)
 
         # dict keys keep the generation order, so seeded output is stable
-        values = {}
+        values: dict[Any, None] = {}
         attempts = length * 10 + 10
         while len(values) < length and attempts:
             values.setdefault(self._generate(schema, path), None)
@@ -338,7 +348,7 @@ class GeneratorRegistry:
             )
         return list(values)
 
-    def _domain_size(self, schema):
+    def _domain_size(self, schema: dict[str, Any]) -> int | None:
         """
         The number of distinct values a schema can produce, when it is small and known
         """
@@ -349,16 +359,17 @@ class GeneratorRegistry:
             return 2
         if t == "union":
             sizes = [self._domain_size(v) for v in schema["variants"]]
-            if None in sizes:
+            known = [size for size in sizes if size is not None]
+            if len(known) < len(sizes):
                 return None
-            return sum(sizes) + (1 if schema.get("nullable") else 0)
+            return sum(known) + (1 if schema.get("nullable") else 0)
         return None
 
     def _is_deep(self) -> bool:
         # A model can only appear MAX_DEPTH times on a path that is at least that long
         return len(self._model_stack) >= MAX_DEPTH
 
-    def _too_deep(self, schema) -> bool:
+    def _too_deep(self, schema: dict[str, Any]) -> bool:
         """
         True when generating `schema` would enter a model that already appears MAX_DEPTH
         times on the current path

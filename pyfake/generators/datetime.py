@@ -1,11 +1,13 @@
 import math
 from datetime import date, datetime, time, timedelta
 from datetime import timezone as dt_timezone
-from typing import Any
+from typing import Any, TypeVar
 from zoneinfo import ZoneInfo
 
 from pyfake.core.context import Context
 from pyfake.generators.bounds import check_range, resolve_bounds
+
+_T = TypeVar("_T")
 
 ONE_DAY = timedelta(days=1)
 ONE_SECOND = timedelta(seconds=1)
@@ -30,7 +32,7 @@ def generate_date(
 
     min_date = ge if ge is not None else (gt + ONE_DAY if gt is not None else None)
     max_date = le if le is not None else (lt - ONE_DAY if lt is not None else None)
-    min_date, max_date = resolve_bounds(
+    start, end = resolve_bounds(
         min_date,
         max_date,
         date(1970, 1, 1),
@@ -38,12 +40,12 @@ def generate_date(
         floor=date.min,
         ceiling=date.max,
     )
-    check_range(min_date, max_date, "date")
+    check_range(start, end, "date")
 
-    delta_days = (max_date - min_date).days
+    delta_days = (end - start).days
     random_days = context.random.randint(0, delta_days)
 
-    return min_date + timedelta(days=random_days)
+    return start + timedelta(days=random_days)
 
 
 def generate_past_date(
@@ -125,7 +127,7 @@ def generate_datetime(
         ),
         None,
     )
-    min_datetime, max_datetime = resolve_bounds(
+    start, end = resolve_bounds(
         min_datetime,
         max_datetime,
         datetime(1970, 1, 1, tzinfo=bounds_tz),
@@ -133,12 +135,12 @@ def generate_datetime(
         floor=datetime.min.replace(tzinfo=bounds_tz),
         ceiling=datetime.max.replace(tzinfo=bounds_tz),
     )
-    check_range(min_datetime, max_datetime, "datetime")
+    check_range(start, end, "datetime")
 
-    delta_seconds = int((max_datetime - min_datetime).total_seconds())
+    delta_seconds = int((end - start).total_seconds())
     random_seconds = context.random.randint(0, delta_seconds)
 
-    result = min_datetime + timedelta(seconds=random_seconds)
+    result = start + timedelta(seconds=random_seconds)
 
     if timezone is not None:
         # An aware result (from aware bounds) is converted, so it stays the same instant
@@ -227,13 +229,25 @@ def generate_future_datetime(
 
 
 def _relative_datetime(
-    *, earliest, latest, lt, gt, le, ge, timezone, context
+    *,
+    earliest: datetime | None,
+    latest: datetime | None,
+    lt: datetime | None,
+    gt: datetime | None,
+    le: datetime | None,
+    ge: datetime | None,
+    timezone: dt_timezone | ZoneInfo | None,
+    context: Context,
 ) -> datetime:
     lower = _latest(
-        earliest, _as_utc(ge), _as_utc(gt) + ONE_SECOND if gt is not None else None
+        earliest,
+        _as_utc(ge),
+        _shift(gt, ONE_SECOND),
     )
     upper = _earliest(
-        latest, _as_utc(le), _as_utc(lt) - ONE_SECOND if lt is not None else None
+        latest,
+        _as_utc(le),
+        _shift(lt, -ONE_SECOND),
     )
     result = generate_datetime(ge=lower, le=upper, context=context)
     return result.astimezone(timezone) if timezone is not None else result
@@ -296,7 +310,7 @@ def generate_timedelta(
 
     lower = ge if ge is not None else (gt + ONE_SECOND if gt is not None else None)
     upper = le if le is not None else (lt - ONE_SECOND if lt is not None else None)
-    lower, upper = resolve_bounds(
+    start_td, end_td = resolve_bounds(
         lower,
         upper,
         timedelta(0),
@@ -306,8 +320,8 @@ def generate_timedelta(
     )
 
     min_seconds, max_seconds = (
-        math.ceil(lower.total_seconds()),
-        math.floor(upper.total_seconds()),
+        math.ceil(start_td.total_seconds()),
+        math.floor(end_td.total_seconds()),
     )
     check_range(min_seconds, max_seconds, "timedelta")
 
@@ -325,9 +339,20 @@ def _as_utc(value: datetime | None) -> datetime | None:
     return value
 
 
-def _earliest(*values):
-    return min((v for v in values if v is not None), default=None)
+def _shift(value: datetime | None, delta: timedelta) -> datetime | None:
+    """The value (read as UTC when naive) moved by delta, or None when there is no value"""
+    if value is None:
+        return None
+    if value.tzinfo is None:
+        value = value.replace(tzinfo=dt_timezone.utc)
+    return value + delta
 
 
-def _latest(*values):
-    return max((v for v in values if v is not None), default=None)
+def _earliest(*values: _T | None) -> _T | None:
+    present: list[Any] = [v for v in values if v is not None]
+    return min(present) if present else None
+
+
+def _latest(*values: _T | None) -> _T | None:
+    present: list[Any] = [v for v in values if v is not None]
+    return max(present) if present else None

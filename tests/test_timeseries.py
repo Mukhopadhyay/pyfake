@@ -96,9 +96,14 @@ def _values(ts):
 
 
 def _flat(**kwargs):
-    params = dict(
-        start="2023-01-01", baseline=100.0, periods=30, freq="day", trend="flat", seed=1
-    )
+    params = {
+        "start": "2023-01-01",
+        "baseline": 100.0,
+        "periods": 30,
+        "freq": "day",
+        "trend": "flat",
+        "seed": 1,
+    }
     params.update(kwargs)
     return Timeseries(**params)
 
@@ -118,11 +123,11 @@ class TestTimeseriesRandomState:
         assert np.random.random() == expected
 
     def test_reproducible_with_noise_and_anomalies(self):
-        params = dict(
-            noise=2.0,
-            seasonality="day",
-            anomalies={"type": "spike", "count": 3, "magnitude": 0.5},
-        )
+        params = {
+            "noise": 2.0,
+            "seasonality": "day",
+            "anomalies": {"type": "spike", "count": 3, "magnitude": 0.5},
+        }
         assert np.array_equal(_values(_flat(**params)), _values(_flat(**params)))
 
     def test_generate_twice_gives_the_same_series(self):

@@ -14,8 +14,8 @@ OUT = Path(__file__).resolve().parent.parent / "docs" / "assets"
 ACCENT = "#ff6d00"
 
 THEMES = {
-    "light": dict(bg="#ffffff", fg="#1f2328", muted="#6b7280", grid="#e5e7eb"),
-    "dark": dict(bg="#1e2129", fg="#e6e8eb", muted="#9aa0aa", grid="#2e323c"),
+    "light": {"bg": "#ffffff", "fg": "#1f2328", "muted": "#6b7280", "grid": "#e5e7eb"},
+    "dark": {"bg": "#1e2129", "fg": "#e6e8eb", "muted": "#9aa0aa", "grid": "#2e323c"},
 }
 
 ts = Timeseries(

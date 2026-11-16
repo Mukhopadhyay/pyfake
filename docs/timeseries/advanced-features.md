@@ -56,7 +56,12 @@ data = ts.generate()
 `mean` defaults to `0` and `std` to `1` when left out of the dict.
 
 ```python
-Timeseries(start="2024-01-01", periods=30, freq="hour", noise={"distribution": "uniform", "mean": 0, "std": 3})
+Timeseries(
+    start="2024-01-01",
+    periods=30,
+    freq="hour",
+    noise={"distribution": "uniform", "mean": 0, "std": 3},
+)
 ```
 
 ---
@@ -84,7 +89,12 @@ So `seasonality="day"` on a daily series gives a weekly cycle, and `seasonality=
 
 ```python
 # A weekly cycle plus a smaller 24-period cycle
-Timeseries(start="2024-01-01", periods=60, freq="day", seasonality=["day", {"type": "hour", "amplitude": 2}])
+Timeseries(
+    start="2024-01-01",
+    periods=60,
+    freq="day",
+    seasonality=["day", {"type": "hour", "amplitude": 2}],
+)
 ```
 
 ---
@@ -115,12 +125,29 @@ An unknown `type` raises `ValueError`.
 
 ```python
 # Two level shifts of +10
-Timeseries(start="2024-01-01", periods=60, freq="day", trend="flat",
-           anomalies={"type": "shift", "count": 2, "magnitude": 10}, seed=1)
+Timeseries(
+    start="2024-01-01",
+    periods=60,
+    freq="day",
+    trend="flat",
+    anomalies={"type": "shift", "count": 2, "magnitude": 10},
+    seed=1,
+)
 
 # One 24-period burst of seasonality with amplitude 5
-Timeseries(start="2024-01-01", periods=120, freq="hour", trend="flat",
-           anomalies={"type": "seasonal_anomaly", "count": 1, "magnitude": 5, "seasonality": "hour"}, seed=1)
+Timeseries(
+    start="2024-01-01",
+    periods=120,
+    freq="hour",
+    trend="flat",
+    anomalies={
+        "type": "seasonal_anomaly",
+        "count": 1,
+        "magnitude": 5,
+        "seasonality": "hour",
+    },
+    seed=1,
+)
 ```
 
 ---
@@ -130,7 +157,9 @@ Timeseries(start="2024-01-01", periods=120, freq="hour", trend="flat",
 `missing` is the probability (between `0` and `1`) that each value is replaced by `NaN`.
 
 ```python
-Timeseries(start="2024-01-01", periods=100, freq="day", missing=0.1)  # about 10 NaN values
+Timeseries(
+    start="2024-01-01", periods=100, freq="day", missing=0.1
+)  # about 10 NaN values
 ```
 
 Missing values are applied after anomalies, so an anomaly can be hidden by a `NaN`.
@@ -143,5 +172,7 @@ Missing values are applied after anomalies, so an anomaly can be hidden by a `Na
 
 ```python
 # Noise can't push the series below zero
-Timeseries(start="2024-01-01", periods=100, freq="day", baseline=5, noise=10, min_value=0)
+Timeseries(
+    start="2024-01-01", periods=100, freq="day", baseline=5, noise=10, min_value=0
+)
 ```

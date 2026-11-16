@@ -134,7 +134,9 @@ from pyfake import fake
 class Order(BaseModel):
     quantity: conint(gt=0, lt=10)
     code: constr(pattern=r"^[A-Z]{3}-\d{4}$")
-    country: Annotated[str, StringConstraints(min_length=2, max_length=2, to_upper=True)]
+    country: Annotated[
+        str, StringConstraints(min_length=2, max_length=2, to_upper=True)
+    ]
     priority: Annotated[int, Interval(ge=1, le=3)]
     discount: Annotated[float, Gt(0)]
     sizes: List[conint(ge=36, le=46)]

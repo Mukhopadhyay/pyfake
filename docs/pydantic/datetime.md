@@ -308,9 +308,11 @@ from typing import Annotated
 from pydantic import BaseModel, Field, FutureDatetime, PastDate
 from pyfake import fake
 
+
 class Subscription(BaseModel):
     started_on: Annotated[PastDate, Field(ge=date(2020, 1, 1))]
     renews_at: FutureDatetime
+
 
 print(fake(Subscription))
 ```
@@ -332,6 +334,7 @@ the same for the whole day.
 from datetime import timedelta
 from typing import Annotated
 from pydantic import BaseModel, Field
+
 
 class Job(BaseModel):
     timeout: Annotated[timedelta, Field(ge=timedelta(minutes=1), le=timedelta(hours=1))]

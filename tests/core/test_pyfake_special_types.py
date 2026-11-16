@@ -7,7 +7,7 @@ import ipaddress
 from collections import Counter, OrderedDict, defaultdict, deque
 from collections.abc import Iterable, Mapping, MutableMapping, MutableSequence, Sequence
 from datetime import date, datetime, timedelta, timezone
-from typing import (
+from typing import (  # noqa: UP035
     AbstractSet,
     Annotated,
     Any,

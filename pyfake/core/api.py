@@ -12,7 +12,7 @@ T = TypeVar("T", bound=BaseModel)
 class Pyfake:
     def __init__(
         self,
-        schema: type[T],
+        schema: type[BaseModel],
         seed: int | None = None,
         context: Context | None = None,
     ):

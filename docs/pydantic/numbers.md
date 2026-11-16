@@ -333,6 +333,7 @@ class Product(BaseModel):
         float | None, Field(..., gt=0.0, lt=100.0)
     ]  # optional; when set, between 0 and 100 (exclusive)
 
+
 result = fake(Product)
 print(result)
 ```
@@ -356,11 +357,13 @@ from decimal import Decimal
 from pydantic import BaseModel, Field, condecimal
 from pyfake import fake
 
+
 class Invoice(BaseModel):
     subtotal: Decimal
     tax_rate: Decimal = Field(..., ge=0, le=1, decimal_places=3)
     total: condecimal(max_digits=6, decimal_places=2)
     units: condecimal(max_digits=3, ge=500)
+
 
 result = fake(Invoice)
 print(result)
