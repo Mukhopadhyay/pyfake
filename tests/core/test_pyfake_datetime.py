@@ -138,14 +138,16 @@ class TestPyfakeDateTimeGeneration:
                 result["time_optional_default"], time
             )
 
-    def test_time_gt_second_59_raises(self):
-        # The generator implementation increments gt.second which can be invalid for second==59.
+    @pytest.mark.parametrize("seed", list(range(10)) + [None])
+    def test_time_gt_second_59(self, seed):
+        # Stepping past a bound at second 59 must roll over to the next minute
         class Model(BaseModel):
             t: Annotated[time, Field(gt=time(12, 0, 59))]
+            u: Annotated[time, Field(lt=time(12, 1, 0))]
 
-        pyfake = Pyfake(Model)
-        with pytest.raises(ValueError):
-            pyfake.generate()
+        result = Pyfake(Model, seed=seed).generate()
+        assert result["t"] > time(12, 0, 59)
+        assert result["u"] < time(12, 1, 0)
 
 
 @pytest.mark.datatypes

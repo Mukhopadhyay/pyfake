@@ -12,6 +12,15 @@ This document is a short, practical guide for contributors writing and running t
 
 ### Quick start (local)
 
+With [`uv`](https://docs.astral.sh/uv/) (recommended):
+
+```bash
+uv sync           # creates .venv and installs pyfake in editable mode, plus the dev dependencies
+uv run pytest     # runs the test suite
+```
+
+With `pip`:
+
 1. Create and activate a virtual environment:
 
 ```bash
@@ -19,14 +28,14 @@ python3 -m venv .venv
 source .venv/bin/activate
 ```
 
-2. Install the package in editable mode and developer tools. The project lists dev dependencies in `pyproject.toml` (`pytest`, `pytest-cov`, `marimo`, `rich`); install them however you prefer:
+2. Install the package in editable mode and developer tools. The project lists dev dependencies in the `dev` dependency group in `pyproject.toml` (`pytest`, `pytest-cov`, `marimo`, `matplotlib`, `rich`):
 
 ```bash
 pip install -e .
-pip install pytest pytest-cov marimo rich
+pip install pytest pytest-cov marimo matplotlib rich
 ```
 
-Notes: some contributors prefer `pip install -e .[dev]` if your tooling supports extras. The repository also exposes `uv` helper commands in docs (`uv pip install -e .`, `uv run pytest`) — you can use those if available in your environment.
+The commands below are shown as `pytest ...`; prefix them with `uv run` when using uv.
 
 ### Run the test suite
 
@@ -71,7 +80,7 @@ pytest --cov=pyfake --cov-report=html
 
 ### Debugging flaky tests
 
-- Reproduce deterministically by using the `seed` argument used throughout the tests: many tests call `Pyfake(..., seed=...)` or use `Context(seed=...)` to make generation deterministic.
+- Reproduce deterministically by using the `seed` argument used throughout the tests: many tests call `Pyfake(..., seed=...)` or use `Context(seed=...)` to make generation deterministic. For values relative to today (`PastDate`, time-based UUIDs), also pass a fixed `Context(seed=..., now=...)`.
 - Run the failing test with `-s --pdb` to inspect state and prints.
 - Add temporary `print()` statements or use `pytest --pdb` to debug interactively.
 
@@ -123,6 +132,8 @@ assert isinstance(res, dict)
 - `registry`: Tests for `GeneratorRegistry()` behaviour.
 - `exceptions`: Tests for exception classes.
 - `complex`: Complex-type tests (lists, sets, tuples, dicts, enums, literals, nested models).
+- `network`: Email, URL and IP address tests.
+- `timeseries`: Tests for the `Timeseries` generator.
 
 ### CI & pull-request checklist (recommended)
 

@@ -10,9 +10,14 @@ T = TypeVar("T", bound=BaseModel)
 
 
 class Pyfake:
-    def __init__(self, schema: type[BaseModel], seed: int | None = None):
+    def __init__(
+        self,
+        schema: type[BaseModel],
+        seed: int | None = None,
+        context: Context | None = None,
+    ):
         self.schema = schema
-        self.context = Context(seed=seed)
+        self.context = context or Context(seed=seed)
         self.engine = Engine(self.context)
 
     @classmethod
@@ -28,29 +33,35 @@ class Pyfake:
     def generate(
         self, num: int | None = 1, as_dict: bool | None = True
     ) -> BaseModel | dict[str, Any] | list[BaseModel | dict[str, Any]]:
-        if not num:
+        """
+        Generate `num` instances. `num=1` (or None) returns a single instance,
+        any other number returns a list (empty for `num=0`).
+        """
+        if num is None:
             num = 1
+        if num < 0:
+            raise ValueError(f"num must be zero or more, got {num}")
 
-        if num > 1:
-            instances = [
-                self.schema(**self.engine.generate(self.schema)) for _ in range(num)
-            ]
-            results: list[BaseModel | dict[str, Any]]
-            if as_dict:
-                results = [instance.model_dump() for instance in instances]
-            else:
-                results = list(instances)
-            return results
+        # by_name: fields with an alias are generated under their field name
+        instances = [
+            self.schema.model_validate(self.engine.generate(self.schema), by_name=True)
+            for _ in range(num)
+        ]
+        results: list[BaseModel | dict[str, Any]]
+        if as_dict:
+            results = [instance.model_dump() for instance in instances]
         else:
-            instance = self.schema(**self.engine.generate(self.schema))
-            if as_dict:
-                return instance.model_dump()
-            return instance
+            results = list(instances)
+
+        return results[0] if num == 1 else results
 
 
 class Fake:
     def __init__(self, seed: int | None = None):
         self._seed = seed
+        # A seeded Fake keeps one random stream across calls, so successive calls return
+        # different rows while the whole sequence stays reproducible
+        self._context = Context(seed=seed) if seed is not None else None
 
     def __call__(
         self,
@@ -60,12 +71,13 @@ class Fake:
         as_dict: bool | None = True,
         seed: int | None = None,
     ) -> BaseModel | dict[str, Any] | list[BaseModel | dict[str, Any]]:
-        return Pyfake.from_schema(
-            schema=schema,
-            num=num,
-            seed=seed if seed is not None else self._seed,
-            as_dict=as_dict,
-        )
+        # An explicit per-call seed always starts a fresh stream
+        if seed is not None:
+            context = Context(seed=seed)
+        else:
+            context = self._context or Context()
+
+        return Pyfake(schema, context=context).generate(num, as_dict=as_dict)
 
     def dict(
         self, schema: type[T], num: int = 1, seed: int | None = None

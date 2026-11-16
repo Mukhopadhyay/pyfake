@@ -38,7 +38,7 @@ No setup required — `pyfake` inspects the schema and generates valid values au
 
 !!! note "Constraints & Customization"
 
-    `pyfake` extracts Pydantic field metadata (like `min_length`, `max_length`, and `regex`) and uses it to drive generation when supported. See below for which options are currently honored.
+    `pyfake` extracts Pydantic field metadata (like `min_length`, `max_length`, and `pattern`) and uses it to drive generation. See below for the options it honours.
 
 ---
 
@@ -97,7 +97,7 @@ print(results)
 
 ## Metadata & Constraints
 
-`pyfake` reads Pydantic Field metadata to decide how to generate values. For strings the generator currently supports `min_length`, `max_length`, and a `length` override. There is also a `pattern` argument on the generator, but note that pattern/regex matching is not yet applied by the default string generator.
+`pyfake` reads Pydantic Field metadata to decide how to generate values. For strings the generator supports `min_length`, `max_length`, `pattern`, and a `length` override. The same constraints can also come from `constr(...)` or `Annotated[str, StringConstraints(...)]`.
 
 ### How length is chosen
 
@@ -136,20 +136,52 @@ print(result)
 | `min_length`     | Minimum length for the generated string. If provided alone, generated length == `min_length`. |
 | `max_length`     | Maximum length for the generated string. If provided alone, generated length == `max_length`. |
 | `length`         | Explicit length used when no min/max constraints are provided. Default is `10`. |
-| `pattern`        | Regular expression the value should match. NOTE: currently accepted but not enforced by the built-in generator. |
+| `pattern`        | Regular expression the value must match. See [Regular expressions](#regular-expressions). |
 
 !!! error "Unsupported / Partial Support"
 
-    - `pattern`/`regex`: the generator accepts this metadata but does not yet generate strings that match arbitrary regular expressions. Pattern support is planned but not implemented in the default `generate_str` function.
-    - The built-in generator uses only ASCII letters (`string.ascii_letters`) — it will not produce digits or punctuation. If you need other character classes, implement a custom generator or post-process generated values.
+    - Without a `pattern`, the built-in generator uses only ASCII letters (`string.ascii_letters`), so it will not produce digits or punctuation. Use a `pattern` if you need other characters.
+    - Field names are not used yet: `first_name` and `city` both get random letters.
+
+## Regular expressions
+
+When a field has a `pattern`, `pyfake` generates a string that matches it:
+
+```python
+from typing import Annotated
+from pydantic import BaseModel, Field, constr
+from pyfake import fake
+
+
+class Product(BaseModel):
+    sku: Annotated[str, Field(pattern=r"^[A-Z]{3}-\d{4}$")]
+    slug: constr(pattern=r"^[a-z0-9]+(?:-[a-z0-9]+)*$", max_length=20)
+    colour: Annotated[str, Field(pattern=r"^#[0-9a-f]{6}$")]
+
+
+result = fake(Product)
+print(result)
+```
+
+<!-- termynal -->
+
+```console
+{'sku': 'SRE-9791', 'slug': 'e1o1i', 'colour': '#b83e3c'}
+```
+
+How it works and what to expect:
+
+- The string is written by walking the parsed pattern: literals, character classes (including `\d`, `\w`, `\s` and negated classes), alternation, groups, backreferences and repeats are all supported.
+- Unbounded repeats (`*`, `+`, `{n,}`) add at most 8 extra repetitions, or up to `min_length` when that is larger.
+- Anchors produce no text. Lookaheads and lookbehinds are skipped while writing, so every result is checked against the real pattern and regenerated if it doesn't match.
+- Like pydantic, a match anywhere in the string counts (`re.search`).
+- `min_length` and `max_length` still apply. If no matching string fits within 100 attempts, pyfake raises `InvalidConstraints`.
 
 ## Implementation notes
 
-The default `generate_str` function (see `pyfake/generators/primitives.py`) currently:
+The default `generate_str` function (see `pyfake/generators/primitives.py`):
 
 - Uses `string.ascii_letters` as the character set.
 - Resolves the output length via `min_length`/`max_length`/`length` as described above.
-- Contains a `pattern` parameter placeholder (TODO in code) but does not apply it yet.
-
-If you rely on regex-based outputs, consider writing a small custom generator that uses `rstr` or similar libraries, or open an enhancement request.
+- Hands fields with a `pattern` to `pyfake.generators.regex.generate_matching`, which is seeded like every other generator.
 

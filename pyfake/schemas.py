@@ -3,6 +3,7 @@ Pydantic classes for various models used in PyFake
 """
 
 from collections.abc import Callable
+from dataclasses import dataclass
 from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict
@@ -26,25 +27,27 @@ class FieldSchema(BaseModel):
     format: str | None = None  # format
 
 
-class GeneratorArgs(BaseModel):
+@dataclass
+class GeneratorArgs:
     """
     The arguments that will be passed to the generator functions
     """
 
-    lt: int | float | None = None
-    gt: int | float | None = None
-    le: int | float | None = None
-    ge: int | float | None = None
+    # Bounds can be numbers, Decimals, dates, datetimes, times or timedeltas
+    lt: Any | None = None
+    gt: Any | None = None
+    le: Any | None = None
+    ge: Any | None = None
     default: Any | None = None
     pattern: str | None = None
-    multiple_of: float | None = None
+    multiple_of: Any | None = None
     decimal_places: int | None = None
+    max_digits: int | None = None
     min_length: int | None = None
     max_length: int | None = None
     examples: list[Any] | None = (
         None  # Will be handled by the registry not the generators
     )
-    # is_optional: Optional[bool] = False
     format: str | None = None
     timezone: Any | None = None
 

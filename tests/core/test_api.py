@@ -192,3 +192,111 @@ class TestFakeClass:
         a = f.seed(42)(self.SampleModel)
         b = f.seed(42)(self.SampleModel)
         assert a == b
+
+
+@pytest.mark.api
+@pytest.mark.pyfake
+class TestNum:
+    class SampleModel(BaseModel):
+        x: int
+
+    @pytest.mark.parametrize("call", ["fake", "pyfake", "from_schema"])
+    def test_num_zero_returns_empty_list(self, call):
+        if call == "fake":
+            result = Fake()(self.SampleModel, num=0)
+        elif call == "pyfake":
+            result = Pyfake(self.SampleModel).generate(num=0)
+        else:
+            result = Pyfake.from_schema(self.SampleModel, num=0)
+        assert result == []
+
+    def test_num_zero_json(self):
+        assert json_module.loads(Fake().json(self.SampleModel, num=0)) == []
+
+    def test_negative_num_raises(self):
+        with pytest.raises(ValueError):
+            Fake()(self.SampleModel, num=-1)
+
+
+@pytest.mark.api
+@pytest.mark.pyfake
+class TestSeededStreams:
+    class SampleModel(BaseModel):
+        x: int
+        y: str
+
+    def test_seeded_fake_returns_different_rows(self):
+        f = Fake().seed(42)
+        assert f(self.SampleModel) != f(self.SampleModel)
+
+    def test_seeded_fake_sequence_is_reproducible(self):
+        a, b = Fake().seed(42), Fake().seed(42)
+        assert [a(self.SampleModel) for _ in range(5)] == [
+            b(self.SampleModel) for _ in range(5)
+        ]
+
+    def test_seeded_fake_shares_the_stream_across_methods(self):
+        a, b = Fake(seed=3), Fake(seed=3)
+        assert [
+            a.dict(self.SampleModel),
+            a.model(self.SampleModel).model_dump(),
+            a.json(self.SampleModel),
+        ] == [
+            b.dict(self.SampleModel),
+            b.model(self.SampleModel).model_dump(),
+            b.json(self.SampleModel),
+        ]
+
+    def test_call_seed_starts_a_fresh_stream(self):
+        f = Fake(seed=1)
+        f(self.SampleModel)
+        assert f(self.SampleModel, seed=7) == Fake()(self.SampleModel, seed=7)
+
+    def test_call_seed_does_not_advance_the_instance_stream(self):
+        a, b = Fake(seed=1), Fake(seed=1)
+        a(self.SampleModel, seed=99)
+        assert a(self.SampleModel) == b(self.SampleModel)
+
+    def test_unseeded_fake_is_random(self):
+        f = Fake()
+        assert len({f.json(self.SampleModel) for _ in range(5)}) > 1
+
+
+@pytest.mark.api
+@pytest.mark.pyfake
+class TestSeededReproducibility:
+    """Same seed, same output, for every supported field type."""
+
+    def test_complex_model_is_reproducible(self):
+        import uuid
+        from datetime import date, datetime, time
+        from decimal import Decimal
+
+        import pydantic
+
+        class Inner(BaseModel):
+            a: int
+            b: str | None
+
+        class Everything(BaseModel):
+            u1: pydantic.UUID1
+            u3: pydantic.UUID3
+            u4: uuid.UUID
+            u5: pydantic.UUID5
+            u6: pydantic.UUID6
+            u7: pydantic.UUID7
+            u8: pydantic.UUID8
+            d: date
+            dt: datetime
+            t: time
+            dec: Decimal
+            email: pydantic.EmailStr
+            url: pydantic.HttpUrl
+            ip: pydantic.IPvAnyAddress
+            past: pydantic.PastDate
+            items: list[Inner]
+            tags: set[str]
+            scores: dict[str, float]
+
+        assert Fake()(Everything, seed=1, num=3) == Fake()(Everything, seed=1, num=3)
+        assert Fake()(Everything, seed=1) != Fake()(Everything, seed=2)

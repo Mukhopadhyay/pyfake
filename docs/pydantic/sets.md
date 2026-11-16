@@ -34,11 +34,11 @@ print(result)
 {'tags': {'aBcDeFgHiJ', 'XyZaBcDeFg'}}
 ```
 
-Note: Pydantic's serialization (`model_dump()`) may convert `Set` to a `list` when `pyfake` returns dicts, so tests accept either representation.
+`model_dump()` keeps sets as Python `set`s, so the dicts `pyfake` returns contain sets. `fake.json(...)` serialises them as lists.
 
 !!! note "Set semantics"
 
-    Sets are unordered and deduplicate values — the final number of elements may be smaller than the requested/generated length.
+    Sets are unordered and hold distinct values. `pyfake` keeps generating items until it has enough distinct ones, so a set always reaches its `min_length`.
 
 ---
 
@@ -63,9 +63,9 @@ print(fake(S, num=3))
 
 ```console
 [
-  {'items': [1, 2]},
-  {'items': [3]},
-  {'items': [4, 5, 6]}
+  {'items': {72, 97}},
+  {'items': {32}},
+  {'items': {4, 5, 6}}
 ]
 ```
 
@@ -95,16 +95,17 @@ print(instances)
 
 ## Metadata & Constraints
 
-`pyfake` honors `min_length` and `max_length` for container sizes. For sets these parameters control how many items are generated before deduplication.
+`pyfake` honors `min_length` and `max_length` for container sizes. For sets they bound the number of distinct items.
 
 ### How length is chosen
 
-- **Default:** when no bounds are provided, the generator chooses a length uniformly at random between `1` and `5` (inclusive).
-- **Both `min_length` and `max_length`:** the length is chosen uniformly between the two bounds.
-- **Only `min_length` provided:** the length is chosen between `min_length` and the default upper bound `5`.
-- **Only `max_length` provided:** the length is chosen between the default lower bound `1` and `max_length`.
+- **Default:** when no bounds are provided, the length is chosen randomly between `1` and `5` (inclusive).
+- **Both `min_length` and `max_length`:** a random length is chosen uniformly between the two bounds (inclusive).
+- **Only `min_length` provided:** the length is chosen between `min_length` and `5`. When `min_length` is above `5`, it is chosen between `min_length` and `min_length + 4`.
+- **Only `max_length` provided:** the length is chosen between `1` and `max_length`.
+- **`min_length=0`** allows an empty collection, and `max_length=0` always gives one.
 
-These rules match the registry implementation: `rng.randint(args.min_length or 1, args.max_length or 5)`.
+When the item type has only a few possible values (`bool`, a `Literal`, an `Enum`, or a union of them), the length is capped at that number. If even `min_length` is more than the number of possible values (e.g. `Set[bool]` with `min_length=3`), `pyfake` raises `InvalidConstraints`. It also raises `InvalidConstraints` when it can't find enough distinct values after a number of attempts, e.g. `Set[Annotated[int, Field(ge=1, le=2)]]` with `min_length=3`.
 
 ### Using `Field` / `Annotated` constraints
 
@@ -126,20 +127,19 @@ print(fake(BoundedSet, seed=42))
 <!-- termynal -->
 
 ```console
- # generator asked for 2..4 items before deduplication
-{'nums': {3, 7}}
+ # between 2 and 4 distinct items
+{'nums': {3, 7, 81}}
 ```
 
 ### Supported Field options
 | Option | Description |
 | ---------------- | -------------------------------------------------------------- |
-| `min_length`     | Minimum number of items to generate (before deduplication).     |
-| `max_length`     | Maximum number of items to generate (before deduplication).     |
+| `min_length`     | Minimum number of distinct items.                               |
+| `max_length`     | Maximum number of distinct items.                               |
 
 !!! error "Unsupported / Partial Support"
 
-  - There is no explicit `length` override for sets; use `min_length`/`max_length` instead.
-  - The default string generator does not guarantee arbitrary regex matches for string elements. Use a custom generator for strict regex-based elements.
+    - There is no explicit `length` override for sets; use `min_length`/`max_length` instead.
 
 ---
 
@@ -197,7 +197,7 @@ print(fake(MaybeSet, num=5, seed=1))
 
 ## Annotated inner types (UUID example)
 
-Inner-type `Annotated` metadata is propagated to element generation, just like lists. For example `Set[Annotated[UUID, UuidVersion(1)]]` will request UUID v1 strings for elements when resolved.
+Inner-type `Annotated` metadata is propagated to element generation, just like lists. For example `Set[Annotated[UUID, UuidVersion(1)]]` generates version 1 UUIDs.
 
 ```python
 from typing import Annotated, Set
@@ -217,7 +217,7 @@ print(fake(USet, seed=0))
 <!-- termynal -->
 
 ```console
-{'ids': {'a1b2c3d4-0000-1000-8000-000000000001'}}
+{'ids': {UUID('6bca4a77-d371-11f1-9092-83e2f728b4fa')}}
 ```
 
 ## Registry direct generation
@@ -245,14 +245,14 @@ This mirrors the behaviour asserted in `tests/core/test_pyfake_complex.py`.
 
 ## Implementation notes
 
-- Sets use the same length selection mechanism as lists: `rng.randint(args.min_length or 1, args.max_length or 5)`.
-- Items are generated first into a list, then converted to `set(items)`, which removes duplicates and may reduce the final size.
-- Elements must be hashable for `set(...)` to succeed — generating sets of unhashable inner types (e.g. `list`) can raise `TypeError`.
+- Sets use the same length rules as lists.
+- Items are generated until there are enough distinct values, with a limited number of attempts.
+- `FrozenSet[T]`, `AbstractSet[T]` and `MutableSet[T]` are generated the same way.
+- Elements must be hashable — generating sets of unhashable inner types (e.g. `list`) raises `TypeError`.
 - Format-based dispatch and inner-type metadata (UUID versions, numeric bounds, patterns) are handled by the resolver and applied to the element schema.
 
 ## Unsupported / Partial support
 
-- The built-in string generator does not guarantee arbitrary regex matches for set elements. Use a custom generator if you need guaranteed pattern matches.
-- Deduplication means you cannot rely on a fixed final size when using `set[...]` — generate more items or post-process if you need to guarantee size.
+- Sets of pydantic models need a frozen model (`model_config = ConfigDict(frozen=True)`), because other models aren't hashable.
 
 

@@ -9,33 +9,36 @@ hide:
 
 # Timeseries
 
-This page shows how to use the `Timeseries` helper included in the `pyfake` package. It focuses on the concrete, tested behaviour you can rely on today (baseline + linear trend), and highlights current limitations so you don't get unexpected results.
+This page shows how to use the `Timeseries` helper included in the `pyfake` package: a small generator for synthetic time series made of a baseline, a linear trend, and optional noise, seasonality, anomalies and missing values.
 
-<img src="../../assets/timeseries.png" alt="Timeseries overview" style="width: 100%; border-radius: 8px; margin: 20px 0;">
-
-!!! note
-    The implementation is deliberately small and matches the behaviour exercised by the test-suite. Features mentioned in the source (seasonality, anomalies, missing data) are scaffolded but not implemented yet; see [pyfake/core/timeseries.py](pyfake/core/timeseries.py) for details.
+![Timeseries overview](../assets/timeseries-light.png#only-light)
+<!-- { style="width: 100%; border-radius: 8px; margin: 20px 0;" } -->
+![Timeseries overview](../assets/timeseries-dark.png#only-dark)
 
 ## Quick overview
 
-- **What it does:** generates a simple synthetic time series as a list of `(datetime, value)` pairs.
-- **What it currently supports:** baseline value, linear trend, deterministic timestamps and a reproducibility `seed` hook for noise.
-- **What it does not (yet) do:** add  seasonality, anomalies or missing values.
+- **What it does:** generates a synthetic time series as a list of `(datetime, value)` pairs.
+- **What it supports:** a baseline value, a linear trend, noise, seasonality, anomalies, missing values, and clipping to a minimum/maximum value. All randomness is reproducible with `seed`.
+- **Where to go next:** [Advanced features](advanced-features.md) covers noise, seasonality, anomalies, missing values and constraints in detail.
 
-## API (practical)
+## API
 
-- **`Timeseries`**: constructor arguments and behaviour
-  - `start` (str|`datetime`): start timestamp. ISO-8601 string like "2023-01-01" is accepted.
-  - `periods` (`int`): number of periods/points to generate.
-  - `freq` (one of `"minute"`, `"hour"`, `"day"`, `"week"`, `"month"`): spacing between points. Note: "month" is implemented as 30 days.
-  - `trend` (`"upward"|"downward"|"flat"` or `dict`): short-hand string chooses default small slope; passing a dict `{"type": <...>, "slope": <float>}` applies that slope per period.
-  - `baseline` (`float`): starting value (default `100.0` in tests/examples).
-  - `noise` (`float` or `dict`): currently not implemented, but reserved for future use to specify noise level and distribution.
-  - `seed` (`int|None`): sets NumPy RNG seed internally. For reproducibility, **`pyfake.Timeseries`** uses Numpy's seeding mechanism, instead of pyfake's internal context system. Read more about numpy seeding here, [`numpy.random.seed`](https://numpy.org/doc/2.2/reference/random/generated/numpy.random.seed.html)
+- **`Timeseries`**: constructor arguments
+    - `start` (`str` | `datetime`): start timestamp. An ISO-8601 string like `"2023-01-01"` is accepted.
+    - `periods` (`int`): number of points to generate.
+    - `freq` (`"minute"`, `"hour"`, `"day"`, `"week"` or `"month"`): spacing between points. `"month"` is a fixed 30 days.
+    - `trend` (`"upward"`, `"downward"`, `"flat"` or a `dict`): a string picks a small default slope; a dict `{"type": ..., "slope": <float>}` applies that slope per period. Default `"upward"`.
+    - `baseline` (`float`): the starting value. Default `100.0`.
+    - `noise` (`float` or `dict`): random noise added to every point. See [Noise](advanced-features.md#noise).
+    - `seasonality` (`str`, `dict` or a list of them): repeating sine waves. See [Seasonality](advanced-features.md#seasonality).
+    - `anomalies` (`dict`): spikes, dips, level shifts, outliers or seasonal bursts. See [Anomalies](advanced-features.md#anomalies).
+    - `missing` (`float`): probability that each value is replaced by `NaN`. See [Missing values](advanced-features.md#missing-values).
+    - `min_value` / `max_value` (`float`): clip the values to this range. See [Constraints](advanced-features.md#value-constraints).
+    - `seed` (`int` | `None`): makes noise, anomalies and missing values reproducible.
 
-- **`generate()`**: returns `List[Tuple[datetime, float]]` in chronological order.
+- **`generate()`**: returns `List[Tuple[datetime, float]]` in chronological order. The values are NumPy `float64`s (a subclass of `float`).
 
-## Behaviour illustrated (examples from tests)
+## Behaviour illustrated
 
 === "Python"
 
@@ -46,7 +49,7 @@ This page shows how to use the `Timeseries` helper included in the `pyfake` pack
     ts = Timeseries(start="2023-01-01", periods=10, freq="day", baseline=100.0)
     data = ts.generate()
     print(type(data), len(data))  # -> list, 10
-    print(data[0])  # -> (datetime(2023-01-01...), 100.0)
+    print(data[0])  # -> (datetime(2023, 1, 1, 0, 0), 100.0)
 
     # explicit trend with a dictionary (5 units per period upward)
     ts2 = Timeseries(
@@ -62,16 +65,32 @@ This page shows how to use the `Timeseries` helper included in the `pyfake` pack
 
 === "Notes"
 
-The tests exercise the following concrete expectations which you can rely on:
+    The tests check these behaviours:
 
-- When `trend` is a string: "upward" → slope `0.1`, "downward" → slope `-0.1`, "flat" → slope `0`.
-- When `trend` is a dict: `slope` is applied per period; `type` determines sign ("upward" → positive, "downward" → negative, "flat" → zero).
-- If `trend` is `None` the constructor currently treats that as the default "upward" behaviour (slope `0.1`).
+    - When `trend` is a string: `"upward"` -> slope `0.1`, `"downward"` -> slope `-0.1`, `"flat"` -> slope `0`.
+    - When `trend` is a dict: `slope` is applied per period; `type` sets the sign (`"upward"` -> positive, `"downward"` -> negative, `"flat"` -> zero).
+    - If `trend` is `None` the constructor uses the default `"upward"` trend (slope `0.1`).
 
 ## Reproducibility and `seed`
 
-The class calls `np.random.seed(seed)` when `seed` is provided. At the moment the generator does not add any random noise, so identical inputs already produce identical outputs. The `seed` parameter is retained and will make noise reproducible once noise-generation is enabled.
+Each `Timeseries` uses its own NumPy random generator (`numpy.random.default_rng(seed)`), so seeding never changes NumPy's global random state. The generator restarts on every `generate()` call, which means:
 
+- the same arguments and `seed` always produce the same series, across calls and across runs;
+- without a `seed`, every call produces a different series once noise, anomalies or missing values are enabled.
+
+A series with only a baseline and a trend has no randomness, so it is identical with or without a seed.
+
+```python
+from pyfake import Timeseries
+
+a = Timeseries(
+    start="2023-01-01", periods=30, freq="day", noise=2.0, seed=42
+).generate()
+b = Timeseries(
+    start="2023-01-01", periods=30, freq="day", noise=2.0, seed=42
+).generate()
+assert a == b
+```
 
 ## Frequency mapping and gotchas
 
@@ -79,7 +98,7 @@ The class calls `np.random.seed(seed)` when `seed` is provided. At the moment th
 - `month` is implemented as a fixed 30-day interval (not calendar-aware).
 
 !!! warning
-    If you need calendar-accurate month boundaries (e.g. Feb, varying month lengths), convert the generated timestamps with a calendar-aware library — the builtin `month` behaviour is a 30-day approximation.
+    If you need calendar-accurate month boundaries (e.g. Feb, varying month lengths), convert the generated timestamps with a calendar-aware library. The built-in `month` frequency is a 30-day approximation.
 
 ## Minimal test-driven examples (mirror assertions in tests)
 
@@ -116,8 +135,8 @@ assert data[1][1] == 97.0
 assert data[2][1] == 94.0
 ```
 
-## Limitations & next steps
+## Limitations
 
-- No seasonality/anomaly injection yet — the source contains commented placeholders (`_apply_seasonality`, `_inject_anomalies`, `_inject_missing`).
-- Consider adding calendar-aware frequency handling, configurable noise models, and unit tests for those features.
-
+- Frequencies are fixed intervals; `month` is not calendar-aware.
+- The trend is linear only.
+- A series takes a single `anomalies` dict, so it has one anomaly type at a time.

@@ -97,7 +97,7 @@ results = Pyfake.from_schema(User, num=3)
 # ]
 ```
 
-`num=1` (the default) returns a single dict. Anything larger returns a list. `num=None` is treated as `num=1`.
+`num=1` (the default) returns a single dict. Any other number returns a list, so `num=0` returns `[]`. `num=None` is treated as `num=1`, and a negative `num` raises `ValueError`.
 
 ---
 
@@ -144,7 +144,27 @@ False
 Seeds are invaluable for tests — pin a seed once and your test data never drifts between runs or environments.
 
 !!! tip
-    All randomness in `pyfake` flows through a single `random.Random` instance stored in a `Context`. Seeding it makes every generator call downstream deterministic, including nested models, collections, and unions.
+    All randomness in `pyfake` flows through a single `random.Random` instance stored in a `Context`. Seeding it makes every generator call downstream deterministic, including nested models, collections, unions and UUIDs.
+
+### Seeded streams with `fake.seed()`
+
+`fake.seed(n)` (or `Fake(seed=n)`) gives you a seeded generator that keeps one random stream across calls. Each call returns new rows, and the whole sequence is the same on every run:
+
+```python
+from pyfake import fake
+
+seeded = fake.seed(42)
+rows = [seeded(User), seeded(User)]
+assert rows[0] != rows[1]  # a new row each call
+
+again = fake.seed(42)
+assert rows == [again(User), again(User)]  # the same sequence every run
+```
+
+A `seed=` passed to a single call always starts a fresh stream, so `fake(User, seed=42)` returns the same row every time.
+
+!!! note "Values relative to today"
+    `PastDate`, `FutureDate`, `PastDatetime`, `FutureDatetime` and time-based UUIDs (v1, v6, v7) are generated relative to the start of the current UTC day. Seeded output for these fields is the same all day, but changes from one day to the next.
 
 ---
 
@@ -404,6 +424,27 @@ result = Pyfake.from_schema(Customer)
 
 Nesting can go as deep as you like — `pyfake` just keeps recursing.
 
+### Self-referencing models
+
+Models that refer to themselves work too. `pyfake` stops adding nested items once a model appears 3 times on the current path, by choosing `None` for optional fields and empty lists (or `min_length` items) for containers:
+
+```python
+from typing import List, Optional
+from pydantic import BaseModel
+from pyfake import Pyfake
+
+
+class Category(BaseModel):
+    name: str
+    parent: Optional["Category"] = None
+    children: List["Category"]
+
+
+result = Pyfake.from_schema(Category, seed=1)
+```
+
+A self-reference that can never be empty, such as a required `child: "Category"`, has no finite value, so `pyfake` raises `InvalidConstraints` and tells you which field to make optional.
+
 ---
 
 ## UUID Fields
@@ -421,7 +462,7 @@ class Resource(BaseModel):
 
 
 result = Pyfake.from_schema(Resource)
-# {'id': '3f2504e0-4f89-11d3-9a0c-0305e82c3301'}
+# {'id': UUID('cd613e30-d8f1-4adf-91b7-584a2265b1f5')}
 ```
 
 Need a specific UUID version? Use `json_schema_extra` on the field:
@@ -439,6 +480,12 @@ class Resource(BaseModel):
 ```
 
 Supported UUID formats: `uuid1`, `uuid3`, `uuid4`, `uuid5`, `uuid6`, `uuid7`, `uuid8`.
+
+---
+
+## Emails, URLs and More
+
+`EmailStr`, `HttpUrl`, DSNs, IP addresses, `SecretStr`, `bytes`, `timedelta` and more work out of the box. See [Other types](special-types.md).
 
 ---
 
@@ -556,8 +603,8 @@ profiles = Pyfake.from_schema(UserProfile, num=2, seed=99)
 
 ```
 $ python profiles.py
-{'id': UUID('3f2504e0-4f89-11d3-9a0c-0305e82c3301'), 'username': 'PqRsT', 'age': 34, 'score': 67.31, 'status': <AccountStatus.ACTIVE: 'active'>, 'tags': ['aBcDe', 'fGhIj'], 'address': {'street': 'KlMnOpQrSt', 'city': 'UvWxYz', 'country_code': 'AB'}, 'joined_at': datetime.datetime(2051, 4, 12, 9, 44, 0), 'last_seen': None}
-{'id': UUID('9a8b7c6d-5e4f-3a2b-1c0d-e8f7a6b5c4d3'), 'username': 'kLmNo', 'age': 72, 'score': 91.45, 'status': <AccountStatus.PENDING: 'pending'>, 'tags': ['xYzAb'], 'address': {'street': 'CdEfGhIjKl', 'city': 'MnOpQr', 'country_code': 'ST'}, 'joined_at': datetime.datetime(2078, 11, 3, 15, 2, 0), 'last_seen': datetime.datetime(2089, 6, 21, 7, 30, 0)}
+{'id': UUID('cd613e30-d8f1-4adf-91b7-584a2265b1f5'), 'username': 'PqRsT', 'age': 34, 'score': 67.31, 'status': <AccountStatus.ACTIVE: 'active'>, 'tags': ['aBcDe', 'fGhIj'], 'address': {'street': 'KlMnOpQrSt', 'city': 'UvWxYz', 'country_code': 'AB'}, 'joined_at': datetime.datetime(2051, 4, 12, 9, 44, 0), 'last_seen': None}
+{'id': UUID('9a8b7c6d-5e4f-4a2b-9c0d-e8f7a6b5c4d3'), 'username': 'kLmNo', 'age': 72, 'score': 91.45, 'status': <AccountStatus.PENDING: 'pending'>, 'tags': ['xYzAb'], 'address': {'street': 'CdEfGhIjKl', 'city': 'MnOpQr', 'country_code': 'ST'}, 'joined_at': datetime.datetime(2078, 11, 3, 15, 2, 0), 'last_seen': datetime.datetime(2089, 6, 21, 7, 30, 0)}
 ```
 
 Two fully-valid `UserProfile` dicts, every constraint respected, the nested `Address` populated, `last_seen` occasionally `None`. Swap `num` for however many you need, drop the `seed` for fresh data each run.

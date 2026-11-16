@@ -14,6 +14,15 @@ class TrendDict(TypedDict):
 
 freq_literals = Literal["minute", "hour", "day", "week", "month"]
 
+# Number of periods in one seasonal cycle for each seasonality type
+SEASON_PERIODS = {
+    "minute": 60,
+    "hour": 24,
+    "day": 7,
+    "week": 52,
+    "month": 12,
+}
+
 
 class SeasonalityDict(TypedDict):
     type: freq_literals
@@ -33,7 +42,8 @@ class AnomalyDict(TypedDict):
     # count will take precedence if both are provided
     magnitude: float
     type: Literal["spike", "dip", "shift", "outlier", "seasonal_anomaly"]
-    # Only applies to "seasonal_anomaly"
+    # Only applies to "seasonal_anomaly": the cycle length of the injected wave.
+    # Defaults to the series frequency.
     seasonality: freq_literals | None
 
 
@@ -90,6 +100,8 @@ class Timeseries:
 
         # self.end = end
 
+        self._set_seed()
+
     def _generate_time_index(self) -> list[datetime]:
         delta_map = {
             "minute": timedelta(minutes=1),
@@ -134,11 +146,11 @@ class Timeseries:
             # Generate simple Gaussian noise if noise is provided
             # as a single number (std deviation)
             scale = self.noise
-            noise = np.random.normal(0, scale=scale, size=self.periods)
+            noise = self._rng.normal(0, scale=scale, size=self.periods)
 
         else:
             if self.noise["distribution"] == "normal":
-                noise = np.random.normal(
+                noise = self._rng.normal(
                     loc=self.noise.get("mean", 0),
                     scale=self.noise.get("std", 1),
                     size=self.periods,
@@ -146,7 +158,7 @@ class Timeseries:
             else:
                 std = self.noise.get("std", 1)
                 mean = self.noise.get("mean", 0)
-                noise = np.random.uniform(
+                noise = self._rng.uniform(
                     low=mean - std,
                     high=mean + std,
                     size=self.periods,
@@ -158,14 +170,6 @@ class Timeseries:
         if not self.seasonality:
             return y
 
-        season_map = {
-            "minute": 60,
-            "hour": 24,
-            "day": 7,
-            "week": 52,
-            "month": 12,
-        }
-
         seasonality = self.seasonality
         if not isinstance(seasonality, list):
             seasonality = [seasonality]
@@ -174,10 +178,10 @@ class Timeseries:
 
         for s in seasonality:
             if isinstance(s, str):
-                period = season_map[s]
+                period = SEASON_PERIODS[s]
                 amplitude: float = 10
             else:
-                period = season_map[s["type"]]
+                period = SEASON_PERIODS[s["type"]]
                 amplitude = s["amplitude"]
 
             y += amplitude * np.sin(2 * np.pi * t / period)
@@ -192,7 +196,7 @@ class Timeseries:
             percentage = self.anomalies.get("percentage") or 0
             count = int(self.periods * percentage)
 
-        idx = np.random.choice(self.periods, count, replace=False)
+        idx = np.sort(self._rng.choice(self.periods, count, replace=False))
         magnitude = self.anomalies["magnitude"]
         anomaly_type = self.anomalies["type"]
 
@@ -201,9 +205,20 @@ class Timeseries:
         elif anomaly_type == "dip":
             y[idx] *= 1 - magnitude
         elif anomaly_type == "shift":
-            y[idx:] += magnitude
+            # Each anomaly is a level shift: every value from that point on moves by magnitude
+            for i in idx:
+                y[i:] += magnitude
         elif anomaly_type == "outlier":
-            y[idx] = y[idx] + np.random.normal(0, magnitude * 10, size=count)
+            y[idx] = y[idx] + self._rng.normal(0, magnitude * 10, size=count)
+        elif anomaly_type == "seasonal_anomaly":
+            # Each anomaly adds one full cycle of a sine wave with amplitude magnitude,
+            # a burst of seasonality that the rest of the series doesn't have
+            period = SEASON_PERIODS[self.anomalies.get("seasonality") or self.freq]
+            for i in idx:
+                cycle = np.arange(min(period, self.periods - i))
+                y[i : i + len(cycle)] += magnitude * np.sin(2 * np.pi * cycle / period)
+        else:
+            raise ValueError(f"Unknown anomaly type: {anomaly_type!r}")
 
         return y
 
@@ -213,7 +228,7 @@ class Timeseries:
 
         prob = self.missing
 
-        missing_idx = np.random.rand(self.periods) < prob
+        missing_idx = self._rng.random(self.periods) < prob
         y[missing_idx] = np.nan
         return y
 
@@ -225,8 +240,9 @@ class Timeseries:
         return y
 
     def _set_seed(self) -> None:
-        if self.seed is not None:
-            np.random.seed(self.seed)
+        # A private generator, so seeding never touches numpy's global random state.
+        # It restarts on every generate() call, so the same seed gives the same series.
+        self._rng = np.random.default_rng(self.seed)
 
     def _format_output(
         self, t: list[datetime], y: NDArray[np.float64]

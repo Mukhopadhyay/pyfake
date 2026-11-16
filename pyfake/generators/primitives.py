@@ -1,9 +1,13 @@
+import math
 import string
+from collections.abc import Callable
 from decimal import ROUND_CEILING, ROUND_FLOOR, Decimal
 from typing import Any
 
 from pyfake.core.context import Context
 from pyfake.exceptions import InvalidConstraints
+from pyfake.generators import regex
+from pyfake.generators.bounds import check_range, resolve_bounds
 
 
 def generate_none(*args: Any, **kwargs: Any) -> None:
@@ -23,8 +27,17 @@ def generate_int(
     if context is None:
         context = Context()
 
-    min_value = ge if ge is not None else (gt + 1 if gt is not None else 0)
-    max_value = le if le is not None else (lt - 1 if lt is not None else 100)
+    low = (
+        math.ceil(ge)
+        if ge is not None
+        else (math.floor(gt) + 1 if gt is not None else None)
+    )
+    high = (
+        math.floor(le)
+        if le is not None
+        else (math.ceil(lt) - 1 if lt is not None else None)
+    )
+    min_value, max_value = resolve_bounds(low, high, 0, 100)
 
     # Handling multiple_of within the range
     if multiple_of is not None:
@@ -44,6 +57,7 @@ def generate_int(
         random_multiple = context.random.randint(0, count - 1)
         return start + random_multiple * mult
 
+    check_range(min_value, max_value, "integer")
     return context.random.randint(min_value, max_value)
 
 
@@ -59,30 +73,47 @@ def generate_str(
     if context is None:
         context = Context()
 
-    # TODO: Support for pattern
+    if pattern is not None:
+        return regex.generate_matching(
+            pattern, min_length=min_length, max_length=max_length, context=context
+        )
+
     if not length:
         length = 10
 
     # Figuring out the length based on min & max length
     if min_length is not None and max_length is not None:
-        l = context.random.randint(min_length, max_length)
+        size = context.random.randint(min_length, max_length)
     elif min_length is not None:
-        l = min_length
+        size = min_length
     elif max_length is not None:
-        l = max_length
+        size = max_length
     else:
-        l = length
+        size = length
 
     letters = string.ascii_letters
-    return "".join(context.random.choice(letters) for _ in range(l))
+    return "".join(context.random.choice(letters) for _ in range(size))
+
+
+def generate_bytes(
+    *,
+    min_length: int | None = None,
+    max_length: int | None = None,
+    context: Context | None = None,
+    **kwargs: Any,
+) -> bytes:
+    # ASCII letters, so the value can still be serialised to JSON
+    return generate_str(
+        min_length=min_length, max_length=max_length, context=context
+    ).encode()
 
 
 def generate_float(
     *,
-    lt: int | None = None,
-    gt: int | None = None,
-    le: int | None = None,
-    ge: int | None = None,
+    lt: float | None = None,
+    gt: float | None = None,
+    le: float | None = None,
+    ge: float | None = None,
     multiple_of: float | None = None,
     decimal_places: int | None = None,
     context: Context | None = None,
@@ -91,30 +122,33 @@ def generate_float(
     if context is None:
         context = Context()
 
-    min_value = ge if ge is not None else (gt + 0.1 if gt is not None else 0.0)
-    max_value = le if le is not None else (lt - 0.1 if lt is not None else 100.0)
-
     num = 0.0
     if multiple_of is not None:
-        min_dec = Decimal(str(min_value))
-        max_dec = Decimal(str(max_value))
-        mult_dec = Decimal(str(multiple_of))
-
-        if mult_dec == 0:
-            raise InvalidConstraints("multiple_of cannot be zero")
-
-        k_start = (min_dec / mult_dec).to_integral_value(rounding=ROUND_CEILING)
-        start = k_start * mult_dec
-        if start > max_dec:
-            raise InvalidConstraints(
-                "No valid float can be generated with the given constraints."
+        num = float(
+            _pick_multiple(
+                lt=lt,
+                gt=gt,
+                le=le,
+                ge=ge,
+                multiple_of=multiple_of,
+                kind="float",
+                context=context,
             )
-
-        k_count = ((max_dec - start) / mult_dec).to_integral_value(rounding=ROUND_FLOOR)
-        count = int(k_count) + 1
-        random_multiple = context.random.randint(0, count - 1)
-        num = float(start + Decimal(random_multiple) * mult_dec)
+        )
     else:
+        # The closest floats inside exclusive bounds
+        low = (
+            ge
+            if ge is not None
+            else (math.nextafter(gt, math.inf) if gt is not None else None)
+        )
+        high = (
+            le
+            if le is not None
+            else (math.nextafter(lt, -math.inf) if lt is not None else None)
+        )
+        min_value, max_value = resolve_bounds(low, high, 0.0, 100.0)
+        check_range(min_value, max_value, "float")
         num = context.random.uniform(min_value, max_value)
 
     # Handling decimal places
@@ -129,55 +163,143 @@ def generate_float(
 
 def generate_decimal(
     *,
-    lt: int | None = None,
-    gt: int | None = None,
-    le: int | None = None,
-    ge: int | None = None,
-    multiple_of: float | None = None,
+    lt: Decimal | None = None,
+    gt: Decimal | None = None,
+    le: Decimal | None = None,
+    ge: Decimal | None = None,
+    multiple_of: Decimal | None = None,
     decimal_places: int | None = None,
+    max_digits: int | None = None,
     context: Context | None = None,
     **kwargs: Any,
 ) -> Decimal:
     if context is None:
         context = Context()
 
-    min_value = ge if ge is not None else (gt + 0.1 if gt is not None else 0.0)
-    max_value = le if le is not None else (lt - 0.1 if lt is not None else 100.0)
-
-    num = Decimal(0)
     if multiple_of is not None:
-        # Use Decimal arithmetic to find the first multiple >= min_value
-        # and the count of multiples <= max_value. This avoids float
-        # rounding errors and incorrect floor/ceil logic.
-        min_dec = Decimal(str(min_value))
-        max_dec = Decimal(str(max_value))
-        mult_dec = Decimal(str(multiple_of))
+        num = _pick_multiple(
+            lt=lt,
+            gt=gt,
+            le=le,
+            ge=ge,
+            multiple_of=multiple_of,
+            kind="decimal",
+            context=context,
+        )
 
-        if mult_dec == 0:
-            raise InvalidConstraints("multiple_of cannot be zero")
+        # Handling decimal places
+        if decimal_places is not None:
+            format_str = "{:." + str(int(decimal_places)) + "f}"
+            num = Decimal(format_str.format(num))
 
-        # Compute the smallest integer k such that k*mult_dec >= min_dec
-        k_start = (min_dec / mult_dec).to_integral_value(rounding=ROUND_CEILING)
-        start = k_start * mult_dec
+        return num
 
-        if start > max_dec:
-            raise InvalidConstraints(
-                "No valid decimal can be generated with the given constraints."
-            )
+    # Prefer 2 decimal places. Fall back to fewer when max_digits leaves no room for the
+    # integer part, or to more when the bounds are closer together than 0.01.
+    candidates = (
+        range(decimal_places, -1, -1)
+        if decimal_places is not None
+        else (2, 1, 0, 3, 4, 5, 6)
+    )
+    for places in candidates:
+        if max_digits is not None and places > max_digits:
+            continue
+        scaled = _scaled_decimal(
+            lt=lt,
+            gt=gt,
+            le=le,
+            ge=ge,
+            places=places,
+            max_digits=max_digits,
+            context=context,
+        )
+        if scaled is not None:
+            return scaled
 
-        k_count = ((max_dec - start) / mult_dec).to_integral_value(rounding=ROUND_FLOOR)
-        count = int(k_count) + 1
-        random_multiple = context.random.randint(0, count - 1)
-        num = start + Decimal(random_multiple) * mult_dec
-    else:
-        num = Decimal(context.random.uniform(min_value, max_value))
+    raise InvalidConstraints(
+        "No valid decimal can be generated with the given constraints."
+    )
 
-    # Handling decimal places
-    if decimal_places is not None:
-        format_str = "{:." + str(int(decimal_places)) + "f}"
-        num = Decimal(format_str.format(num))
 
-    return num
+def _scaled_decimal(
+    *,
+    lt: Decimal | None,
+    gt: Decimal | None,
+    le: Decimal | None,
+    ge: Decimal | None,
+    places: int,
+    max_digits: int | None,
+    context: Context,
+) -> Decimal | None:
+    """
+    A random Decimal with exactly ``places`` decimal places, generated as a scaled integer
+    so it never carries float noise. Returns None when no such value fits the constraints.
+    """
+    scale = Decimal(10) ** places
+
+    low: int | None = None
+    high: int | None = None
+    if ge is not None:
+        low = _scale(ge, scale, ROUND_CEILING)
+    elif gt is not None:
+        low = _scale(gt, scale, ROUND_FLOOR) + 1
+    if le is not None:
+        high = _scale(le, scale, ROUND_FLOOR)
+    elif lt is not None:
+        high = _scale(lt, scale, ROUND_CEILING) - 1
+    lower, upper = resolve_bounds(low, high, 0, 100 * 10**places)
+
+    # A scaled integer with at most max_digits digits gives a Decimal with at most max_digits digits
+    if max_digits is not None:
+        largest = 10**max_digits - 1
+        lower, upper = max(lower, -largest), min(upper, largest)
+
+    if lower > upper:
+        return None
+    return Decimal(context.random.randint(lower, upper)).scaleb(-places)
+
+
+def _scale(value: Decimal, scale: Decimal, rounding: str) -> int:
+    return int((Decimal(str(value)) * scale).to_integral_value(rounding=rounding))
+
+
+def _pick_multiple(
+    *,
+    lt: float | Decimal | None,
+    gt: float | Decimal | None,
+    le: float | Decimal | None,
+    ge: float | Decimal | None,
+    multiple_of: float | Decimal,
+    kind: str,
+    context: Context,
+) -> Decimal:
+    """
+    Pick a random multiple of ``multiple_of`` within the bounds. Decimal arithmetic avoids
+    float rounding errors and incorrect floor/ceil logic.
+    """
+    mult = Decimal(str(multiple_of))
+    if mult <= 0:
+        raise InvalidConstraints("multiple_of must be a positive number")
+
+    low, high = resolve_bounds(
+        ge if ge is not None else gt, le if le is not None else lt, 0, 100
+    )
+    lower, upper = Decimal(str(low)), Decimal(str(high))
+
+    # The smallest and largest k such that k * mult is within the bounds
+    k_start = (lower / mult).to_integral_value(rounding=ROUND_CEILING)
+    if ge is None and gt is not None and k_start * mult == lower:
+        k_start += 1
+    k_end = (upper / mult).to_integral_value(rounding=ROUND_FLOOR)
+    if le is None and lt is not None and k_end * mult == upper:
+        k_end -= 1
+
+    if k_start > k_end:
+        raise InvalidConstraints(
+            f"No valid {kind} can be generated with the given constraints."
+        )
+
+    return context.random.randint(int(k_start), int(k_end)) * mult
 
 
 def generate_bool(
@@ -189,3 +311,21 @@ def generate_bool(
         context = Context()
 
     return context.random.choice([True, False])
+
+
+def generate_any(
+    *,
+    context: Context | None = None,
+    **kwargs: Any,
+) -> int | float | str | bool:
+    """A random JSON-safe scalar, for `Any` and `object` fields"""
+    if context is None:
+        context = Context()
+
+    generators: list[Callable[..., int | float | str | bool]] = [
+        generate_int,
+        generate_float,
+        generate_str,
+        generate_bool,
+    ]
+    return context.random.choice(generators)(context=context)

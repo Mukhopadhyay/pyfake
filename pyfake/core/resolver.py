@@ -1,4 +1,7 @@
+import collections
+import collections.abc
 import types
+from collections.abc import Iterable, Iterator
 from enum import Enum
 from typing import Annotated, Any, Literal, Union, cast, get_args, get_origin
 
@@ -9,6 +12,29 @@ from pydantic.types import UuidVersion
 from pydantic_core import PydanticUndefinedType
 
 from pyfake.schemas import GeneratorArgs
+
+# Abstract and specialised containers are generated as the concrete type pydantic accepts for them
+_LIST_ORIGINS = (
+    list,
+    collections.deque,
+    collections.abc.Sequence,
+    collections.abc.MutableSequence,
+    collections.abc.Iterable,
+)
+_SET_ORIGINS = (set, collections.abc.Set, collections.abc.MutableSet)
+_DICT_ORIGINS = (
+    dict,
+    collections.OrderedDict,
+    collections.defaultdict,
+    collections.abc.Mapping,
+    collections.abc.MutableMapping,
+)
+_BARE_CONTAINERS = (
+    _LIST_ORIGINS
+    + _SET_ORIGINS
+    + _DICT_ORIGINS
+    + (frozenset, tuple, collections.Counter)
+)
 
 
 class Resolver:
@@ -27,17 +53,36 @@ class Resolver:
         # Examples
         if field_info.examples:
             generator_args.examples = field_info.examples
-        # Format / Timezone
+        # Format / Timezone (a callable json_schema_extra only edits the JSON schema, so it's skipped)
         extra = field_info.json_schema_extra
         if isinstance(extra, dict):
             fmt = extra.get("format")
             generator_args.format = fmt if isinstance(fmt, str) else None
             generator_args.timezone = extra.get("timezone")
 
-        if not field_info.metadata:
-            return generator_args
+        Resolver.__apply_metadata(generator_args, field_info.metadata)
+        return generator_args
 
-        for meta in field_info.metadata:
+    @staticmethod
+    def __flatten(metadata: Iterable[Any]) -> Iterator[Any]:
+        """
+        Yield the individual constraints in a metadata list. Grouped metadata such as
+        `conint(...)`, `constr(...)`, `Interval(...)` and `StringConstraints(...)` is
+        expanded, and the `None` placeholders that pydantic leaves for unset options are skipped.
+        """
+        for meta in metadata:
+            if meta is None:
+                continue
+            if isinstance(meta, annotated_types.GroupedMetadata):
+                yield from Resolver.__flatten(meta)
+            else:
+                yield meta
+
+    @staticmethod
+    def __apply_metadata(
+        generator_args: GeneratorArgs, metadata: Iterable[Any]
+    ) -> None:
+        for meta in Resolver.__flatten(metadata):
             if isinstance(meta, annotated_types.Ge):
                 generator_args.ge = cast("int | float", meta.ge)
             if isinstance(meta, annotated_types.Le):
@@ -55,30 +100,13 @@ class Resolver:
             if isinstance(meta, UuidVersion):
                 generator_args.format = f"uuid{meta.uuid_version}"
             if meta.__class__.__name__ == "_PydanticGeneralMetadata":
-                # if meta.pattern is not None:
-                if hasattr(meta, "pattern") and meta.pattern is not None:
+                if getattr(meta, "pattern", None) is not None:
                     generator_args.pattern = meta.pattern
-                if hasattr(meta, "decimal_places") and meta.decimal_places is not None:
+                if getattr(meta, "decimal_places", None) is not None:
                     generator_args.decimal_places = meta.decimal_places
-        return generator_args
+                if getattr(meta, "max_digits", None) is not None:
+                    generator_args.max_digits = meta.max_digits
 
-    # @staticmethod
-    # def __merge(schema, root_args):
-    #     """
-    #     Attach root generator args to the schema node itself.
-    #     Do NOT propagate to children (containers keep their own constraints).
-    #     """
-
-    #     if "generator_args" not in schema:
-    #         schema["generator_args"] = GeneratorArgs()
-
-    #     local = schema["generator_args"]
-
-    #     for k, v in root_args.__dict__.items():
-    #         if v is not None:
-    #             setattr(local, k, v)
-
-    #     return schema
     @staticmethod
     def __merge(schema: dict[str, Any], root_args: GeneratorArgs) -> dict[str, Any]:
 
@@ -118,6 +146,10 @@ class Resolver:
             origin = get_origin(tp)
             generator_args = inherited_args or GeneratorArgs()
 
+            # Bare `list`, `dict`, ... behave like `list[Any]`, `dict[Any, Any]`, ...
+            if origin is None and tp in _BARE_CONTAINERS:
+                origin = tp
+
             # Annotated[T, Field(...)]
             if origin is Annotated:
                 base, *meta = get_args(tp)
@@ -134,11 +166,10 @@ class Resolver:
                         for k, v in parsed.__dict__.items():
                             if v is not None:
                                 setattr(local_args, k, v)
+                    else:
+                        # Raw constraints, e.g. `conint(gt=0)` or `Annotated[int, Gt(0)]`
+                        self.__apply_metadata(local_args, [m])
 
-                    if isinstance(m, UuidVersion):
-                        local_args.format = f"uuid{m.uuid_version}"
-
-                # return _resolve(base, local_args)
                 merged = GeneratorArgs()
 
                 # inherit previous constraints
@@ -173,13 +204,21 @@ class Resolver:
                     "nullable": nullable,
                 }
 
-            # List / Set
-            if origin in (list, set):
+            # List / Set / FrozenSet (and their abstract counterparts, e.g. Sequence)
+            if origin in _LIST_ORIGINS or origin in _SET_ORIGINS or origin is frozenset:
                 args = get_args(tp)
 
+                container: type
+                if origin is frozenset:
+                    container = frozenset
+                elif origin in _SET_ORIGINS:
+                    container = set
+                else:
+                    container = list
+
                 return {
-                    "type": origin,
-                    "items": _resolve(args[0]) if args else None,
+                    "type": container,
+                    "items": _resolve(args[0] if args else Any),
                     "generator_args": generator_args,
                 }
 
@@ -187,12 +226,12 @@ class Resolver:
             if origin is tuple:
                 args = get_args(tp)
 
-                # Tuple[int, ...]
-                if len(args) == 2 and args[1] is Ellipsis:
+                # Tuple[int, ...] (or a bare tuple)
+                if not args or (len(args) == 2 and args[1] is Ellipsis):
                     return {
                         "type": tuple,
                         "mode": "variable",
-                        "items": _resolve(args[0]),
+                        "items": _resolve(args[0] if args else Any),
                         "generator_args": generator_args,
                     }
 
@@ -204,26 +243,30 @@ class Resolver:
                     "generator_args": generator_args,
                 }
 
-            # Dict
-            if origin is dict:
-                k, v = get_args(tp)
+            # Dict (Counter[K] maps keys to int counts)
+            if origin in _DICT_ORIGINS or origin is collections.Counter:
+                args = get_args(tp)
+
+                key_tp: Any
+                value_tp: Any
+                if origin is collections.Counter:
+                    key_tp, value_tp = (args[0] if args else Any), int
+                else:
+                    key_tp, value_tp = args if args else (Any, Any)
 
                 return {
                     "type": dict,
-                    "keys": _resolve(k),
-                    "values": _resolve(v),
+                    "keys": _resolve(key_tp),
+                    "values": _resolve(value_tp),
                     "generator_args": generator_args,
                 }
 
-            # Nested Pydantic model
+            # Nested Pydantic model. Its fields are resolved lazily by the registry,
+            # so self-referencing models don't recurse forever here.
             if isinstance(tp, type) and issubclass(tp, BaseModel):
                 return {
                     "type": "model",
                     "model": tp,
-                    "fields": {
-                        k: Resolver(v).resolve()["schema"]
-                        for k, v in tp.model_fields.items()
-                    },
                     "generator_args": generator_args,
                 }
 
@@ -261,5 +304,4 @@ class Resolver:
 
         return {
             "schema": schema,
-            # "generator_args": root_args,
         }

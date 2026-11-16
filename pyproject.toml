@@ -1,10 +1,13 @@
 [project]
 name = "pyfake"
-version = "0.0.13"
+version = "0.0.14"
 description = "A fake data generator that is pydantic compatible."
 readme = "README.md"
 requires-python = ">=3.10"
-dependencies = ["numpy>=2.2.6", "pydantic[email,timezone]>=2.12.5"]
+dependencies = [
+    "numpy>=2.2.6",
+    "pydantic[email,timezone]>=2.12.5",
+]
 license = "MIT"
 license-files = ["LICENSE"]
 authors = [
@@ -73,6 +76,8 @@ markers = [
     "registry: All pyfake registry GeneratorRegistry() related tests.",
     "exceptions: Tests for pyfake exception classes.",
     "complex: Tests for complex types (list, set, tuple, dict, enum, literal, nested models).",
+    "network: Email, URL and IP address related tests, generator + pydantic integration.",
+    "timeseries: Tests for the `Timeseries` generator.",
 ]
 
 [build-system]
@@ -130,8 +135,8 @@ exclude = [
 line-length = 88
 indent-width = 4
 
-# Assume Python 3.11
-target-version = "py311"
+# Assume Python 3.10 (the minimum supported version)
+target-version = "py310"
 
 [tool.ruff.lint]
 # select = [...]  # See the Default Rules page for the full listing.
