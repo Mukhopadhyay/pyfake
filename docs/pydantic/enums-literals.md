@@ -68,9 +68,9 @@ print(fake(Product, num=3, seed=0))
 
 ```console
 [
-  {'color': <Color.GREEN: 'green'>, 'maybe_color': None},
-  {'color': <Color.RED: 'red'>, 'maybe_color': <Color.BLUE: 'blue'>},
-  {'color': <Color.BLUE: 'blue'>, 'maybe_color': None}
+  {'color': <Color.GREEN: 'green'>, 'maybe_color': <Color.RED: 'red'>},
+  {'color': <Color.GREEN: 'green'>, 'maybe_color': <Color.GREEN: 'green'>},
+  {'color': <Color.GREEN: 'green'>, 'maybe_color': <Color.BLUE: 'blue'>}
 ]
 ```
 
@@ -91,7 +91,7 @@ print(fake(Product, as_dict=False))
 <!-- termynal -->
 
 ```console
-[Product(color=<Color.GREEN: 'green'>, maybe_color=None)]
+Product(color=<Color.GREEN: 'green'>, maybe_color=None)
 ```
 
 ---
@@ -116,10 +116,12 @@ print(fake(Maybe, num=6, seed=1))
 
 ```console
 [
-  {'opt_literal': None, 'opt_enum': 'red'},
+  {'opt_literal': None, 'opt_enum': <Color.GREEN: 'green'>},
+  {'opt_literal': None, 'opt_enum': <Color.BLUE: 'blue'>},
+  {'opt_literal': 'x', 'opt_enum': <Color.GREEN: 'green'>},
+  {'opt_literal': 'y', 'opt_enum': <Color.BLUE: 'blue'>},
   {'opt_literal': 'x', 'opt_enum': None},
-  {'opt_literal': None, 'opt_enum': None},
-  ...
+  {'opt_literal': 'y', 'opt_enum': <Color.BLUE: 'blue'>}
 ]
 ```
 
@@ -129,7 +131,7 @@ Note: `None` probability is controlled by the registry and may change in future 
 
 ## Defaults and explicit values
 
-If you provide a non-`None` default for a field (e.g. `Field(default=...)` or a default on the dataclass), `pyfake` will return that default instead of generating a value. This applies to literals and enums as well.
+If you provide a non-`None` default for a field (e.g. `Field(default=...)` or a plain `= value` default), `pyfake` will return that default instead of generating a value. This applies to literals and enums as well.
 
 ```python
 from pydantic import Field
@@ -194,5 +196,6 @@ print(fake(HasCode))
 ## Examples & limitations
 
 - `Field(..., examples=...)` values are captured by the resolver into `GeneratorArgs.examples`, but generators currently do not automatically prefer `examples` for enums/literals — this metadata is available for future heuristics or for custom registry logic.
-- If you need to bias generation towards certain enum members or literal choices, register a custom generator or post-process results.
+- There is no way to bias generation towards certain enum members or literal choices yet; post-process the results if you need that.
+- In a `Set[...]` of literals or enums, the set size is capped at the number of choices, and `min_length` above that raises `InvalidConstraints`.
 

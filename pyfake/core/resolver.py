@@ -27,7 +27,12 @@ _DICT_ORIGINS = (
     collections.abc.Mapping,
     collections.abc.MutableMapping,
 )
-_BARE_CONTAINERS = _LIST_ORIGINS + _SET_ORIGINS + _DICT_ORIGINS + (frozenset, tuple, collections.Counter)
+_BARE_CONTAINERS = (
+    _LIST_ORIGINS
+    + _SET_ORIGINS
+    + _DICT_ORIGINS
+    + (frozenset, tuple, collections.Counter)
+)
 
 
 class Resolver:
@@ -39,7 +44,9 @@ class Resolver:
 
         generator_args = GeneratorArgs()
         # Default value
-        if field_info.default is not None and not isinstance(field_info.default, PydanticUndefinedType):
+        if field_info.default is not None and not isinstance(
+            field_info.default, PydanticUndefinedType
+        ):
             generator_args.default = field_info.default
         # Examples
         if field_info.examples:

@@ -125,9 +125,9 @@ print(result)
 - If a non-`None` `default` is present in the field metadata, the registry returns that value before attempting generation.
 
 ## Unsupported / Partial support
-- There is no built-in way to bias the generator (e.g., 70% True / 30% False). Use a custom generator if you need weighted booleans.
+- There is no built-in way to bias the generator (e.g., 70% True / 30% False). Post-process the results if you need weighted booleans.
 - There are no field-level boolean constraints (min/max, pattern, etc.) — booleans are binary values.
 
 ## Custom generators
-If you need more control (for example, a weighted probability), write a small custom generator that accepts a `prob_true` argument and registers it with the registry.
+There is no public API for registering your own generators yet. To pin a value, give the field a default; for anything else, post-process the generated data.
 

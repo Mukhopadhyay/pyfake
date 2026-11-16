@@ -99,12 +99,13 @@ print(results)
 
 ### How length is chosen
 
-- **Default:** when no bounds are provided, the list length is chosen randomly between `1` and `5` (inclusive).
+- **Default:** when no bounds are provided, the length is chosen randomly between `1` and `5` (inclusive).
 - **Both `min_length` and `max_length`:** a random length is chosen uniformly between the two bounds (inclusive).
-- **Only `min_length` provided:** the length is chosen randomly between `min_length` and the default upper bound `5`.
-- **Only `max_length` provided:** the length is chosen randomly between the default lower bound `1` and `max_length`.
+- **Only `min_length` provided:** the length is chosen between `min_length` and `5`. When `min_length` is above `5`, it is chosen between `min_length` and `min_length + 4`.
+- **Only `max_length` provided:** the length is chosen between `1` and `max_length`.
+- **`min_length=0`** allows an empty collection, and `max_length=0` always gives one.
 
-This behaviour mirrors the implementation in `pyfake.core.registry.GeneratorRegistry._generate` which uses `rng.randint(args.min_length or 1, args.max_length or 5)` for lists and sets.
+These rules are implemented in `pyfake.core.registry.GeneratorRegistry._length` and shared by lists, sets, variable-length tuples and dicts.
 
 ### Using `Field` / `Annotated` constraints
 
@@ -137,7 +138,6 @@ print(result)
 !!! error "Unsupported / Partial Support"
 
     - There is no `length` override for lists in `GeneratorArgs` (unlike the string generator's explicit `length`), so length control should be expressed via `min_length`/`max_length`.
-    - Item-level `pattern` (e.g. a regex for string elements) is accepted by the resolver but the default string generator does not guarantee arbitrary regex matches. For regex-based string items, consider a custom generator or post-processing.
 
 ---
 
@@ -210,11 +210,13 @@ print(fake(Matrix, seed=2))
 
 ## Sets vs Lists
 
-If the schema is a `set[...]` (or `typing.Set[...]`) the registry will generate a Python `set`. Internally it generates items and then converts to `set(...)`, so duplicates are removed and the final size may be smaller than the requested length.
+If the schema is a `set[...]` (or `typing.Set[...]`) the registry will generate a Python `set`. It keeps generating items until it has enough distinct values, so the set always reaches `min_length`. See [Sets](sets.md).
+
+Abstract types such as `Sequence[T]`, `MutableSequence[T]`, `Iterable[T]` and `deque[T]` are generated as lists, using the same rules. See [Other types](special-types.md#abstract-and-specialised-containers).
 
 ## Annotated inner types (UUID example)
 
-Field/Annotated metadata attached to the inner type is propagated when resolving the element schema. For example, `Annotated[UUID, UuidVersion(1)]` inside a list will cause the UUID generator to be invoked with the corresponding `format` (see `docs/usage/uuid.md`).
+Field/Annotated metadata attached to the inner type is propagated when resolving the element schema. For example, `Annotated[UUID, UuidVersion(1)]` inside a list will cause the UUID generator to be invoked with the corresponding `format` (see [UUID](uuid.md)).
 
 ```python
 from typing import Annotated, List
@@ -233,21 +235,21 @@ print(result)
 <!-- termynal -->
 
 ```console
-{'ids': ['a1b2c3d4-0000-1000-8000-000000000001', '...']}  # uuid v1 strings
+{'ids': [UUID('6bca4a77-d371-11f1-9092-83e2f728b4fa'), UUID('ff4d2ffa-d35c-11f1-bac4-d571c8a70639')]}  # version 1 UUIDs
 ```
 
 ## Implementation notes
 
-- Lists/sets: length selection uses `rng.randint(args.min_length or 1, args.max_length or 5)` (default range `1..5`).
-- Elements are produced by recursively generating the `schema['items']` node — all resolver-provided metadata for the inner type (format, numeric bounds, uuid version, etc.) will affect element generation.
-- For sets the generated list of items is converted with `set(items)`, which removes duplicates.
+- Lists/sets: length selection follows the rules above (default range `1..5`).
+- Elements are produced by recursively generating the `schema['items']` node — all resolver-provided metadata for the inner type (format, numeric bounds, uuid version, pattern, etc.) will affect element generation.
+- For sets, items are generated until there are enough distinct values.
+- In a self-referencing model (e.g. `children: List["Node"]`), lists stop growing once the model appears 3 times on the current path, and get `min_length` items (empty by default) from then on.
 - Format-based dispatch (e.g. UUID versions, date/time formats) is handled through `GeneratorArgs.format` and the registry's generator map (see `pyfake.core.registry`).
 
 ## Unsupported / Partial support
 
-- The default string generator does not guarantee arbitrary regex pattern matches for elements. Pattern/`regex` metadata is accepted by the resolver but not enforced by the built-in string generator.
-- Lists do not enforce element uniqueness — use `set[...]` if uniqueness is required, but note the final size may be smaller due to deduplication.
+- Lists do not enforce element uniqueness. Use `set[...]` if uniqueness is required.
 
-If you need deterministic lengths, strict regex-based elements, or other behaviour not provided out of the box, you can register a custom generator or post-process generated values.
+If you need a fixed length, set `min_length` and `max_length` to the same value.
 
 

@@ -12,7 +12,7 @@ hide:
 # Numbers in `pyfake`
 
 ## Simple Usage
-pyfake supports generating fake data for integer (`<int>`), floating-point (`<float>`), and decimal (`<Decimal>`) fields in your Pydantic models. Here's a simple 
+pyfake supports generating fake data for integer (`<int>`), floating-point (`<float>`), and decimal (`<Decimal>`) fields in your Pydantic models. Here's a simple example:
 
 ```python
 from pyfake import fake
@@ -109,22 +109,35 @@ print(results)
 
 ## Metadata & Constraints
 
-pyfake also supports generating metadata about the generated values, such as which generator was used and which constraints were applied. This can be accessed via the `metadata` attribute of the generated instances:
-
 !!! info "Pydantic Field"
 
     pyfake automatically extracts metadata from your Pydantic model fields, including type annotations and constraints. This metadata is used internally to determine how to generate appropriate fake data for each field.
 
-    Read more about Field metadata in the [Pydantic documentation](https://docs.pydantic.dev/latest/usage/models/#field-metadata).
+    Read more about Field metadata in the [Pydantic documentation](https://docs.pydantic.dev/latest/concepts/fields/).
 
-pyfake's internal architecture is designed to leverage this metadata effectively, ensuring that generated data adheres to the specified constraints and types defined in your Pydantic models.
+Constraints can come from `Field(...)`, from `Annotated[...]` metadata, or from pydantic's constrained types (`conint`, `confloat`, `condecimal`). All three are read the same way.
+
+### Default ranges
+
+Without bounds, numbers fall in these ranges:
+
+| Type | Default range |
+| --- | --- |
+| `int` | `0` to `100` |
+| `float` | `0.0` to `100.0` |
+| `Decimal` | `0` to `100`, with 2 decimal places |
+
+A single bound inside the default range just narrows it: `Field(ge=50)` gives values from `50` to `100`.
+A single bound outside it moves the range next to the bound and keeps its width: `Field(ge=500)` gives values from `500` to `600`, and `Field(le=-5)` gives values from `-105` to `-5`.
+
+Bounds that leave no valid value (for example `ge=10, le=5`) raise `InvalidConstraints`.
 
 ### Using `Field` constraints
 
 ```python
 from pydantic import BaseModel, Field
 class Product(BaseModel):
-    id: int = Field(..., gt=-4, lt=0)  # id must be greater than 0
+    id: int = Field(..., gt=-4, lt=0)  # id must be between -4 and 0 (exclusive)
     price: float = Field(..., ge=3.0, le=7.0)  # price must be between 3.0 and 7.0
 
 results = fake(Product, num=1, as_dict=False)
@@ -133,7 +146,7 @@ print(results)
 
 <!-- termynal -->
 ```console
-[Product(id=-3, price=5.67890123456789)]
+Product(id=-3, price=5.67890123456789)
 ```
 
 ### Supported Field options
@@ -144,7 +157,8 @@ print(results)
 | `lt`             | Less than: the generated value will be less than this value.
 | `le`             | Less than or equal to: the generated value will be less than or equal to this value.
 | `multiple_of`    | The generated value will be a multiple of this value. For floats, the generated value will be a multiple of this value within a reasonable tolerance to account for floating-point precision issues.
-| `decimal_places` | For Decimal fields, this option specifies the number of decimal places to generate. The generated value will be rounded to this number of decimal places.
+| `decimal_places` | For `float` and `Decimal` fields, the number of decimal places to generate. `Decimal` values have exactly this many places (2 by default).
+| `max_digits`     | For `Decimal` fields, the maximum number of digits in total. pyfake uses fewer decimal places when needed to fit the integer part.
 
 !!! note "Option support updates"
 
@@ -287,7 +301,7 @@ class Product(BaseModel):
     price: float = Field(..., ge=0.0)  # price must be non-negative
     height: float = Field(..., gt=0.0)  # height must be greater than 0
     width: float = Field(..., gt=0.0, le=100.0)  # width must be greater than 0 and less than or equal to 100
-    expiry: Annotated[float | None, Field(..., gt=0.0, lt=100.0)]  # Optional expiry must be a positive multiple of 0.5
+    expiry: Annotated[float | None, Field(..., gt=0.0, lt=100.0)]  # optional; when set, between 0 and 100 (exclusive)
 
 result = fake(Product)
 print(result)
@@ -302,3 +316,35 @@ print(result)
     'expiry': None
 }
 ```
+
+## Decimal Types
+
+`Decimal` values are generated as scaled integers, so they never carry float rounding noise. They have 2 decimal places unless `decimal_places` says otherwise, and they always fit `max_digits`:
+
+```python
+from decimal import Decimal
+from pydantic import BaseModel, Field, condecimal
+from pyfake import fake
+
+class Invoice(BaseModel):
+    subtotal: Decimal
+    tax_rate: Decimal = Field(..., ge=0, le=1, decimal_places=3)
+    total: condecimal(max_digits=6, decimal_places=2)
+    units: condecimal(max_digits=3, ge=500)
+
+result = fake(Invoice)
+print(result)
+```
+
+<!-- termynal -->
+```console
+{
+    'subtotal': Decimal('74.11'),
+    'tax_rate': Decimal('0.886'),
+    'total': Decimal('91.71'),
+    'units': Decimal('599')
+}
+```
+
+`units` gets no decimal places: with `max_digits=3`, a value of at least `500` has no room for any.
+If no value can satisfy the constraints (e.g. `max_digits=2` with `ge=1000`), pyfake raises `InvalidConstraints`.

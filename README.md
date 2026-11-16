@@ -13,18 +13,18 @@
   <a href="https://pypi.org/project/pyfake/">
     <img src="https://img.shields.io/pypi/v/pyfake?style=for-the-badge">
   </a>
-  <img src="https://img.shields.io/badge/python-3.9+-3670A0?style=for-the-badge&logo=python&logoColor=ffdd54"/>
+  <img src="https://img.shields.io/badge/python-3.10+-3670A0?style=for-the-badge&logo=python&logoColor=ffdd54"/>
   <img src="https://img.shields.io/badge/pydantic-v2-4B8BBE?style=for-the-badge"/>
   <img src="https://img.shields.io/github/stars/Mukhopadhyay/pyfake?style=for-the-badge"/>
 </p>
 
 
 <p align="center">
-  <a href="https://mukhopadhyay.github.io/pyfake/"><strong>Documentation</strong></a> &middot; <a href="https://github.com/Mukhopadhyay/pyfake"><strong>Github</strong></a> &middot; <a href="https://pypi.org/project/pyfake/"><strong>PyPI</strong></a>
+  <a href="https://mukhopadhyay.is-a.dev/pyfake/"><strong>Documentation</strong></a> &middot; <a href="https://github.com/Mukhopadhyay/pyfake"><strong>Github</strong></a> &middot; <a href="https://pypi.org/project/pyfake/"><strong>PyPI</strong></a>
 </p>
 
 <p align="center">
-Generate realistic fake data for your Pydantic models with ease. Perfect for testing, prototyping, and anywhere you need valid mock data.
+Generate valid fake data for your Pydantic models with ease. Perfect for testing, prototyping, and anywhere you need valid mock data.
 </p>
 
 ## ⚡ Quick Example
@@ -58,10 +58,10 @@ print(result)
 |Problem| Most fake data generators | Pyfake|
 |-|-|-|
 |Random but not structured| ❌ Generates random data without understanding the schema | ✅ Reads your Pydantic models to produce structured, schema-aware data |
-|Structured but not realistic| ❌ Generates data that fits the schema but isn't realistic (e.g. random strings for names) | ✅ Uses intelligent generators to produce realistic fake data (e.g. names, addresses) |
-|Hard to extend| ❌ Difficult to add custom generators or handle complex types | ✅ Easily extensible with a flexible generator registry and schema resolution system |
-|Support for constraints| ❌ Ignores field constraints like `min_length`, `gt`, `multiple_of` | ✅ Respects all Pydantic field constraints when generating data |
-|Support for python primitive types| ❌ Limited support for complex types like `Decimal`, `UUID`, `datetime` | ✅ Full support for Python primitives, including `Decimal`, `UUID`, `datetime`, and more |
+|Structured but not valid| ❌ Generates strings for emails, URLs or IP addresses that fail validation | ✅ Format-aware generators for `EmailStr`, `HttpUrl`, DSNs, IP addresses, UUIDs and regex `pattern`s |
+|Support for constraints| ❌ Ignores field constraints like `min_length`, `gt`, `multiple_of` | ✅ Respects Pydantic constraints: bounds, lengths, `multiple_of`, `max_digits`/`decimal_places`, `pattern`, and `conint`/`constr`-style types |
+|Support for python types| ❌ Limited support for complex types like `Decimal`, `UUID`, `datetime` | ✅ Supports `Decimal`, `UUID`, `datetime`, `timedelta`, `bytes`, enums, literals, nested and self-referencing models, and more |
+|Clear failures| ❌ Silently returns invalid data | ✅ Raises an error that names the field when a type or constraint can't be satisfied |
 |Reproducibility| ❌ No built-in way to generate the same fake data across runs | ✅ Supports seeding for reproducible fake data generation |
 
 
@@ -70,8 +70,8 @@ print(result)
 Pyfake reads your Pydantic schema and:
 
 * Inspects field types and constraints
-* Applies intelligent generators
-* Produces validated fake data
+* Picks a generator for each field (realistic names and addresses are on the roadmap)
+* Validates the result with your model, so every value it returns is valid
 
 
 ### Installation

@@ -30,13 +30,12 @@ print(result)
 <!-- termynal -->
 
 ```console
-# pydantic may serialise tuples as lists
-{'variable': [1, 2], 'fixed': [7, 'AbcDef']}
+{'variable': (72, 97), 'fixed': (8, 'qhFWCEPyYn')}
 ```
 
 !!! note "Tuple serialization"
 
-    The registry generates `tuple` objects for tuple schemas, but Pydantic's `model_dump()` (used when `pyfake` returns dicts) may represent tuples as lists. When you request model instances (`as_dict=False`) you will generally see Python `tuple` values on the model.
+    The registry generates `tuple` objects for tuple schemas, and `model_dump()` (used when `pyfake` returns dicts) keeps them as tuples. `fake.json(...)` serialises them as lists.
 
 ---
 
@@ -70,10 +69,11 @@ The resolver populates `GeneratorArgs` from `Field` / `Annotated` metadata. For 
 
 - **Default:** when no bounds are provided the length is chosen randomly between `1` and `5` (inclusive).
 - **Both `min_length` and `max_length`:** a random length is chosen uniformly between the bounds.
-- **Only `min_length` provided:** the random length is chosen between `min_length` and the default upper bound `5`.
-- **Only `max_length` provided:** the random length is chosen between the default lower bound `1` and `max_length`.
+- **Only `min_length` provided:** the length is chosen between `min_length` and `5`. When `min_length` is above `5`, it is chosen between `min_length` and `min_length + 4`.
+- **Only `max_length` provided:** the length is chosen between `1` and `max_length`.
+- **`min_length=0`** allows an empty tuple, and `max_length=0` always gives one.
 
-These rules match the implementation in `pyfake.core.registry.GeneratorRegistry._generate`, which uses `rng.randint(args.min_length or 1, args.max_length or 5)` for variable-length containers.
+These are the same rules as for [lists](lists.md#how-length-is-chosen).
 
 ### Using `Field` / `Annotated` constraints
 
@@ -93,7 +93,7 @@ print(fake(Bounded, seed=42))
 <!-- termynal -->
 
 ```console
-{'many': [4, 1, 7]}  # length will be between 2 and 4
+{'many': (4, 1, 7)}  # length will be between 2 and 4
 ```
 
 ### Supported Field options
@@ -105,7 +105,6 @@ print(fake(Bounded, seed=42))
 !!! error "Unsupported / Partial Support"
 
     - `min_length`/`max_length` do **not** affect fixed-length tuples (`Tuple[T1, T2, ...]`).
-    - The default string generator does not guarantee arbitrary regex matches for string elements; `pattern` metadata is accepted by the resolver but not enforced by the built-in string generator.
 
 ---
 
@@ -127,7 +126,7 @@ print(fake(Fixed, seed=0))
 <!-- termynal -->
 
 ```console
-{'pair': [5, 'AbcDef']}  # order and types are preserved; Pydantic may display as list
+{'pair': (5, 'AbcDef')}  # order and types are preserved
 ```
 
 ## Tuples containing unions and optional elements
@@ -149,9 +148,9 @@ print(fake(Mixed, num=3, seed=1))
 
 ```console
 [
-  {'values': [None, 'Xy']},
-  {'values': [3, None]},
-  {'values': [5, 'Ab']}
+  {'values': (None, 'Xy')},
+  {'values': (3, None)},
+  {'values': (5, 'Ab')}
 ]
 ```
 
@@ -180,14 +179,14 @@ This mirrors the behaviour covered by tests in `tests/core/test_pyfake_complex.p
 
 ## Implementation notes
 
-- **Fixed vs variable**: `mode == 'fixed'` → generator creates one element per annotated position; `mode == 'variable'` → generator chooses a length and repeats the single `items` schema.
-- **Length selection** (variable tuples) uses `rng.randint(args.min_length or 1, args.max_length or 5)` (default range `1..5`).
+- **Fixed vs variable**: `mode == 'fixed'` -> generator creates one element per annotated position; `mode == 'variable'` -> generator chooses a length and repeats the single `items` schema.
+- **Length selection** (variable tuples) follows the rules above (default range `1..5`).
+- A bare `tuple` annotation is treated as `Tuple[Any, ...]`.
 - **Defaults**: if a field has a non-`None` default, the resolver will set `GeneratorArgs.default` and the registry will return that default instead of generating a value.
-- **Pydantic serialization**: `model_dump()` may convert tuples to lists — tests accept either list or tuple when validating outputs.
+- **Pydantic serialization**: `model_dump()` keeps tuples; JSON output turns them into lists.
 
 ## Unsupported / Partial support
 
-- Regex-based generation for string elements is not guaranteed by the built-in string generator. Use a custom generator for strict regex requirements.
 - Fixed-length tuples cannot have their length adjusted via `min_length`/`max_length` — use variable tuples if you need length bounds.
 
 
