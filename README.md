@@ -13,7 +13,10 @@
   <a href="https://pypi.org/project/pyfake/">
     <img src="https://img.shields.io/pypi/v/pyfake?style=for-the-badge">
   </a>
-  <img src="https://img.shields.io/badge/python-3.10+-3670A0?style=for-the-badge&logo=python&logoColor=ffdd54"/>
+  <a href="https://github.com/Mukhopadhyay/pyfake/actions/workflows/test.yml">
+    <img src="https://img.shields.io/github/actions/workflow/status/Mukhopadhyay/pyfake/test.yml?branch=master&style=for-the-badge&label=tests">
+  </a>
+  <img src="https://img.shields.io/pypi/pyversions/pyfake?style=for-the-badge&logo=python&logoColor=ffdd54"/>
   <img src="https://img.shields.io/badge/pydantic-v2-4B8BBE?style=for-the-badge"/>
   <img src="https://img.shields.io/github/stars/Mukhopadhyay/pyfake?style=for-the-badge"/>
 </p>
