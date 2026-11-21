@@ -126,6 +126,8 @@ Nested models are not resolved eagerly. The resolver returns a `model` node, and
 
 The registry owns the mapping from type keys and format strings to generator callables. It also contains the dispatch logic in `_generate(schema, path)`.
 
+It also holds the [custom generators](../pydantic/custom-generators.md) in `_custom`, keyed by type. When the registry is created it copies the module-level table (`pyfake.register`, stored in `registry._global_generators`) and then the per-instance table passed in as `generators`, so instance registrations win. `Fake` passes its own registrations down through `Pyfake(..., generators=...)` and `Engine(..., generators=...)`. Custom generators are called as `fn(ctx, **constraints)`, where `ctx` is a `GeneratorContext` (`random`, `now`, `path`, `type`) and `constraints` are the `GeneratorArgs` that are set, without `default`, `examples` and `format`.
+
 ### Type and format map
 
 Keys match the JSON Schema `format` names where one exists, so any of them can be picked with `Field(json_schema_extra={"format": ...})`.
@@ -168,10 +170,11 @@ Subclasses of a mapped type use their base class's generator, e.g. pydantic's `B
 4. `type == "enum"` -> `random.choice(values)`.
 5. `type in (list, set, frozenset, dict, tuple)` -> generate the correct number of items by recursing. Sets and dict keys are generated until they are distinct.
 6. `type == "model"` -> generate the model's fields (resolved once and cached) and build it with `model_validate(data, by_name=True)`.
-7. `generator_args.format` is set and matches a key in `_generators` -> call that generator.
-8. `type` has pydantic `UrlConstraints` (URL and DSN types) -> call `generate_url` with the allowed schemes.
-9. `type` (or one of its base classes) is in `_type_map` -> call the mapped generator.
-10. Fall through -> raise `GeneratorNotFound(type, path)`.
+7. `type` is exactly a key in `_custom` (a registered custom generator) -> call it with a `GeneratorContext` and the set constraints.
+8. `generator_args.format` is set and matches a key in `_generators` -> call that generator.
+9. `type` has pydantic `UrlConstraints` (URL and DSN types) -> call `generate_url` with the allowed schemes.
+10. `type` (or one of its base classes) is in `_type_map` -> call the mapped generator.
+11. Fall through -> raise `GeneratorNotFound(type, path)`.
 
 ### Container lengths
 

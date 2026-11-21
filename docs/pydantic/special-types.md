@@ -181,6 +181,18 @@ fake(Upload)
 # (field 'Upload.location'). Use a supported type or give the field a default value.
 ```
 
-Giving the field a default works around it, because fields with a non-`None` default are never generated.
+To support the type, [register a generator](custom-generators.md) for it:
 
-Not supported yet: `Path` and its pydantic variants (`FilePath`, `DirectoryPath`, ...), `TypedDict`, dataclasses and `NamedTuple` used as field types (these raise `GeneratorNotFound`), and `Json[T]` and the types from `pydantic-extra-types` (these may fail pydantic validation).
+```python
+def path_generator(ctx, **constraints):
+    return pathlib.Path(f"/tmp/{ctx.random.randint(0, 999)}")
+
+
+fake.register(pathlib.Path, path_generator)
+fake(Upload)
+# {'location': PosixPath('/tmp/394')}
+```
+
+Giving the field a default also works around it, because fields with a non-`None` default are never generated.
+
+Not supported yet: `Path` and its pydantic variants (`FilePath`, `DirectoryPath`, ...), `TypedDict`, dataclasses and `NamedTuple` used as field types (these raise `GeneratorNotFound` unless you register a generator for them), and `Json[T]` and the types from `pydantic-extra-types` (these may fail pydantic validation).
