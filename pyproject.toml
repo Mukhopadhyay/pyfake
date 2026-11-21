@@ -1,6 +1,6 @@
 [project]
 name = "pyfake"
-version = "0.0.14"
+version = "0.0.15"
 description = "A fake data generator that is pydantic compatible."
 readme = "README.md"
 requires-python = ">=3.10"

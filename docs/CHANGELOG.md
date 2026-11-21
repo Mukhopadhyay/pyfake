@@ -9,6 +9,10 @@ hide:
 
 # Changelog 🕓
 
+### `0.0.15`
+
+Escape hatch for users who need to generate data for supported types that pyfake does not yet support.
+
 ### `0.0.14` - 2026-11-17
 
 A bug-fix release. Models that used to crash or fail validation now generate valid data, and many more pydantic types are supported.
