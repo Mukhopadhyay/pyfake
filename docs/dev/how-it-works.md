@@ -68,6 +68,8 @@ When `as_dict=True` (the default), instances are returned as plain `dict`s via `
 
 The `fake` object (`from pyfake import fake`) is a thin wrapper around `Pyfake`. `fake.seed(n)` returns a `Fake` that keeps one `Context` across calls, so successive calls continue the same seeded stream.
 
+Generators registered with `fake.register(type, fn)` belong to that `Fake` instance. They are passed down as `Pyfake(..., generators=...)` → `Engine` → `GeneratorRegistry`, which combines them with the module-level ones from `pyfake.register(type, fn)`.
+
 ---
 
 ### `Engine` — Orchestration
@@ -139,9 +141,10 @@ The registry receives a schema node and routes it to the correct generator funct
 3. **Literal / Enum** — pick a random value from the declared set.
 4. **Container types** (`list`, `set`, `frozenset`, `dict`, `tuple`) — generate the appropriate number of items by recursing into sub-schemas. Sets and dict keys are generated until they are distinct.
 5. **Nested model** — generate its fields and build the model with `model_validate`.
-6. **Format-based dispatch** — if `generator_args.format` is set (e.g. `"uuid4"`, `"date-time"`, `"email"`), look up the matching generator by that string key.
-7. **URL types** — `HttpUrl`, `PostgresDsn`, ... carry their allowed schemes, which are passed to the URL generator.
-8. **Primitive type dispatch** — map the Python type (or a supported base class) to a generator via the `_type_map` table.
+6. **Custom generators** — if the type was registered with `fake.register(...)` or `pyfake.register(...)` (exact match), call that generator. See [Custom generators](../pydantic/custom-generators.md).
+7. **Format-based dispatch** — if `generator_args.format` is set (e.g. `"uuid4"`, `"date-time"`, `"email"`), look up the matching generator by that string key.
+8. **URL types** — `HttpUrl`, `PostgresDsn`, ... carry their allowed schemes, which are passed to the URL generator.
+9. **Primitive type dispatch** — map the Python type (or a supported base class) to a generator via the `_type_map` table.
 
 Below are the built-in type and format mappings:
 

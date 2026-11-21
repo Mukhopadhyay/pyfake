@@ -13,6 +13,10 @@ hide:
 
 Escape hatch for users who need to generate data for supported types that pyfake does not yet support.
 
+**New features**
+
+* **Custom generators**: `fake.register(type, fn)` registers a generator on a `Fake` instance, and `pyfake.register(type, fn)` registers one for every instance. Generators are called as `fn(ctx, **constraints)`, where `ctx` is a `pyfake.GeneratorContext` with the seeded `random` stream, `now`, and the field's `path` and `type`. Built-in generators can be overridden (instance registrations win over module-level ones, which win over built-ins), and `fake.seed(n)` keeps the instance's registrations. See [Custom generators](https://mukhopadhyay.is-a.dev/pyfake/pydantic/custom-generators/).
+
 ### `0.0.14` - 2026-11-17
 
 A bug-fix release. Models that used to crash or fail validation now generate valid data, and many more pydantic types are supported.

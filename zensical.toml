@@ -30,6 +30,7 @@ nav = [
         { "Sets" = "pydantic/sets.md" },
         { "Literals and Enums" = "pydantic/enums-literals.md" },
         { "Other types" = "pydantic/special-types.md" },
+        { "Custom generators" = "pydantic/custom-generators.md" },
         # { "Examples" = "pydantic/examples.md" },
     ] },
     { "Timeseries" = [

@@ -135,9 +135,33 @@ print(result)
 - If a non-`None` `default` is present in the field metadata, the registry returns that value before attempting generation.
 
 ## Unsupported / Partial support
-- There is no built-in way to bias the generator (e.g., 70% True / 30% False). Post-process the results if you need weighted booleans.
+- The built-in generator is always uniform. For weighted booleans (e.g., 70% True / 30% False), register a custom generator (see below).
 - There are no field-level boolean constraints (min/max, pattern, etc.) — booleans are binary values.
 
 ## Custom generators
-There is no public API for registering your own generators yet. To pin a value, give the field a default; for anything else, post-process the generated data.
+Register your own generator for `bool` to replace the built-in one. Draw from `ctx.random` so seeded output stays reproducible:
+
+```python
+from pydantic import BaseModel
+from pyfake import Fake
+
+
+class Feature(BaseModel):
+    enabled: bool
+
+
+def mostly_true(ctx, **constraints):
+    return ctx.random.random() < 0.7
+
+
+f = Fake()
+f.register(bool, mostly_true)
+print(f(Feature, num=3))
+```
+
+```console
+[{'enabled': True}, {'enabled': True}, {'enabled': False}]
+```
+
+See [Custom generators](custom-generators.md) for the generator signature, module-level registration and precedence rules.
 
