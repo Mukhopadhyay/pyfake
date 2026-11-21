@@ -1,10 +1,12 @@
 import json
+from collections.abc import Callable, Mapping
 from typing import Any, TypeVar, cast
 
 from pydantic import BaseModel
 
 from pyfake.core.context import Context
 from pyfake.core.engine import Engine
+from pyfake.core.registry import _check_registration
 
 T = TypeVar("T", bound=BaseModel)
 
@@ -15,10 +17,12 @@ class Pyfake:
         schema: type[BaseModel],
         seed: int | None = None,
         context: Context | None = None,
+        *,
+        generators: Mapping[Any, Callable[..., Any]] | None = None,
     ):
         self.schema = schema
         self.context = context or Context(seed=seed)
-        self.engine = Engine(self.context)
+        self.engine = Engine(self.context, generators=generators)
 
     @classmethod
     def from_schema(
@@ -62,6 +66,20 @@ class Fake:
         # A seeded Fake keeps one random stream across calls, so successive calls return
         # different rows while the whole sequence stays reproducible
         self._context = Context(seed=seed) if seed is not None else None
+        # Generators registered on this instance only
+        self._generators: dict[Any, Callable[..., Any]] = {}
+
+    def register(self, type_: Any, fn: Callable[..., Any]) -> None:
+        """
+        Register `fn` as the generator for `type_` on this instance only.
+
+        `fn` is called as `fn(ctx, **constraints)`: `ctx` is a `GeneratorContext` and
+        `constraints` holds the field's constraints that are set (e.g. `min_length`, `ge`).
+        Registering a type again replaces its generator, and built-in types can be overridden.
+        Takes precedence over generators registered with `pyfake.register()`.
+        """
+        _check_registration(type_, fn)
+        self._generators[type_] = fn
 
     def __call__(
         self,
@@ -77,7 +95,9 @@ class Fake:
         else:
             context = self._context or Context()
 
-        return Pyfake(schema, context=context).generate(num, as_dict=as_dict)
+        return Pyfake(schema, context=context, generators=self._generators).generate(
+            num, as_dict=as_dict
+        )
 
     def dict(
         self, schema: type[T], num: int = 1, seed: int | None = None
@@ -100,4 +120,7 @@ class Fake:
         return json.dumps(data, indent=4, default=str)
 
     def seed(self, seed: int) -> "Fake":
-        return Fake(seed=seed)
+        # The new instance starts with a copy of this instance's registered generators
+        seeded = Fake(seed=seed)
+        seeded._generators = dict(self._generators)
+        return seeded

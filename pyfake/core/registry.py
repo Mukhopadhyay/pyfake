@@ -5,7 +5,7 @@ Resolves the datatypes and forms the generator mapping
 import datetime as dt_mod
 import ipaddress
 import uuid as uuid_mod
-from collections.abc import Callable, Iterable
+from collections.abc import Callable, Iterable, Mapping
 from dataclasses import fields
 from decimal import Decimal
 from functools import partial
@@ -16,7 +16,7 @@ from pydantic import BaseModel
 from pydantic.fields import FieldInfo
 from pydantic.networks import UrlConstraints
 
-from pyfake.core.context import Context
+from pyfake.core.context import Context, GeneratorContext
 from pyfake.core.resolver import Resolver
 from pyfake.exceptions import GeneratorNotFound, InvalidConstraints
 from pyfake.generators import datetime, network, primitives, uuid
@@ -32,6 +32,33 @@ MAX_DEPTH = 3
 # extra levels the model can't be generated with finite depth.
 _RECURSION_LIMIT = MAX_DEPTH + 10
 
+# Generators registered with pyfake.register(), used by every Fake instance
+_global_generators: dict[Any, Callable[..., Any]] = {}
+
+
+def _check_registration(type_: Any, fn: Callable[..., Any]) -> None:
+    if not callable(fn):
+        raise TypeError(f"The generator for {type_!r} must be callable, got {fn!r}")
+    try:
+        hash(type_)
+    except TypeError:
+        raise TypeError(
+            f"Can't register a generator for {type_!r}: it isn't hashable"
+        ) from None
+
+
+def register(type_: Any, fn: Callable[..., Any]) -> None:
+    """
+    Register `fn` as the generator for `type_` for every `Fake` instance.
+
+    `fn` is called as `fn(ctx, **constraints)`: `ctx` is a `GeneratorContext` and
+    `constraints` holds the field's constraints that are set (e.g. `min_length`, `ge`).
+    Registering a type again replaces its generator, and built-in types can be overridden.
+    A generator registered on a `Fake` instance takes precedence over this one.
+    """
+    _check_registration(type_, fn)
+    _global_generators[type_] = fn
+
 
 class GeneratorRegistry:
     """
@@ -41,7 +68,11 @@ class GeneratorRegistry:
     3. Generating value based on the resolved type and FieldInfo
     """
 
-    def __init__(self, context: Context | None = None):
+    def __init__(
+        self,
+        context: Context | None = None,
+        generators: Mapping[Any, Callable[..., Any]] | None = None,
+    ):
         # Keys match the JSON schema `format` names where one exists, so
         # `json_schema_extra={"format": ...}` can pick any of these generators
         self._generators: dict[str, Callable[..., Any]] = {
@@ -117,6 +148,11 @@ class GeneratorRegistry:
             ipaddress.IPv4Interface: "ipv4interface",
             ipaddress.IPv6Interface: "ipv6interface",
             pydantic.IPvAnyInterface: "ipvanyinterface",
+        }
+        # Registered generators (global, then per instance) take precedence over the built-in ones
+        self._custom: dict[Any, Callable[..., Any]] = {
+            **_global_generators,
+            **(generators or {}),
         }
         self.__context = context or Context()
         self._model_fields: dict[type, dict[str, dict[str, Any]]] = {}
@@ -255,6 +291,17 @@ class GeneratorRegistry:
             return model_cls.model_validate(data, by_name=True)
 
         # ---------------------
+        # Registered generators (exact type match)
+        # ---------------------
+        custom = self._custom_generator(t)
+        if custom is not None:
+            ctx = GeneratorContext(
+                random=rng, now=self.__context.now, path=path, type=t
+            )
+            constraints = {k: v for k, v in self._kwargs(args).items() if v is not None}
+            return custom(ctx, **constraints)
+
+        # ---------------------
         # Format-based dispatch
         # (uuid, date, date-time, time, etc.)
         # ---------------------
@@ -280,12 +327,24 @@ class GeneratorRegistry:
     def _call(
         self, gen_func: Callable[..., Any], args: GeneratorArgs, **extra: Any
     ) -> Any:
-        gen_kwargs = {
+        return gen_func(context=self.__context, **self._kwargs(args), **extra)
+
+    @staticmethod
+    def _kwargs(args: GeneratorArgs) -> dict[str, Any]:
+        """
+        The generator arguments that are passed on to generators
+        """
+        return {
             f.name: getattr(args, f.name)
             for f in fields(args)
             if f.name not in _REGISTRY_ARGS
         }
-        return gen_func(context=self.__context, **gen_kwargs, **extra)
+
+    def _custom_generator(self, t: Any) -> Callable[..., Any] | None:
+        try:
+            return self._custom.get(t)
+        except TypeError:  # unhashable annotation
+            return None
 
     def _type_key(self, t: Any) -> str | None:
         try:

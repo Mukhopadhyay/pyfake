@@ -1,3 +1,4 @@
+from collections.abc import Callable, Mapping
 from typing import Any
 
 from pydantic import BaseModel
@@ -15,9 +16,13 @@ class Engine:
     3. Controlling the output format (dict, list, pydantic model, etc)
     """
 
-    def __init__(self, context: Context | None = None):
+    def __init__(
+        self,
+        context: Context | None = None,
+        generators: Mapping[Any, Callable[..., Any]] | None = None,
+    ):
         self.context = context
-        self.registry = GeneratorRegistry(context=self.context)
+        self.registry = GeneratorRegistry(context=self.context, generators=generators)
 
     def generate(self, schema: type[BaseModel]) -> dict[str, Any]:
         # The registry resolves each field once per model and reuses it for every row

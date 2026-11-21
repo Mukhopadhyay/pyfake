@@ -3,7 +3,9 @@ Shared execution state for Pyfake
 """
 
 import random
+from dataclasses import dataclass
 from datetime import datetime, timezone
+from typing import Any
 
 
 class Context:
@@ -18,3 +20,19 @@ class Context:
                 hour=0, minute=0, second=0, microsecond=0
             )
         self.now = now
+
+
+@dataclass(frozen=True)
+class GeneratorContext:
+    """
+    What a custom generator receives as its first argument (see `pyfake.register`)
+    """
+
+    # The seeded random stream. Draw every random value from it so seeded output is reproducible.
+    random: random.Random
+    # Reference point for values relative to "now"
+    now: datetime
+    # Path of the field being generated, e.g. "User.avatar" or "User.tags[]"
+    path: str
+    # The annotation type the generator was registered for
+    type: Any
