@@ -11,6 +11,22 @@ from pyfake.core.registry import _check_registration
 T = TypeVar("T", bound=BaseModel)
 
 
+def _merge_overrides(
+    overrides: Mapping[str, Any] | None, field_overrides: Mapping[str, Any]
+) -> dict[str, Any] | None:
+    """
+    Combine `overrides={...}` with the `field=value` keyword shorthand
+    """
+    duplicates = sorted(set(overrides or {}) & set(field_overrides))
+    if duplicates:
+        names = ", ".join(repr(name) for name in duplicates)
+        raise TypeError(
+            f"Override for {names} given both in overrides= and as a keyword argument"
+        )
+    merged = {**(overrides or {}), **field_overrides}
+    return merged or None
+
+
 class Pyfake:
     def __init__(
         self,
@@ -35,20 +51,30 @@ class Pyfake:
         return cls(schema, seed).generate(num, as_dict=as_dict)
 
     def generate(
-        self, num: int | None = 1, as_dict: bool | None = True
+        self,
+        num: int | None = 1,
+        as_dict: bool | None = True,
+        overrides: Mapping[str, Any] | None = None,
     ) -> BaseModel | dict[str, Any] | list[BaseModel | dict[str, Any]]:
         """
         Generate `num` instances. `num=1` (or None) returns a single instance,
         any other number returns a list (empty for `num=0`).
+
+        `overrides` maps field names (dotted for nested models, e.g. "address.city")
+        to a value, or to a callable that is called with a `GeneratorContext` for every row.
         """
         if num is None:
             num = 1
         if num < 0:
             raise ValueError(f"num must be zero or more, got {num}")
+        if overrides:
+            self.engine.registry.check_overrides(self.schema, overrides)
 
         # by_name: fields with an alias are generated under their field name
         instances = [
-            self.schema.model_validate(self.engine.generate(self.schema), by_name=True)
+            self.schema.model_validate(
+                self.engine.generate(self.schema, overrides), by_name=True
+            )
             for _ in range(num)
         ]
         results: list[BaseModel | dict[str, Any]]
@@ -88,7 +114,17 @@ class Fake:
         *,
         as_dict: bool | None = True,
         seed: int | None = None,
+        overrides: Mapping[str, Any] | None = None,
+        **field_overrides: Any,
     ) -> BaseModel | dict[str, Any] | list[BaseModel | dict[str, Any]]:
+        """
+        Generate `num` rows of `schema`. Fields can be overridden with `overrides={...}`
+        or as keyword arguments (`fake(User, email="a@b.com")`). Fields named like a
+        parameter of this method (`schema`, `num`, `as_dict`, `seed`, `overrides`) can only
+        be overridden with `overrides={...}`.
+        """
+        merged = _merge_overrides(overrides, field_overrides)
+
         # An explicit per-call seed always starts a fresh stream
         if seed is not None:
             context = Context(seed=seed)
@@ -96,27 +132,65 @@ class Fake:
             context = self._context or Context()
 
         return Pyfake(schema, context=context, generators=self._generators).generate(
-            num, as_dict=as_dict
+            num, as_dict=as_dict, overrides=merged
         )
 
     def dict(
-        self, schema: type[T], num: int = 1, seed: int | None = None
+        self,
+        schema: type[T],
+        num: int = 1,
+        seed: int | None = None,
+        overrides: Mapping[str, Any] | None = None,
+        **field_overrides: Any,
     ) -> dict[str, Any] | list[dict[str, Any]]:
         return cast(
             "dict[str, Any] | list[dict[str, Any]]",
-            self(schema=schema, num=num, as_dict=True, seed=seed),
+            self(
+                schema=schema,
+                num=num,
+                as_dict=True,
+                seed=seed,
+                overrides=overrides,
+                **field_overrides,
+            ),
         )
 
     def model(
-        self, schema: type[T], num: int = 1, seed: int | None = None
+        self,
+        schema: type[T],
+        num: int = 1,
+        seed: int | None = None,
+        overrides: Mapping[str, Any] | None = None,
+        **field_overrides: Any,
     ) -> BaseModel | list[BaseModel]:
         return cast(
             "BaseModel | list[BaseModel]",
-            self(schema=schema, num=num, as_dict=False, seed=seed),
+            self(
+                schema=schema,
+                num=num,
+                as_dict=False,
+                seed=seed,
+                overrides=overrides,
+                **field_overrides,
+            ),
         )
 
-    def json(self, schema: type[T], num: int = 1, seed: int | None = None) -> str:
-        data = self(schema=schema, num=num, as_dict=True, seed=seed)
+    def json(
+        self,
+        schema: type[T],
+        num: int = 1,
+        seed: int | None = None,
+        overrides: Mapping[str, Any] | None = None,
+        **field_overrides: Any,
+    ) -> str:
+        data = self(
+            schema=schema,
+            num=num,
+            as_dict=True,
+            seed=seed,
+            overrides=overrides,
+            **field_overrides,
+        )
         return json.dumps(data, indent=4, default=str)
 
     def seed(self, seed: int) -> "Fake":

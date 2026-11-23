@@ -24,6 +24,8 @@ class Engine:
         self.context = context
         self.registry = GeneratorRegistry(context=self.context, generators=generators)
 
-    def generate(self, schema: type[BaseModel]) -> dict[str, Any]:
+    def generate(
+        self, schema: type[BaseModel], overrides: Mapping[str, Any] | None = None
+    ) -> dict[str, Any]:
         # The registry resolves each field once per model and reuses it for every row
-        return self.registry.generate_fields(schema)
+        return self.registry.generate_fields(schema, overrides=overrides)

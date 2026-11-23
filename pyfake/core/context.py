@@ -25,7 +25,8 @@ class Context:
 @dataclass(frozen=True)
 class GeneratorContext:
     """
-    What a custom generator receives as its first argument (see `pyfake.register`)
+    What a custom generator (see `pyfake.register`) or a callable field override
+    receives as its first argument
     """
 
     # The seeded random stream. Draw every random value from it so seeded output is reproducible.
@@ -34,5 +35,5 @@ class GeneratorContext:
     now: datetime
     # Path of the field being generated, e.g. "User.avatar" or "User.tags[]"
     path: str
-    # The annotation type the generator was registered for
+    # The type the custom generator was registered for, or the field's annotation for an override
     type: Any

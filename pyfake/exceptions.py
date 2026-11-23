@@ -16,3 +16,8 @@ class GeneratorNotFound(PyfakeError):
 class InvalidConstraints(PyfakeError, ValueError):
     def __init__(self, message: str) -> None:
         super().__init__(message)
+
+
+class InvalidOverride(PyfakeError, ValueError):
+    def __init__(self, message: str) -> None:
+        super().__init__(message)
