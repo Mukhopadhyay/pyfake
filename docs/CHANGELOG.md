@@ -16,6 +16,7 @@ Escape hatch for users who need to generate data for supported types that pyfake
 **New features**
 
 * **Custom generators**: `fake.register(type, fn)` registers a generator on a `Fake` instance, and `pyfake.register(type, fn)` registers one for every instance. Generators are called as `fn(ctx, **constraints)`, where `ctx` is a `pyfake.GeneratorContext` with the seeded `random` stream, `now`, and the field's `path` and `type`. Built-in generators can be overridden (instance registrations win over module-level ones, which win over built-ins), and `fake.seed(n)` keeps the instance's registrations. See [Custom generators](https://mukhopadhyay.is-a.dev/pyfake/pydantic/custom-generators/).
+* **Field overrides**: `fake(User, overrides={"email": "a@b.com"})`, or the shorthand `fake(User, email="a@b.com")`, sets fields for one call (also on `fake.dict`, `fake.model`, `fake.json` and `Pyfake.generate(overrides=...)`). A callable is called with a `GeneratorContext` for every row, e.g. `age=lambda ctx: ctx.random.randint(18, 65)`. Dotted paths such as `"address.city"` reach nested models, including inside `Optional[...]` and lists. Unknown fields raise the new `InvalidOverride`. Overrides win over field defaults, and pydantic still validates the result. See [Field overrides](https://mukhopadhyay.is-a.dev/pyfake/pydantic/overrides/).
 
 ### `0.0.14` - 2026-11-17
 

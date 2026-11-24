@@ -68,6 +68,8 @@ When `as_dict=True` (the default), instances are returned as plain `dict`s via `
 
 The `fake` object (`from pyfake import fake`) is a thin wrapper around `Pyfake`. `fake.seed(n)` returns a `Fake` that keeps one `Context` across calls, so successive calls continue the same seeded stream.
 
+Per-call [field overrides](../pydantic/overrides.md) (`fake(User, email="a@b.com")` or `overrides={"address.city": "Pune"}`) are checked once by `Pyfake.generate`, then applied by the registry field by field before any generation, so they also win over defaults.
+
 Generators registered with `fake.register(type, fn)` belong to that `Fake` instance. They are passed down as `Pyfake(..., generators=...)` → `Engine` → `GeneratorRegistry`, which combines them with the module-level ones from `pyfake.register(type, fn)`.
 
 ---
@@ -134,7 +136,7 @@ Each resolved node is a dict with at minimum a `type` key and a `generator_args`
 
 ### `GeneratorRegistry` — Dispatch
 
-The registry receives a schema node and routes it to the correct generator function. The dispatch order is:
+The registry receives a schema node and routes it to the correct generator function. Fields with a [field override](../pydantic/overrides.md) skip this dispatch completely: `generate_fields` uses the override value instead. The dispatch order is:
 
 1. **Default shortcut** — if `generator_args.default` is set, return it immediately.
 2. **Union** — pick a random variant; occasionally return `None` for nullable unions.

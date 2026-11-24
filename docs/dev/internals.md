@@ -188,7 +188,13 @@ The registry keeps a stack of the models it is generating. Once a model appears 
 
 ## `Engine`
 
-`Engine` is intentionally thin. It calls `registry.generate_fields(model)`, which resolves `model.model_fields` (once per model) and generates a value for each field. The dict is returned to `Pyfake`, which uses it to construct a validated model instance with `model_validate(data, by_name=True)`.
+`Engine` is intentionally thin. It calls `registry.generate_fields(model, overrides=...)`, which resolves `model.model_fields` (once per model) and generates a value for each field. The dict is returned to `Pyfake`, which uses it to construct a validated model instance with `model_validate(data, by_name=True)`.
+
+### Field overrides
+
+[Field overrides](../pydantic/overrides.md) are passed as `Fake.__call__(..., overrides=..., **field_overrides)` → `Pyfake.generate(overrides=...)` → `Engine.generate` → `GeneratorRegistry.generate_fields`. `Pyfake.generate` first calls `registry.check_overrides(model, overrides)`, which raises `InvalidOverride` for unknown fields, dotted keys into fields without a nested model, conflicting parent/child keys and non-string keys.
+
+`generate_fields` splits the overrides on the first `.`. A field named directly gets the override, before `_generate` runs, so overrides also win over the default shortcut. A callable is called with a `GeneratorContext` (`type` is the field's annotation), and any other value is used as-is. The remaining dotted keys are passed to `_generate` for that field, which hands them to union variants, container items, dict values and nested models, where `generate_fields` applies them again.
 
 ---
 
