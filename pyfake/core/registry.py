@@ -5,7 +5,7 @@ Resolves the datatypes and forms the generator mapping
 import datetime as dt_mod
 import ipaddress
 import uuid as uuid_mod
-from collections.abc import Callable, Iterable
+from collections.abc import Callable, Iterable, Mapping
 from dataclasses import fields
 from decimal import Decimal
 from functools import partial
@@ -16,9 +16,9 @@ from pydantic import BaseModel
 from pydantic.fields import FieldInfo
 from pydantic.networks import UrlConstraints
 
-from pyfake.core.context import Context
+from pyfake.core.context import Context, GeneratorContext
 from pyfake.core.resolver import Resolver
-from pyfake.exceptions import GeneratorNotFound, InvalidConstraints
+from pyfake.exceptions import GeneratorNotFound, InvalidConstraints, InvalidOverride
 from pyfake.generators import datetime, network, primitives, uuid
 from pyfake.generators.bounds import check_range, resolve_bounds
 from pyfake.schemas import GeneratorArgs
@@ -32,6 +32,33 @@ MAX_DEPTH = 3
 # extra levels the model can't be generated with finite depth.
 _RECURSION_LIMIT = MAX_DEPTH + 10
 
+# Generators registered with pyfake.register(), used by every Fake instance
+_global_generators: dict[Any, Callable[..., Any]] = {}
+
+
+def _check_registration(type_: Any, fn: Callable[..., Any]) -> None:
+    if not callable(fn):
+        raise TypeError(f"The generator for {type_!r} must be callable, got {fn!r}")
+    try:
+        hash(type_)
+    except TypeError:
+        raise TypeError(
+            f"Can't register a generator for {type_!r}: it isn't hashable"
+        ) from None
+
+
+def register(type_: Any, fn: Callable[..., Any]) -> None:
+    """
+    Register `fn` as the generator for `type_` for every `Fake` instance.
+
+    `fn` is called as `fn(ctx, **constraints)`: `ctx` is a `GeneratorContext` and
+    `constraints` holds the field's constraints that are set (e.g. `min_length`, `ge`).
+    Registering a type again replaces its generator, and built-in types can be overridden.
+    A generator registered on a `Fake` instance takes precedence over this one.
+    """
+    _check_registration(type_, fn)
+    _global_generators[type_] = fn
+
 
 class GeneratorRegistry:
     """
@@ -41,7 +68,11 @@ class GeneratorRegistry:
     3. Generating value based on the resolved type and FieldInfo
     """
 
-    def __init__(self, context: Context | None = None):
+    def __init__(
+        self,
+        context: Context | None = None,
+        generators: Mapping[Any, Callable[..., Any]] | None = None,
+    ):
         # Keys match the JSON schema `format` names where one exists, so
         # `json_schema_extra={"format": ...}` can pick any of these generators
         self._generators: dict[str, Callable[..., Any]] = {
@@ -118,6 +149,11 @@ class GeneratorRegistry:
             ipaddress.IPv6Interface: "ipv6interface",
             pydantic.IPvAnyInterface: "ipvanyinterface",
         }
+        # Registered generators (global, then per instance) take precedence over the built-in ones
+        self._custom: dict[Any, Callable[..., Any]] = {
+            **_global_generators,
+            **(generators or {}),
+        }
         self.__context = context or Context()
         self._model_fields: dict[type, dict[str, dict[str, Any]]] = {}
         # Models currently being generated, outermost first
@@ -128,10 +164,14 @@ class GeneratorRegistry:
         return self._generate(schema, path)
 
     def generate_fields(
-        self, model: type[BaseModel], path: str | None = None
+        self,
+        model: type[BaseModel],
+        path: str | None = None,
+        overrides: Mapping[str, Any] | None = None,
     ) -> dict[str, Any]:
         """
-        Generate a value for every field of a pydantic model, keyed by field name
+        Generate a value for every field of a pydantic model, keyed by field name.
+        Fields named in `overrides` take the override instead (see `check_overrides`).
         """
         path = path or model.__name__
 
@@ -141,6 +181,74 @@ class GeneratorRegistry:
                 "so it can't be generated. Make the self-reference Optional or a list, or give it a default."
             )
 
+        model_fields = self._fields(model)
+        own, nested = self._split_overrides(overrides or {})
+
+        self._model_stack.append(model)
+        try:
+            data: dict[str, Any] = {}
+            for name, schema in model_fields.items():
+                field_path = f"{path}.{name}"
+                # Overrides come before generation, so they also win over the field's default
+                if name in own:
+                    data[name] = self._override(
+                        own[name], field_path, model.model_fields[name].annotation
+                    )
+                else:
+                    data[name] = self._generate(schema, field_path, nested.get(name))
+            return data
+        finally:
+            self._model_stack.pop()
+
+    def check_overrides(
+        self, model: type[BaseModel], overrides: Mapping[str, Any], prefix: str = ""
+    ) -> None:
+        """
+        Raise InvalidOverride unless every key of `overrides` names a field of `model`.
+        A dotted key such as "address.city" names a field of the model(s) inside `address`.
+        """
+        model_fields = self._fields(model)
+        own, nested = self._split_overrides(overrides)
+
+        for name in [*own, *nested]:
+            if name not in model_fields:
+                raise InvalidOverride(
+                    f"Unknown field '{prefix}{name}' in overrides: '{model.__name__}' has no field '{name}'. "
+                    f"Fields: {', '.join(model_fields)}"
+                )
+
+        for name, rest in nested.items():
+            first = next(iter(rest))
+            if name in own:
+                raise InvalidOverride(
+                    f"Overrides for '{prefix}{name}' and '{prefix}{name}.{first}' conflict. "
+                    f"Override either the whole field or its nested fields."
+                )
+
+            models = self._nested_models(model_fields[name])
+            if not models:
+                raise InvalidOverride(
+                    f"'{model.__name__}.{name}' has no nested model, "
+                    f"so '{prefix}{name}.{first}' can't be overridden"
+                )
+
+            # With a union of models, each key has to fit at least one of them
+            for key, value in rest.items():
+                errors: list[InvalidOverride] = []
+                for nested_model in models:
+                    try:
+                        self.check_overrides(
+                            nested_model, {key: value}, f"{prefix}{name}."
+                        )
+                    except InvalidOverride as exc:
+                        errors.append(exc)
+                if len(errors) == len(models):
+                    raise errors[0]
+
+    def _fields(self, model: type[BaseModel]) -> dict[str, dict[str, Any]]:
+        """
+        The resolved schema of every field of `model`, resolved once per model
+        """
         if model not in self._model_fields:
             # Like pydantic does on first use, resolve forward references to models defined later
             if not model.__pydantic_complete__:
@@ -150,17 +258,75 @@ class GeneratorRegistry:
                 name: Resolver(field_info).resolve()["schema"]
                 for name, field_info in model.model_fields.items()
             }
+        return self._model_fields[model]
 
-        self._model_stack.append(model)
-        try:
-            return {
-                name: self._generate(schema, f"{path}.{name}")
-                for name, schema in self._model_fields[model].items()
-            }
-        finally:
-            self._model_stack.pop()
+    @staticmethod
+    def _split_overrides(
+        overrides: Mapping[str, Any],
+    ) -> tuple[dict[str, Any], dict[str, dict[str, Any]]]:
+        """
+        Split overrides into this model's fields and the nested ones, grouped by field:
+        {"email": 1, "address.city": 2} -> ({"email": 1}, {"address": {"city": 2}})
+        """
+        own: dict[str, Any] = {}
+        nested: dict[str, dict[str, Any]] = {}
+        for key, value in overrides.items():
+            if not isinstance(key, str) or not key:
+                raise InvalidOverride(f"Override keys must be field names, got {key!r}")
+            name, dot, rest = key.partition(".")
+            if dot:
+                nested.setdefault(name, {})[rest] = value
+            else:
+                own[name] = value
+        return own, nested
 
-    def _generate(self, schema: dict[str, Any], path: str = "") -> object:
+    def _override(self, value: Any, path: str, annotation: Any) -> Any:
+        """
+        A callable override is called with a GeneratorContext; any other value is used as-is
+        """
+        if callable(value):
+            ctx = GeneratorContext(
+                random=self.__context.random,
+                now=self.__context.now,
+                path=path,
+                type=annotation,
+            )
+            return value(ctx)
+        return value
+
+    def _nested_models(self, schema: dict[str, Any]) -> list[type[BaseModel]]:
+        """
+        The models a field can contain: directly, in a union, or as container items
+        """
+        t = schema["type"]
+        if t == "model":
+            return [schema["model"]]
+        if t == "union":
+            children = schema["variants"]
+        elif t in (list, set, frozenset):
+            children = [schema["items"]]
+        elif t is tuple:
+            children = (
+                schema["items"] if schema["mode"] == "fixed" else [schema["items"]]
+            )
+        elif t is dict:
+            children = [schema["values"]]
+        else:
+            return []
+
+        models: list[type[BaseModel]] = []
+        for child in children:
+            for model in self._nested_models(child):
+                if model not in models:
+                    models.append(model)
+        return models
+
+    def _generate(
+        self,
+        schema: dict[str, Any],
+        path: str = "",
+        overrides: Mapping[str, Any] | None = None,
+    ) -> object:
         t = schema["type"]
         args = schema.get("generator_args") or GeneratorArgs()
 
@@ -189,7 +355,7 @@ class GeneratorRegistry:
                 return None
 
             variant = rng.choice(variants)
-            return self._generate(variant, path)
+            return self._generate(variant, path, overrides)
 
         # ---------------------
         # Literal
@@ -208,11 +374,16 @@ class GeneratorRegistry:
         # ---------------------
         if t is list:
             length = self._length(args, [schema["items"]])
-            return [self._generate(schema["items"], f"{path}[]") for _ in range(length)]
+            return [
+                self._generate(schema["items"], f"{path}[]", overrides)
+                for _ in range(length)
+            ]
 
         if t in (set, frozenset):
             length = self._length(args, [schema["items"]])
-            items = self._unique(schema["items"], length, args.min_length, f"{path}[]")
+            items = self._unique(
+                schema["items"], length, args.min_length, f"{path}[]", overrides
+            )
             return t(items)
 
         # ---------------------
@@ -223,11 +394,12 @@ class GeneratorRegistry:
                 length = self._length(args, [schema["items"]])
 
                 return tuple(
-                    self._generate(schema["items"], f"{path}[]") for _ in range(length)
+                    self._generate(schema["items"], f"{path}[]", overrides)
+                    for _ in range(length)
                 )
 
             return tuple(
-                self._generate(item, f"{path}[{i}]")
+                self._generate(item, f"{path}[{i}]", overrides)
                 for i, item in enumerate(schema["items"])
             )
 
@@ -239,7 +411,7 @@ class GeneratorRegistry:
             keys = self._unique(schema["keys"], length, args.min_length, f"{path}[key]")
 
             return {
-                key: self._generate(schema["values"], f"{path}[{key!r}]")
+                key: self._generate(schema["values"], f"{path}[{key!r}]", overrides)
                 for key in keys
             }
 
@@ -249,10 +421,21 @@ class GeneratorRegistry:
         if t == "model":
             model_cls = schema["model"]
 
-            data = self.generate_fields(model_cls, path)
+            data = self.generate_fields(model_cls, path, overrides)
 
             # by_name: fields with an alias are generated under their field name
             return model_cls.model_validate(data, by_name=True)
+
+        # ---------------------
+        # Registered generators (exact type match)
+        # ---------------------
+        custom = self._custom_generator(t)
+        if custom is not None:
+            ctx = GeneratorContext(
+                random=rng, now=self.__context.now, path=path, type=t
+            )
+            constraints = {k: v for k, v in self._kwargs(args).items() if v is not None}
+            return custom(ctx, **constraints)
 
         # ---------------------
         # Format-based dispatch
@@ -280,12 +463,24 @@ class GeneratorRegistry:
     def _call(
         self, gen_func: Callable[..., Any], args: GeneratorArgs, **extra: Any
     ) -> Any:
-        gen_kwargs = {
+        return gen_func(context=self.__context, **self._kwargs(args), **extra)
+
+    @staticmethod
+    def _kwargs(args: GeneratorArgs) -> dict[str, Any]:
+        """
+        The generator arguments that are passed on to generators
+        """
+        return {
             f.name: getattr(args, f.name)
             for f in fields(args)
             if f.name not in _REGISTRY_ARGS
         }
-        return gen_func(context=self.__context, **gen_kwargs, **extra)
+
+    def _custom_generator(self, t: Any) -> Callable[..., Any] | None:
+        try:
+            return self._custom.get(t)
+        except TypeError:  # unhashable annotation
+            return None
 
     def _type_key(self, t: Any) -> str | None:
         try:
@@ -322,6 +517,7 @@ class GeneratorRegistry:
         length: int,
         min_length: int | None,
         path: str,
+        overrides: Mapping[str, Any] | None = None,
     ) -> list[Any]:
         """
         Generate `length` distinct values, or at least `min_length` of them
@@ -339,7 +535,7 @@ class GeneratorRegistry:
         values: dict[Any, None] = {}
         attempts = length * 10 + 10
         while len(values) < length and attempts:
-            values.setdefault(self._generate(schema, path), None)
+            values.setdefault(self._generate(schema, path, overrides), None)
             attempts -= 1
 
         if len(values) < minimum:
